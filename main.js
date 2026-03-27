@@ -313,10 +313,11 @@ document.addEventListener("DOMContentLoaded", () => {
                 type: 'raster',
                 source: {
                     type: 'raster',
+                    // Using color scheme 2 (Titan - very colorful) and smoothing 1 so clouds jump out over the map
                     tiles: [`https://tilecache.rainviewer.com${latestTime}/256/{z}/{x}/{y}/2/1_1.png`],
                     tileSize: 256
                 },
-                paint: { 'raster-opacity': 0.65 }
+                paint: { 'raster-opacity': 0.85 }
             }, 'terminator-layer');
             
             if(!toggles.weather) {
@@ -513,11 +514,11 @@ document.addEventListener("DOMContentLoaded", () => {
     // API: Live Webcams
     // ----------------------------------------------------
     const webcamData = [
-        { name: 'Jackson Hole, WY', img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Jackson_Hole_town_square.jpg/640px-Jackson_Hole_town_square.jpg', lat: 43.4799, lon: -110.7624 },
-        { name: 'NASA ISS Live Feed', img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e1/FullEarth2012.jpg/640px-FullEarth2012.jpg', lat: 28.3922, lon: -80.6077 },
-        { name: 'Abbey Road, London', img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/69/Abbey_Road_zebra_crossing_2004-01.jpg/640px-Abbey_Road_zebra_crossing_2004-01.jpg', lat: 51.5321, lon: -0.1773 },
-        { name: 'Venice Grand Canal', img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/29/Venice_-_Grand_Canal_from_the_Rialto_Bridge.jpg/640px-Venice_-_Grand_Canal_from_the_Rialto_Bridge.jpg', lat: 45.4383, lon: 12.3364 },
-        { name: 'Times Square, NYC', img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/47/New_york_times_square-terabass.jpg/640px-New_york_times_square-terabass.jpg', lat: 40.7580, lon: -73.9855 }
+        { name: 'Jackson Hole, WY', img: 'https://images.unsplash.com/photo-1618083811566-f40c749b5ae7?w=640&q=80', lat: 43.4799, lon: -110.7624 },
+        { name: 'NASA ISS Live Feed', img: 'https://images.unsplash.com/photo-1614729939124-032f0b56c9ce?w=640&q=80', lat: 28.3922, lon: -80.6077 },
+        { name: 'Abbey Road, London', img: 'https://images.unsplash.com/photo-1513635269975-59693e2d8ce2?w=640&q=80', lat: 51.5321, lon: -0.1773 },
+        { name: 'Venice Grand Canal', img: 'https://images.unsplash.com/photo-1514890547357-a9ee288728e0?w=640&q=80', lat: 45.4383, lon: 12.3364 },
+        { name: 'Times Square, NYC', img: 'https://images.unsplash.com/photo-1500916434205-0c77489c6cf7?w=640&q=80', lat: 40.7580, lon: -73.9855 }
     ];
 
     const initWebcams = () => {
@@ -538,7 +539,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         <i class="fa-solid fa-satellite-dish"></i> ${cam.name}
                     </h3>
                     <div style="position:relative; width:300px; height:170px; border: 1px solid rgba(0,255,0,0.5); overflow: hidden; background: #000;">
-                        <img src="${cam.img}" style="width:100%; height:100%; object-fit: cover; filter: grayscale(80%) sepia(30%) hue-rotate(80deg) brightness(80%) contrast(150%);">
+                        <img src="${cam.img}" style="display:block; width:100%; height:100%; object-fit: cover; filter: sepia(30%) hue-rotate(80deg) contrast(120%);">
                         <div style="position:absolute; top:8px; left:8px; color:red; font-weight:bold; font-family:monospace; animation: blink 1s infinite;">
                             <span style="display:inline-block; width:8px; height:8px; background:red; border-radius:50%; margin-right:4px;"></span>REC
                         </div>
