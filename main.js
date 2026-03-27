@@ -62,6 +62,25 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     map.on('load', () => {
+        // --- MOBILE MENU BEHAVIOR ---
+        const sidebar = document.getElementById('sidebar');
+        const mobileBtn = document.getElementById('mobile-menu-btn');
+        
+        if (mobileBtn && sidebar) {
+            mobileBtn.addEventListener('click', (e) => {
+                e.stopPropagation(); // prevent map from catching the initial click
+                sidebar.classList.toggle('open');
+            });
+        }
+
+        map.on('click', () => {
+            if (window.innerWidth <= 768 && sidebar && sidebar.classList.contains('open')) {
+                sidebar.classList.remove('open');
+            }
+        });
+        // -----------------------------
+
+        // --- MAP DATA INITIALIZATION ---
         setStatus("SATELLITE DOWNLINK ESTABLISHED. INITIALIZING MODEL V4.1.");
 
         // Draw Solar Terminator Night Shadow Before Weather/Other Data
@@ -437,7 +456,8 @@ document.addEventListener("DOMContentLoaded", () => {
                     <p>SPD: ${(f.spd * 8000000).toFixed(0)} KM/H</p>
                 `));
             f.marker = marker;
-            if (toggles.flights) marker.addTo(map);
+            marker.addTo(map);
+            if (!toggles.flights) marker.getElement().style.display = 'none';
             flightMarkers.push(f);
         });
         
@@ -498,7 +518,8 @@ document.addEventListener("DOMContentLoaded", () => {
             `));
             
             ship.marker = marker;
-            if (toggles.ships) marker.addTo(map);
+            marker.addTo(map);
+            if (!toggles.ships) marker.getElement().style.display = 'none';
             shipMarkers.push(ship);
         });
 
@@ -573,7 +594,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 .setLngLat([cam.lon, cam.lat])
                 .setPopup(popup);
 
-            if (toggles.webcams) marker.addTo(map);
+            marker.addTo(map);
+            if (!toggles.webcams) marker.getElement().style.display = 'none';
             webcamMarkers.push(marker);
         });
     }
