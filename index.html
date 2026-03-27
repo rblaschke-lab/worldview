@@ -16,7 +16,7 @@
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <link rel="stylesheet" href="./style.css?v=4.8">
+    <link rel="stylesheet" href="./style.css?v=4.9">
 </head>
 <body class="theme-clean">
     <div id="map"></div>
@@ -31,7 +31,7 @@
             </div>
         </header>
 
-        <section class="menu-group" style="border-bottom: 2px dashed #00ff00;">
+        <section class="menu-group" style="border-bottom: 1px dotted rgba(0, 255, 0, 0.3); padding-bottom: 15px; margin-bottom: 15px;">
             <div class="control-item">
                 <strong style="color: #0ff;">OVERRIDE: ALL SYSTEMS</strong>
                 <label class="toggle-switch">
@@ -54,6 +54,13 @@
                 <span>NASA Active Wildfires</span>
                 <label class="toggle-switch">
                     <input type="checkbox" id="toggle-fires">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="control-item" style="margin-top: 8px;">
+                <span>Global Seismic Activity</span>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="toggle-earthquakes">
                     <span class="slider"></span>
                 </label>
             </div>
@@ -120,6 +127,6 @@
         </footer>
     </div>
 
-    <script src="./main.js?v=4.8"></script>
+    <script src="./main.js?v=4.9"></script>
 </body>
 </html>
