@@ -21,7 +21,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
                     ],
                     tileSize: 256,
-                    maxzoom: 17,
+                    maxzoom: 16,
                     attribution: '&copy; Esri &mdash; NASA / USGS'
                 }
             },
@@ -615,7 +615,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     document.getElementById('toggle-flights').addEventListener('change', (e) => {
         toggles.flights = e.target.checked;
-        flightMarkers.forEach(m => toggles.flights ? m.marker.addTo(map) : m.marker.remove());
+        flightMarkers.forEach(m => {
+            if(m.marker.getElement()) m.marker.getElement().style.display = toggles.flights ? 'block' : 'none';
+        });
     });
 
     document.getElementById('toggle-weather').addEventListener('change', (e) => {
@@ -627,12 +629,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
     document.getElementById('toggle-ships').addEventListener('change', (e) => {
         toggles.ships = e.target.checked;
-        shipMarkers.forEach(s => toggles.ships ? s.marker.addTo(map) : s.marker.remove());
+        shipMarkers.forEach(s => {
+            if(s.marker.getElement()) s.marker.getElement().style.display = toggles.ships ? 'block' : 'none';
+        });
     });
 
     document.getElementById('toggle-webcams').addEventListener('change', (e) => {
         toggles.webcams = e.target.checked;
-        webcamMarkers.forEach(s => toggles.webcams ? s.addTo(map) : s.remove());
+        webcamMarkers.forEach(m => {
+            if(m.getElement()) m.getElement().style.display = toggles.webcams ? 'block' : 'none';
+        });
     });
 
     setInterval(() => {
