@@ -21,6 +21,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
                     ],
                     tileSize: 256,
+                    maxzoom: 17,
                     attribution: '&copy; Esri &mdash; NASA / USGS'
                 }
             },
@@ -178,9 +179,10 @@ document.addEventListener("DOMContentLoaded", () => {
             paint: { 
                 'circle-radius': [
                     'interpolate', ['linear'], ['get', 'mag'],
-                    1.0, 2,  
-                    6.0, 6,  
-                    8.0, 12  
+                    1.0, 4,
+                    4.0, 8,  
+                    6.0, 14,  
+                    8.0, 24  
                 ],
                 'circle-color': [
                     'step', ['get', 'mag'],
@@ -198,9 +200,10 @@ document.addEventListener("DOMContentLoaded", () => {
             paint: { 
                 'circle-radius': [
                     'interpolate', ['linear'], ['get', 'mag'],
-                    1.0, 6,
-                    6.0, 16,
-                    8.0, 24
+                    1.0, 8,
+                    4.0, 16,
+                    6.0, 32,
+                    8.0, 80
                 ],
                 'circle-color': 'transparent', 
                 'circle-stroke-width': [
@@ -277,7 +280,8 @@ document.addEventListener("DOMContentLoaded", () => {
     // ----------------------------------------------------
     const fetchNASA_Fires = () => {
         try {
-            const today = new Date().toISOString().split('T')[0];
+            // NASA GIBS tiles are typically 24-48 hours behind real time.
+            const pastDate = new Date(Date.now() - 2 * 86400000).toISOString().split('T')[0];
             
             map.addLayer({
                 id: 'nasa-fires',
@@ -285,7 +289,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 source: {
                     type: 'raster',
                     tiles: [
-                        `https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/VIIRS_SNPP_Thermal_Anomalies_375m_All/default/${today}/GoogleMapsCompatible_Level8/{z}/{y}/{x}.png`
+                        `https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/VIIRS_SNPP_Thermal_Anomalies_375m_All/default/${pastDate}/GoogleMapsCompatible_Level8/{z}/{y}/{x}.png`
                     ],
                     tileSize: 256
                 },
@@ -449,9 +453,11 @@ document.addEventListener("DOMContentLoaded", () => {
                 if(f.lon < -180) f.lon += 360;
                 if(f.lat > 85 || f.lat < -85) f.hdg += 180; 
                 
-                f.marker.setLngLat([f.lon, f.lat]);
-                // update internal marker rotation explicitly because MapLibre CSS rotation must match
-                f.marker.setRotation(f.hdg);
+                if (toggles.flights) {
+                    f.marker.setLngLat([f.lon, f.lat]);
+                    // update internal marker rotation explicitly because MapLibre CSS rotation must match
+                    f.marker.setRotation(f.hdg);
+                }
             });
             requestAnimationFrame(animateAirspace);
         }
@@ -503,7 +509,9 @@ document.addEventListener("DOMContentLoaded", () => {
             shipMarkers.forEach(s => {
                 s.lat += Math.cos(s.hdg * Math.PI / 180) * s.spd;
                 s.lon += Math.sin(s.hdg * Math.PI / 180) * s.spd;
-                s.marker.setLngLat([s.lon, s.lat]);
+                if(toggles.ships) {
+                    s.marker.setLngLat([s.lon, s.lat]);
+                }
             });
             requestAnimationFrame(animateShips);
         }
@@ -514,11 +522,18 @@ document.addEventListener("DOMContentLoaded", () => {
     // API: Live Webcams
     // ----------------------------------------------------
     const webcamData = [
-        { name: 'Jackson Hole, WY', img: 'https://images.unsplash.com/photo-1618083811566-f40c749b5ae7?w=640&q=80', lat: 43.4799, lon: -110.7624 },
-        { name: 'NASA ISS Live Feed', img: 'https://images.unsplash.com/photo-1614729939124-032f0b56c9ce?w=640&q=80', lat: 28.3922, lon: -80.6077 },
-        { name: 'Abbey Road, London', img: 'https://images.unsplash.com/photo-1513635269975-59693e2d8ce2?w=640&q=80', lat: 51.5321, lon: -0.1773 },
-        { name: 'Venice Grand Canal', img: 'https://images.unsplash.com/photo-1514890547357-a9ee288728e0?w=640&q=80', lat: 45.4383, lon: 12.3364 },
-        { name: 'Times Square, NYC', img: 'https://images.unsplash.com/photo-1500916434205-0c77489c6cf7?w=640&q=80', lat: 40.7580, lon: -73.9855 }
+        // Global Highlight Cams
+        { name: 'Jackson Hole, WY', img: 'https://images.unsplash.com/photo-1618083811566-f40c749b5ae7?w=800&q=90', lat: 43.4799, lon: -110.7624 },
+        { name: 'NASA ISS Live Feed', img: 'https://images.unsplash.com/photo-1614729939124-032f0b56c9ce?w=800&q=90', lat: 28.3922, lon: -80.6077 },
+        { name: 'Abbey Road, London', img: 'https://images.unsplash.com/photo-1513635269975-59693e2d8ce2?w=800&q=90', lat: 51.5321, lon: -0.1773 },
+        { name: 'Venice Grand Canal', img: 'https://images.unsplash.com/photo-1514890547357-a9ee288728e0?w=800&q=90', lat: 45.4383, lon: 12.3364 },
+        
+        // --- DEEP DIVE DEMO CLUSTER: NEW YORK CITY ---
+        { name: 'Times Square Central', img: 'https://images.unsplash.com/photo-1500916434205-0c77489c6cf7?w=800&q=90', lat: 40.7580, lon: -73.9855 },
+        { name: 'Brooklyn Bridge Approach', img: 'https://images.unsplash.com/photo-1505295556276-88abeb7e31b6?w=800&q=90', lat: 40.7061, lon: -73.9969 },
+        { name: 'Central Park South', img: 'https://images.unsplash.com/photo-1522083165195-3424ed129620?w=800&q=90', lat: 40.7643, lon: -73.9730 },
+        { name: 'Wall Street Exchange', img: 'https://images.unsplash.com/photo-1534430480872-3498386e7856?w=800&q=90', lat: 40.7075, lon: -74.0113 },
+        { name: 'Statue of Liberty Perimeter', img: 'https://images.unsplash.com/photo-1605130284535-11dd9eedc58a?w=800&q=90', lat: 40.6892, lon: -74.0445 }
     ];
 
     const initWebcams = () => {
@@ -539,18 +554,17 @@ document.addEventListener("DOMContentLoaded", () => {
                         <i class="fa-solid fa-satellite-dish"></i> ${cam.name}
                     </h3>
                     <div style="position:relative; width:300px; height:170px; border: 1px solid rgba(0,255,0,0.5); overflow: hidden; background: #000;">
-                        <img src="${cam.img}" style="display:block; width:100%; height:100%; object-fit: cover; filter: sepia(30%) hue-rotate(80deg) contrast(120%);">
-                        <div style="position:absolute; top:8px; left:8px; color:red; font-weight:bold; font-family:monospace; animation: blink 1s infinite;">
+                        <!-- Clear-View Mod: Removed CSS hue/sepia filters for perfect RGB colors & resolution -->
+                        <img src="${cam.img}" style="display:block; width:100%; height:100%; object-fit: cover;">
+                        <div style="position:absolute; top:8px; left:8px; color:red; font-weight:bold; font-family:monospace; animation: blink 1s infinite; text-shadow: 1px 1px 2px black;">
                             <span style="display:inline-block; width:8px; height:8px; background:red; border-radius:50%; margin-right:4px;"></span>REC
                         </div>
-                        <div style="position:absolute; bottom:8px; left:8px; color:#00ff00; font-family:monospace; font-size:10px; background:rgba(0,0,0,0.5); padding:2px;">
-                            CAM: ACTIVE // SIG: STR
+                        <div style="position:absolute; bottom:8px; left:8px; color:#00ff00; font-family:monospace; font-size:10px; background:rgba(0,0,0,0.7); padding:3px; border-radius: 2px;">
+                            HD CAM: ACTIVE
                         </div>
-                        <div style="position:absolute; top:8px; right:8px; color:#00ff00; font-family:monospace; font-size:10px; text-shadow: 1px 1px 0 #000;">
+                        <div style="position:absolute; top:8px; right:8px; color:#00ff00; font-family:monospace; font-size:10px; text-shadow: 1px 1px 2px black; background:rgba(0,0,0,0.7); padding:3px; border-radius: 2px;">
                             ${timeStr}
                         </div>
-                        <!-- CRT Scanlines -->
-                        <div style="position:absolute; top:0; left:0; right:0; bottom:0; background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06)); background-size: 100% 4px, 6px 100%; pointer-events: none;"></div>
                     </div>
                 `);
             });
