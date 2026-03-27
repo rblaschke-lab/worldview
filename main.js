@@ -1,13 +1,4 @@
 document.addEventListener("DOMContentLoaded", () => {
-    // 1. Mobile Menu Hamburger Toggle Logic
-    const mobileBtn = document.getElementById('mobile-menu-btn');
-    const sidebar = document.getElementById('sidebar');
-    if(mobileBtn && sidebar) {
-        mobileBtn.addEventListener('click', () => {
-            sidebar.classList.toggle('open');
-        });
-    }
-
     // 2. Initialize V4 MapLibre GL JS
     const map = new maplibregl.Map({
         container: 'map',
