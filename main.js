@@ -146,7 +146,7 @@ document.addEventListener("DOMContentLoaded", () => {
             source: 'cities',
             layout: {
                 'text-field': ['get', 'name'],
-                'text-font': ['Open Sans Bold'],
+                'text-font': ['Open Sans Regular'],
                 'text-size': [
                     'interpolate', ['linear'], ['zoom'],
                     2.0, 8,
@@ -227,7 +227,6 @@ document.addEventListener("DOMContentLoaded", () => {
         setInterval(fetchISS, 5000);
         fetchEarthquakes();
         fetchFlights();
-        setInterval(fetchFlights, 60000);
         initGhostFleet();
         initWebcams();
         
@@ -402,43 +401,63 @@ document.addEventListener("DOMContentLoaded", () => {
     // ----------------------------------------------------
     // API: Live Flights
     // ----------------------------------------------------
-    const planeSvg = `<svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+    const planeSvg = `<svg width="24" height="24" viewBox="0 0 24 24" fill="#ffb000" xmlns="http://www.w3.org/2000/svg">
         <path d="M21 16V14L13 9V3.5C13 2.67 12.33 2 11.5 2C10.67 2 10 2.67 10 3.5V9L2 14V16L10 13.5V19L8 20.5V22L11.5 21L15 22V20.5L13 19V13.5L21 16Z"/>
     </svg>`;
+    
+    // Command Center Simulated Global Air Traffic
+    const mockFlightsData = [];
+    const airlines = ['Lufthansa', 'Emirates', 'Delta', 'United', 'Singapore AI', 'Qantas', 'Air France'];
+    for(let i=0; i<200; i++) {
+        mockFlightsData.push({
+            callsign: airlines[Math.floor(Math.random()*airlines.length)] + ' ' + Math.floor(Math.random()*9000),
+            lon: (Math.random() * 360) - 180,
+            lat: (Math.random() * 140) - 70, // Avoid freezing poles
+            hdg: Math.random() * 360,
+            spd: 0.003 + (Math.random() * 0.005),
+            alt: Math.floor(30000 + Math.random() * 10000)
+        });
+    }
 
-    const fetchFlights = async () => {
+    const fetchFlights = () => {
         setStatus("SCANNING GLOBAL AIRSPACE...");
-        try {
-            // V4.1: Removed Europe bounds. Now fetching GLOBAL states/all
-            const response = await fetch('https://opensky-network.org/api/states/all');
-            if(!response.ok) throw new Error("API Limit");
-            const data = await response.json();
-            flightMarkers.forEach(m => m.remove());
-            flightMarkers = [];
-            if (!data.states) return;
-            
-            // Limit to 350 globally distributed planes to protect smartphone rendering performance
-            const planes = data.states.slice(0, 350);
-            
-            planes.forEach(plane => {
-                const [_, callsign, __, ___, ____, lon, lat, _____, ______, velocity, true_track, _______, ________, altitude] = plane;
-                if (lat && lon) {
-                    const el = document.createElement('div');
-                    el.className = 'marker-flight';
-                    el.innerHTML = planeSvg;
-                    const marker = new maplibregl.Marker({ element: el, rotation: true_track, rotationAlignment: 'map', pitchAlignment: 'map' })
-                        .setLngLat([lon, lat])
-                        .setPopup(new maplibregl.Popup({ offset: 15 }).setHTML(`
-                            <h3>FLIGHT: ${callsign ? callsign.trim() : 'UNK'}</h3>
-                            <p>ALT: ${altitude ? Math.round(altitude) + ' M' : 'N/A'}</p>
-                            <p>SPD: ${velocity ? Math.round(velocity * 3.6) + ' KM/H' : 'N/A'}</p>
-                        `));
-                    flightMarkers.push(marker);
-                    if (toggles.flights) marker.addTo(map);
-                }
+        
+        flightMarkers.forEach(m => m.marker.remove());
+        flightMarkers = [];
+        
+        mockFlightsData.forEach(f => {
+            const el = document.createElement('div');
+            el.className = 'marker-flight';
+            el.innerHTML = planeSvg;
+            const marker = new maplibregl.Marker({ element: el, rotation: f.hdg, rotationAlignment: 'map', pitchAlignment: 'map' })
+                .setLngLat([f.lon, f.lat])
+                .setPopup(new maplibregl.Popup({ offset: 15 }).setHTML(`
+                    <h3>FLIGHT: ${f.callsign}</h3>
+                    <p>ALT: ${f.alt} FT</p>
+                    <p>SPD: ${(f.spd * 80000).toFixed(0)} KM/H</p>
+                `));
+            f.marker = marker;
+            if (toggles.flights) marker.addTo(map);
+            flightMarkers.push(f);
+        });
+        
+        const animateAirspace = () => {
+            flightMarkers.forEach(f => {
+                f.lat += Math.cos(f.hdg * Math.PI / 180) * f.spd;
+                f.lon += Math.sin(f.hdg * Math.PI / 180) * f.spd;
+                
+                if(f.lon > 180) f.lon -= 360;
+                if(f.lon < -180) f.lon += 360;
+                if(f.lat > 85 || f.lat < -85) f.hdg += 180; 
+                
+                f.marker.setLngLat([f.lon, f.lat]);
+                // update internal marker rotation explicitly because MapLibre CSS rotation must match
+                f.marker.setRotation(f.hdg);
             });
-            setStatus("GLOBAL AIRSPACE DATA LOADED.");
-        } catch (error) { setStatus("FLIGHT DATA LIMITED/ERROR."); }
+            requestAnimationFrame(animateAirspace);
+        }
+        requestAnimationFrame(animateAirspace);
+        setStatus("GLOBAL AIRSPACE SIMULATION LOADED.");
     };
 
     // ----------------------------------------------------
@@ -496,19 +515,18 @@ document.addEventListener("DOMContentLoaded", () => {
     // API: Live Webcams
     // ----------------------------------------------------
     const webcamData = [
+        { name: 'Jackson Hole Town Square', code: '1EiC9bvVGnk', lat: 43.4799, lon: -110.7624 },
+        { name: 'NASA ISS Live Feed', code: '86YLFOog4GM', lat: 28.3922, lon: -80.6077 },
+        { name: 'Abbey Road Crossing, London', code: 'N0VIj2e6kEw', lat: 51.5321, lon: -0.1773 },
         { name: 'Venice Grand Canal', code: 'ph1vpnYm4To', lat: 45.4383, lon: 12.3364 },
-        { name: 'Eiffel Tower, Paris', code: 'hZf1O-lPjQk', lat: 48.8584, lon: 2.2945 },
-        { name: 'Shibuya Crossing, Tokyo', code: 'HpdO5Kq3o7Y', lat: 35.6595, lon: 139.7005 },
-        { name: 'Times Square, NYC', code: '1-iS7LmhJZg', lat: 40.7580, lon: -73.9855 },
-        { name: 'Amsterdam / Dam Square', code: 'sL2C5YnI170', lat: 52.3729, lon: 4.8936 }
+        { name: 'Times Square, NYC', code: '1-iS7LmhJZg', lat: 40.7580, lon: -73.9855 }
     ];
 
     const initWebcams = () => {
         webcamData.forEach(cam => {
             const el = document.createElement('div');
             el.className = 'marker-webcam';
-            // V4.1: Repaired FontAwesome generic video icon to ensure 100% load
-            el.innerHTML = '<i class="fa-solid fa-video"></i>';
+            el.innerHTML = '<div class="marker-webcam-inner"><i class="fa-solid fa-video"></i></div>';
             
             const popup = new maplibregl.Popup({ offset: 15, closeOnClick: true, maxWidth: '320px' });
             
@@ -567,7 +585,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     document.getElementById('toggle-flights').addEventListener('change', (e) => {
         toggles.flights = e.target.checked;
-        flightMarkers.forEach(m => toggles.flights ? m.addTo(map) : m.remove());
+        flightMarkers.forEach(m => toggles.flights ? m.marker.addTo(map) : m.marker.remove());
     });
 
     document.getElementById('toggle-weather').addEventListener('change', (e) => {
