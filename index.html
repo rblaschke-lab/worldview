@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Worldview V3 | Satellite Globe</title>
+    <title>Worldview V4.0 | Global Command</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
     
-    <!-- MapLibre GL CSS & JS (Upgraded to v4 for Globe Projection) -->
+    <!-- MapLibre GL CSS & JS (V4) -->
     <link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet" />
     <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
     
@@ -21,42 +21,40 @@
 <body class="theme-clean">
     <div id="map"></div>
     
+    <button id="mobile-menu-btn" title="Toggle Terminal"><i class="fa-solid fa-bars"></i></button>
+
     <div id="sidebar" class="terminal-panel">
         <header>
-            <h1>WORLDVIEW <span class="version">V3.0</span></h1>
+            <h1>WORLDVIEW <span class="version">V4.0</span></h1>
             <div class="sub-header">
                 <span class="blinking-cursor">_</span> SATELLITE UPLINK ACTIVE
             </div>
         </header>
 
         <section class="menu-group">
-            <h2 class="category-title"><i class="fa-solid fa-satellite"></i> ORBITAL</h2>
+            <h2 class="category-title"><i class="fa-solid fa-globe"></i> ENVIRONMENT</h2>
             <div class="control-item">
-                <span>ISS Telemetry</span>
+                <span>Solar Terminator (Night)</span>
                 <label class="toggle-switch">
-                    <input type="checkbox" id="toggle-iss" checked>
+                    <input type="checkbox" id="toggle-terminator" checked>
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="control-item" style="margin-top: 8px;">
+                <span>NASA Active Wildfires</span>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="toggle-fires" checked>
                     <span class="slider"></span>
                 </label>
             </div>
         </section>
 
         <section class="menu-group">
-            <h2 class="category-title"><i class="fa-solid fa-waveform-lines"></i> SEISMIC</h2>
+            <h2 class="category-title"><i class="fa-solid fa-cloud-bolt"></i> WEATHER</h2>
             <div class="control-item">
-                <span>Global Activity (24H)</span>
+                <span>Multi-Spectrum Radar</span>
                 <label class="toggle-switch">
-                    <input type="checkbox" id="toggle-earthquakes" checked>
-                    <span class="slider"></span>
-                </label>
-            </div>
-        </section>
-
-        <section class="menu-group">
-            <h2 class="category-title"><i class="fa-solid fa-plane-radar"></i> AVIATION</h2>
-            <div class="control-item">
-                <span>EU Airspace Traffic</span>
-                <label class="toggle-switch">
-                    <input type="checkbox" id="toggle-flights" checked>
+                    <input type="checkbox" id="toggle-weather" checked>
                     <span class="slider"></span>
                 </label>
             </div>
@@ -74,11 +72,22 @@
         </section>
 
         <section class="menu-group">
-            <h2 class="category-title"><i class="fa-solid fa-cloud-bolt"></i> WEATHER</h2>
+            <h2 class="category-title"><i class="fa-solid fa-plane-radar"></i> AVIATION</h2>
             <div class="control-item">
-                <span>Multi-Spectrum Radar</span>
+                <span>EU Airspace Traffic</span>
                 <label class="toggle-switch">
-                    <input type="checkbox" id="toggle-weather" checked>
+                    <input type="checkbox" id="toggle-flights" checked>
+                    <span class="slider"></span>
+                </label>
+            </div>
+        </section>
+
+        <section class="menu-group">
+            <h2 class="category-title"><i class="fa-solid fa-satellite"></i> ORBITAL</h2>
+            <div class="control-item">
+                <span>ISS Telemetry</span>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="toggle-iss" checked>
                     <span class="slider"></span>
                 </label>
             </div>

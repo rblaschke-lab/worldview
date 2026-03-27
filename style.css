@@ -2,7 +2,7 @@
     --amber: #ffb000;
     --amber-dim: rgba(255, 176, 0, 0.4);
     --bg-dark: #0a0a09;
-    --panel-bg: rgba(10, 10, 9, 0.85); /* Slightly darker for contrast against earth */
+    --panel-bg: rgba(10, 10, 9, 0.65); /* More transparent so map is visible behind it */
 }
 
 * {
@@ -33,6 +33,25 @@ body, html {
 /* Let globe bleed to edges nicely */
 .maplibregl-canvas { filter: none; }
 
+/* Mobile Menu Button */
+#mobile-menu-btn {
+    display: none;
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    z-index: 20;
+    background: rgba(10, 10, 9, 0.85);
+    border: 1px solid var(--amber);
+    color: var(--amber);
+    padding: 10px 15px;
+    font-size: 1.5rem;
+    cursor: pointer;
+    border-radius: 4px;
+    box-shadow: 0 0 10px var(--amber-dim);
+}
+
+#mobile-menu-btn:hover { background: var(--amber-dim); }
+
 /* Sidebar Terminal Panel */
 #sidebar {
     position: absolute;
@@ -44,18 +63,19 @@ body, html {
     border: 1px solid var(--amber);
     box-shadow: 0 0 15px var(--amber-dim);
     padding: 20px;
-    backdrop-filter: blur(10px);
+    backdrop-filter: blur(8px);
+    transition: transform 0.3s ease-in-out;
 }
 
 header {
-    border-bottom: 1px solid var(--amber);
-    padding-bottom: 15px;
-    margin-bottom: 20px;
+    border-bottom: 1px dashed var(--amber);
+    padding-bottom: 10px;
+    margin-bottom: 15px;
 }
 
 header h1 {
-    font-size: 1.8rem;
-    letter-spacing: 2px;
+    font-size: 1.6rem;
+    letter-spacing: 1px;
     text-shadow: 0 0 5px var(--amber);
 }
 
@@ -66,7 +86,7 @@ header h1 {
 }
 
 .sub-header {
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     margin-top: 5px;
     opacity: 0.7;
 }
@@ -74,11 +94,11 @@ header h1 {
 .blinking-cursor { animation: blink 1s step-end infinite; }
 @keyframes blink { 50% { opacity: 0; } }
 
-.menu-group { margin-bottom: 15px; }
+.menu-group { margin-bottom: 12px; }
 
 .category-title {
-    font-size: 0.9rem;
-    margin-bottom: 8px;
+    font-size: 0.8rem;
+    margin-bottom: 6px;
     text-transform: uppercase;
     letter-spacing: 1px;
     border-bottom: 1px dashed var(--amber-dim);
@@ -92,15 +112,15 @@ header h1 {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     padding-left: 10px;
 }
 
 /* Custom Checkbox (Retro Style) */
 .toggle-switch {
     position: relative;
-    width: 36px;
-    height: 18px;
+    width: 34px;
+    height: 16px;
     border: 1px solid var(--amber);
     background: transparent;
     cursor: pointer;
@@ -125,8 +145,8 @@ header h1 {
 .slider:before {
     position: absolute;
     content: "";
-    height: 14px;
-    width: 14px;
+    height: 12px;
+    width: 12px;
     left: 1px;
     bottom: 1px;
     background-color: var(--amber);
@@ -141,13 +161,13 @@ input:checked + .slider:before {
 
 /* Status Panel */
 .status-panel {
-    margin-top: 25px;
-    padding-top: 15px;
+    margin-top: 20px;
+    padding-top: 10px;
     border-top: 1px solid var(--amber);
     display: flex;
     align-items: center;
     gap: 10px;
-    font-size: 0.8rem;
+    font-size: 0.75rem;
 }
 
 .pulse-ring {
@@ -167,45 +187,45 @@ input:checked + .slider:before {
 
 /* Map Popups (MapLibre specific) */
 .maplibregl-popup-content {
-    background: var(--panel-bg);
+    background: rgba(10, 10, 9, 0.9);
     border: 1px solid var(--amber);
     color: var(--amber);
-    border-radius: 0;
+    border-radius: 4px;
     font-family: 'Share Tech Mono', monospace;
     box-shadow: 0 0 10px var(--amber-dim);
     padding: 10px;
 }
+.maplibregl-popup-content h3 { border-bottom: 1px solid var(--amber); padding-bottom: 2px; }
+.maplibregl-popup-content p { font-size: 0.8rem; margin: 3px 0; }
+.maplibregl-popup-content iframe { border: 1px solid var(--amber-dim); margin-top: 5px; }
 
-.maplibregl-popup-anchor-bottom .maplibregl-popup-tip { border-top-color: var(--amber); }
-.maplibregl-popup-anchor-top .maplibregl-popup-tip { border-bottom-color: var(--amber); }
-.maplibregl-popup-anchor-left .maplibregl-popup-tip { border-right-color: var(--amber); }
-.maplibregl-popup-anchor-right .maplibregl-popup-tip { border-left-color: var(--amber); }
-
-.maplibregl-popup-content h3 {
-    margin: 0 0 5px 0;
-    font-size: 1rem;
-    border-bottom: 1px solid var(--amber);
-    padding-bottom: 2px;
-}
-.maplibregl-popup-content p {
-    margin: 3px 0;
-    font-size: 0.8rem;
-}
-.maplibregl-popup-content iframe {
-    margin-top: 5px;
-    border: 1px solid var(--amber-dim);
-}
-
-/* Marker Overrides */
+/* Marker Colors */
 .marker-flight svg, .marker-iss svg { filter: drop-shadow(0 0 3px currentColor); }
 .marker-ship svg { filter: drop-shadow(0 0 3px currentColor); }
 .ship-cargo svg { fill: #00f2fe; color: #00f2fe; }
 .ship-naval svg { fill: #ff4444; color: #ff4444; filter: drop-shadow(0 0 5px #ff4444); }
+.marker-webcam { color: #00ff00; font-size: 20px; cursor: pointer; text-shadow: 0 0 5px #00ff00; }
 
-/* Webcams */
-.marker-webcam {
-    color: #00ff00;
-    font-size: 20px;
-    cursor: pointer;
-    text-shadow: 0 0 5px #00ff00;
+/* Media Queries for Mobile Responsiveness */
+@media (max-width: 768px) {
+    #mobile-menu-btn {
+        display: block; /* Show hamburger */
+    }
+    
+    #sidebar {
+        width: 100%;
+        max-width: 300px;
+        top: 65px;
+        right: 15px;
+        transform: translateX(120%); /* Hide off-screen by default */
+        background: rgba(10, 10, 9, 0.85); /* Slightly darker when open to ensure text readability */
+    }
+    
+    #sidebar.open {
+        transform: translateX(0); /* Slide in */
+    }
+    
+    .maplibregl-ctrl-top-left {
+        top: 65px; /* Ensure map controls aren't colliding with standard mobile top-bars */
+    }
 }

@@ -1,5 +1,14 @@
 document.addEventListener("DOMContentLoaded", () => {
-    // 1. Initialize MapLibre GL JS v4 with Globe and ESRI Satellites
+    // 1. Mobile Menu Hamburger Toggle Logic
+    const mobileBtn = document.getElementById('mobile-menu-btn');
+    const sidebar = document.getElementById('sidebar');
+    if(mobileBtn && sidebar) {
+        mobileBtn.addEventListener('click', () => {
+            sidebar.classList.toggle('open');
+        });
+    }
+
+    // 2. Initialize V4 MapLibre GL JS
     const map = new maplibregl.Map({
         container: 'map',
         style: {
@@ -11,7 +20,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
                     ],
                     tileSize: 256,
-                    attribution: '&copy; Esri &mdash; Source: Esri, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EAP'
+                    attribution: '&copy; Esri &mdash; NASA / USGS'
                 }
             },
             layers: [{
@@ -23,16 +32,15 @@ document.addEventListener("DOMContentLoaded", () => {
             }]
         },
         center: [15.0, 48.0],
-        zoom: 2, // Zoomed out farther so you can see the globe shape
+        zoom: 2, 
         pitch: 0, 
         bearing: 0,
-        projection: { type: 'globe' }, // Native MapLibre 3D Globe Projection
+        projection: { type: 'globe' }, 
         dragRotate: true,
         dragPan: true,
         scrollZoom: true
     });
 
-    // Add navigation UI to the map
     map.addControl(new maplibregl.NavigationControl(), 'top-left');
 
     const statusText = document.getElementById("status-text");
@@ -43,51 +51,55 @@ document.addEventListener("DOMContentLoaded", () => {
     let flightMarkers = [];
     let shipMarkers = [];
     let webcamMarkers = [];
+    let terminatorInterval = null;
     
     // Store toggle states
     const toggles = {
-        iss: true,
-        earthquakes: true,
-        flights: true,
-        ships: true,
+        terminator: true,
+        fires: true,
         weather: true,
-        webcams: true
+        ships: true,
+        flights: true,
+        iss: true,
+        webcams: true,
+        earthquakes: true
     };
 
     map.on('load', () => {
-        setStatus("SATELLITE DOWNLINK ESTABLISHED. INITIALIZING FEEDS.");
+        setStatus("SATELLITE DOWNLINK ESTABLISHED. INITIALIZING MODEL V4.");
 
-        // Setup Earthquake geojson source & layers
-        map.addSource('earthquakes', {
+        // Draw Solar Terminator Night Shadow Before Weather/Other Data
+        map.addSource('terminator', {
             type: 'geojson',
-            data: { type: 'FeatureCollection', features: [] }
+            data: getTerminatorGeoJSON()
+        });
+        map.addLayer({
+            id: 'terminator-layer',
+            type: 'fill',
+            source: 'terminator',
+            paint: {
+                'fill-color': '#000000',
+                'fill-opacity': 0.65
+            }
         });
 
+        // Setup Earthquake geojson source & layers
+        map.addSource('earthquakes', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
         map.addLayer({
             id: 'earthquakes-core',
             type: 'circle',
             source: 'earthquakes',
-            paint: {
-                'circle-radius': ['*', ['get', 'mag'], 2.5],
-                'circle-color': '#ffb000',
-                'circle-opacity': 0.8
-            }
+            paint: { 'circle-radius': ['*', ['get', 'mag'], 2.5], 'circle-color': '#ffb000', 'circle-opacity': 0.8 }
         });
-
         map.addLayer({
             id: 'earthquakes-halo',
             type: 'circle',
             source: 'earthquakes',
-            paint: {
-                'circle-radius': ['*', ['get', 'mag'], 6],
-                'circle-color': 'transparent',
-                'circle-stroke-width': 1.5,
-                'circle-stroke-color': '#ffb000',
-                'circle-stroke-opacity': 0.6
-            }
+            paint: { 'circle-radius': ['*', ['get', 'mag'], 6], 'circle-color': 'transparent', 'circle-stroke-width': 1.5, 'circle-stroke-color': '#ffb000', 'circle-stroke-opacity': 0.6 }
         });
 
         // Initialize Feeds
+        fetchNASA_Fires();
         fetchWeather();
         fetchISS();
         setInterval(fetchISS, 5000);
@@ -96,7 +108,85 @@ document.addEventListener("DOMContentLoaded", () => {
         setInterval(fetchFlights, 60000);
         initGhostFleet();
         initWebcams();
+        
+        // Dynamically update shadow every 60 seconds
+        terminatorInterval = setInterval(() => {
+            if(map.getSource('terminator')) {
+                map.getSource('terminator').setData(getTerminatorGeoJSON());
+            }
+        }, 60000);
     });
+
+    // ----------------------------------------------------
+    // API: Solar Terminator Math (Pure JS Astro-Logic)
+    // ----------------------------------------------------
+    const getTerminatorGeoJSON = () => {
+        const now = new Date();
+        const t = now.getTime() / 86400000.0 + 2440587.5;
+        const d = t - 2451545.0;
+        const g = (357.529 + 0.98560028 * d) % 360;
+        const q = (280.459 + 0.98564736 * d) % 360;
+        const l = q + 1.915 * Math.sin(g * Math.PI / 180) + 0.020 * Math.sin(2 * g * Math.PI / 180);
+        const e = 23.439 - 0.00000036 * d;
+        
+        // Calculate the solar declination
+        const declination = Math.asin(Math.sin(e * Math.PI / 180) * Math.sin(l * Math.PI / 180)) * 180 / Math.PI;
+        
+        // GMT calculation for longitude translation (Greenwich Sidereal Time)
+        const gmst = (18.697374558 + 24.06570982441908 * d) % 24;
+        const subsolarLon = (-(gmst * 15)) % 360; 
+    
+        let coords = [];
+        // Trace terminator exactly 90 degrees out from subsolar spot
+        for (let lon = -180; lon <= 180; lon += 1) {
+            const dLon = (lon - subsolarLon) * Math.PI / 180;
+            // Arc tangent provides the latitude boundary
+            let lat = Math.atan(-Math.cos(dLon) / Math.tan(declination * Math.PI / 180)) * 180 / Math.PI;
+            coords.push([lon, lat]);
+        }
+    
+        // Complete the giant shadow polygon over the hemisphere wrapped in night
+        const poleLat = declination > 0 ? -90 : 90;
+        coords.push([180, poleLat], [-180, poleLat], [coords[0][0], coords[0][1]]);
+    
+        return {
+            type: "FeatureCollection",
+            features: [{
+                type: "Feature",
+                geometry: { type: "Polygon", coordinates: [coords] }
+            }]
+        };
+    };
+
+    // ----------------------------------------------------
+    // API: NASA FIRMS (Global Wildfires)
+    // ----------------------------------------------------
+    const fetchNASA_Fires = () => {
+        try {
+            const today = new Date().toISOString().split('T')[0]; // Format YYYY-MM-DD
+            
+            map.addLayer({
+                id: 'nasa-fires',
+                type: 'raster',
+                source: {
+                    type: 'raster',
+                    tiles: [
+                        // Public GIBS Endpoint serving Thermal Anomalies / Active Fires 
+                        `https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/VIIRS_SNPP_Thermal_Anomalies_375m_All/default/${today}/GoogleMapsCompatible_Level8/{z}/{y}/{x}.png`
+                    ],
+                    tileSize: 256
+                },
+                paint: {
+                    'raster-opacity': 0.8
+                }
+            }, 'earthquakes-core'); // Render below earthquakes
+            
+            if(!toggles.fires) map.setLayoutProperty('nasa-fires', 'visibility', 'none');
+            setStatus("NASA ACTIVE FIRES SYNCHRONIZED.");
+        } catch(err) {
+            console.warn("NASA Data Error:", err);
+        }
+    };
 
     // ----------------------------------------------------
     // API: Weather Radar (RainViewer)
@@ -115,10 +205,8 @@ document.addEventListener("DOMContentLoaded", () => {
                     tiles: [`https://tilecache.rainviewer.com${latestTime}/256/{z}/{x}/{y}/2/1_1.png`],
                     tileSize: 256
                 },
-                paint: {
-                    'raster-opacity': 0.65
-                }
-            }, 'earthquakes-core');
+                paint: { 'raster-opacity': 0.65 }
+            }, 'terminator-layer');
             
             if(!toggles.weather) {
                 map.setLayoutProperty('weather-radar', 'visibility', 'none');
@@ -208,7 +296,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const fetchFlights = async () => {
         setStatus("SCANNING AIRSPACE...");
         try {
-            const response = await fetch('https://opensky-network.org/api/states/all?lamin=40.0&lomin=-10.0&lamax=60.0&lomax=30.0');
+            // Using a European window to ensure reliable data volume without overloading browser
+            const response = await fetch('https://opensky-network.org/api/states/all?lamin=35.0&lomin=-15.0&lamax=65.0&lomax=35.0');
             if(!response.ok) throw new Error("API Limit");
             const data = await response.json();
             flightMarkers.forEach(m => m.remove());
@@ -262,12 +351,7 @@ document.addEventListener("DOMContentLoaded", () => {
             el.className = `marker-ship ship-${ship.type}`;
             el.innerHTML = shipSvg;
             
-            const marker = new maplibregl.Marker({ 
-                element: el, 
-                rotation: ship.hdg,
-                rotationAlignment: 'map',
-                pitchAlignment: 'map'
-            })
+            const marker = new maplibregl.Marker({ element: el, rotation: ship.hdg, rotationAlignment: 'map', pitchAlignment: 'map' })
             .setLngLat([ship.lon, ship.lat])
             .setPopup(new maplibregl.Popup({ offset: 15 }).setHTML(`
                 <h3><i class="${ship.type === 'naval' ? 'fa-solid fa-crosshairs' : 'fa-solid fa-box'}"></i> ${ship.name}</h3>
@@ -309,7 +393,6 @@ document.addEventListener("DOMContentLoaded", () => {
             el.className = 'marker-webcam';
             el.innerHTML = '<i class="fa-solid fa-camera-security"></i>';
             
-            // Generate Iframe Dynamically to preserve system memory until clicked
             const popup = new maplibregl.Popup({ offset: 15, closeOnClick: true, maxWidth: '320px' });
             
             popup.on('open', () => {
@@ -322,7 +405,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 popup.setHTML(`<h3><i class="fa-solid fa-camera"></i> ${cam.name}</h3><p>Loading downlink stream...</p>`);
             });
             
-            // Set initial HTML
             popup.setHTML(`<h3><i class="fa-solid fa-camera"></i> ${cam.name}</h3><p>Loading downlink stream...</p>`);
 
             const marker = new maplibregl.Marker({ element: el })
@@ -337,6 +419,23 @@ document.addEventListener("DOMContentLoaded", () => {
     // ----------------------------------------------------
     // UI Toggles
     // ----------------------------------------------------
+    
+    // NEW / V4: Environment Layer event listeners
+    document.getElementById('toggle-terminator').addEventListener('change', (e) => {
+        toggles.terminator = e.target.checked;
+        if (map.getLayer('terminator-layer')) {
+            map.setLayoutProperty('terminator-layer', 'visibility', toggles.terminator ? 'visible' : 'none');
+        }
+    });
+
+    document.getElementById('toggle-fires').addEventListener('change', (e) => {
+        toggles.fires = e.target.checked;
+        if (map.getLayer('nasa-fires')) {
+            map.setLayoutProperty('nasa-fires', 'visibility', toggles.fires ? 'visible' : 'none');
+        }
+    });
+
+    // Original Toggles
     document.getElementById('toggle-iss').addEventListener('change', (e) => {
         toggles.iss = e.target.checked;
         if (issMarker) toggles.iss ? issMarker.addTo(map) : issMarker.remove();
@@ -374,7 +473,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     setInterval(() => {
-        if(statusText.innerText.includes("UPDATED") || statusText.innerText.includes("LOADED") || statusText.innerText.includes("ESTABLISHED")) {
+        if(statusText.innerText.includes("UPDATED") || statusText.innerText.includes("LOADED") || statusText.innerText.includes("ESTABLISHED") || statusText.innerText.includes("SYNCHRONIZED")) {
             setStatus("SYSTEM NOMINAL // RECEIVING UPLINK");
         }
     }, 5000);
