@@ -21,7 +21,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
                     ],
                     tileSize: 256,
-                    maxzoom: 16,
+                    maxzoom: 15,
                     attribution: '&copy; Esri &mdash; NASA / USGS'
                 }
             },
@@ -55,16 +55,10 @@ document.addEventListener("DOMContentLoaded", () => {
     let webcamMarkers = [];
     let terminatorInterval = null;
     
-    // Store toggle states
+    // Application State
     const toggles = {
-        terminator: true,
-        fires: true,
-        weather: true,
-        ships: true,
-        flights: true,
-        iss: true,
-        webcams: true,
-        earthquakes: true
+        terminator: false, fires: false, weather: false,
+        ships: false, flights: false, iss: false, earthquakes: false, webcams: false
     };
 
     map.on('load', () => {
@@ -291,15 +285,17 @@ document.addEventListener("DOMContentLoaded", () => {
                     tiles: [
                         `https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/VIIRS_SNPP_Thermal_Anomalies_375m_All/default/${pastDate}/GoogleMapsCompatible_Level8/{z}/{y}/{x}.png`
                     ],
-                    tileSize: 256
+                    tileSize: 256,
+                    maxzoom: 15
                 },
                 paint: {
                     'raster-opacity': 0.8
                 }
             }, 'terminator-layer');
             
-            if(!toggles.fires) map.setLayoutProperty('nasa-fires', 'visibility', 'none');
-            setStatus("NASA ACTIVE FIRES SYNCHRONIZED.");
+            if(!toggles.fires) {
+                map.setLayoutProperty('nasa-fires', 'visibility', 'none');
+            }setStatus("NASA ACTIVE FIRES SYNCHRONIZED.");
         } catch(err) {}
     };
 
@@ -319,7 +315,8 @@ document.addEventListener("DOMContentLoaded", () => {
                     type: 'raster',
                     // Using color scheme 2 (Titan - very colorful) and smoothing 1 so clouds jump out over the map
                     tiles: [`https://tilecache.rainviewer.com${latestTime}/256/{z}/{x}/{y}/2/1_1.png`],
-                    tileSize: 256
+                    tileSize: 256,
+                    maxzoom: 15
                 },
                 paint: { 'raster-opacity': 0.85 }
             }, 'terminator-layer');
@@ -585,6 +582,18 @@ document.addEventListener("DOMContentLoaded", () => {
     // UI Toggles
     // ----------------------------------------------------
     
+    document.getElementById('toggle-all').addEventListener('change', (e) => {
+        const isChecked = e.target.checked;
+        const allToggles = ['toggle-terminator', 'toggle-fires', 'toggle-weather', 'toggle-ships', 'toggle-flights', 'toggle-iss', 'toggle-earthquakes', 'toggle-webcams'];
+        allToggles.forEach(id => {
+            const cb = document.getElementById(id);
+            if(cb && cb.checked !== isChecked) {
+                cb.checked = isChecked;
+                cb.dispatchEvent(new Event('change')); 
+            }
+        });
+    });
+
     document.getElementById('toggle-terminator').addEventListener('change', (e) => {
         toggles.terminator = e.target.checked;
         if (map.getLayer('terminator-layer')) {

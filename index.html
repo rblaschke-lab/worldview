@@ -16,7 +16,7 @@
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <link rel="stylesheet" href="./style.css">
+    <link rel="stylesheet" href="./style.css?v=4.8">
 </head>
 <body class="theme-clean">
     <div id="map"></div>
@@ -31,19 +31,29 @@
             </div>
         </header>
 
+        <section class="menu-group" style="border-bottom: 2px dashed #00ff00;">
+            <div class="control-item">
+                <strong style="color: #0ff;">OVERRIDE: ALL SYSTEMS</strong>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="toggle-all">
+                    <span class="slider"></span>
+                </label>
+            </div>
+        </section>
+
         <section class="menu-group">
             <h2 class="category-title"><i class="fa-solid fa-globe"></i> ENVIRONMENT</h2>
             <div class="control-item">
                 <span>Solar Terminator (Night)</span>
                 <label class="toggle-switch">
-                    <input type="checkbox" id="toggle-terminator" checked>
+                    <input type="checkbox" id="toggle-terminator">
                     <span class="slider"></span>
                 </label>
             </div>
             <div class="control-item" style="margin-top: 8px;">
                 <span>NASA Active Wildfires</span>
                 <label class="toggle-switch">
-                    <input type="checkbox" id="toggle-fires" checked>
+                    <input type="checkbox" id="toggle-fires">
                     <span class="slider"></span>
                 </label>
             </div>
@@ -54,7 +64,7 @@
             <div class="control-item">
                 <span>Multi-Spectrum Radar</span>
                 <label class="toggle-switch">
-                    <input type="checkbox" id="toggle-weather" checked>
+                    <input type="checkbox" id="toggle-weather">
                     <span class="slider"></span>
                 </label>
             </div>
@@ -65,7 +75,7 @@
             <div class="control-item">
                 <span>Military & Cargo AIS</span>
                 <label class="toggle-switch">
-                    <input type="checkbox" id="toggle-ships" checked>
+                    <input type="checkbox" id="toggle-ships">
                     <span class="slider"></span>
                 </label>
             </div>
@@ -76,7 +86,7 @@
             <div class="control-item">
                 <span>EU Airspace Traffic</span>
                 <label class="toggle-switch">
-                    <input type="checkbox" id="toggle-flights" checked>
+                    <input type="checkbox" id="toggle-flights">
                     <span class="slider"></span>
                 </label>
             </div>
@@ -87,7 +97,7 @@
             <div class="control-item">
                 <span>ISS Telemetry</span>
                 <label class="toggle-switch">
-                    <input type="checkbox" id="toggle-iss" checked>
+                    <input type="checkbox" id="toggle-iss">
                     <span class="slider"></span>
                 </label>
             </div>
@@ -98,7 +108,7 @@
             <div class="control-item">
                 <span>Global Live Streams</span>
                 <label class="toggle-switch">
-                    <input type="checkbox" id="toggle-webcams" checked>
+                    <input type="checkbox" id="toggle-webcams">
                     <span class="slider"></span>
                 </label>
             </div>
@@ -110,6 +120,6 @@
         </footer>
     </div>
 
-    <script src="./main.js"></script>
+    <script src="./main.js?v=4.8"></script>
 </body>
 </html>
