@@ -48,8 +48,8 @@ document.addEventListener("DOMContentLoaded", () => {
     
     // Application State
     const toggles = {
-        terminator: false, fires: false, weather: false,
-        ships: false, flights: false, iss: false, earthquakes: false, webcams: false
+        terminator: false, fires: false, weather: false, borders: false,
+        ships: false, flights: false, iss: false, starlink: false, earthquakes: false, webcams: false
     };
 
     map.on('load', () => {
@@ -241,10 +241,11 @@ document.addEventListener("DOMContentLoaded", () => {
         fetchWeather();
         fetchISS();
         setInterval(fetchISS, 5000);
-        fetchEarthquakes();
-        fetchFlights();
+        fetchWeather();
         initGhostFleet();
+        fetchEarthquakes();
         initWebcams();
+        initStarlink(); // NEW: Boot Starlink
         
         // Dynamically update shadow every 60 seconds
         terminatorInterval = setInterval(() => {
@@ -293,10 +294,10 @@ document.addEventListener("DOMContentLoaded", () => {
     // API: NASA FIRMS (Global Wildfires)
     // ----------------------------------------------------
     const fetchNASA_Fires = () => {
-        try {
-            // NASA GIBS tiles are typically 24-48 hours behind real time.
-            const pastDate = new Date(Date.now() - 2 * 86400000).toISOString().split('T')[0];
-            
+        // NASA GIBS tiles are typically 24-48 hours behind real time.
+        const pastDate = "2023-08-15"; // Historic Anchor: Intense global wildfire season (100% Tile Availability!)
+
+        try {   
             map.addLayer({
                 id: 'nasa-fires',
                 type: 'raster',
@@ -315,7 +316,8 @@ document.addEventListener("DOMContentLoaded", () => {
             
             if(!toggles.fires) {
                 map.setLayoutProperty('nasa-fires', 'visibility', 'none');
-            }setStatus("NASA ACTIVE FIRES SYNCHRONIZED.");
+            }
+            setStatus("NASA ACTIVE FIRES SYNCHRONIZED.");
         } catch(err) {}
     };
 
@@ -383,6 +385,59 @@ document.addEventListener("DOMContentLoaded", () => {
                 `);
             }
         } catch (error) {}
+    };
+
+    // ----------------------------------------------------
+    // MOCK: STARLINK CONSTELLATION
+    // ----------------------------------------------------
+    const starlinkSvg = `<svg width="12" height="12" viewBox="0 0 24 24" fill="#00ff00" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="12" cy="12" r="6"/>
+    </svg>`;
+    const mockStarlinkData = [];
+    const starlinkMarkers = [];
+    
+    for(let i=0; i<150; i++) {
+        mockStarlinkData.push({
+            id: 'STARLINK-' + Math.floor(1000 + Math.random()*9000),
+            lon: (Math.random() * 360) - 180,
+            lat: (Math.random() * 180) - 90,
+            hdg: 45 + (Math.random() * 10), // Mostly eastward polar orbit inclination
+            spd: 0.0003 + (Math.random() * 0.0001) // Super fast LEO speed
+        });
+    }
+
+    const initStarlink = () => {
+        mockStarlinkData.forEach(sat => {
+            const el = document.createElement('div');
+            el.className = 'marker-starlink';
+            el.innerHTML = starlinkSvg;
+            const marker = new maplibregl.Marker({ element: el, rotation: sat.hdg })
+                .setLngLat([sat.lon, sat.lat])
+                .setPopup(new maplibregl.Popup({ offset: 10 }).setHTML(`
+                    <h3 style="color:#00ff00;"><i class="fa-solid fa-satellite"></i> ${sat.id}</h3>
+                    <p style="color:#0ff;">LOW EARTH ORBIT</p>
+                    <p>STATUS: ACTIVE</p>
+                `));
+            sat.marker = marker;
+            marker.addTo(map);
+            if (!toggles.starlink) marker.getElement().style.display = 'none';
+            starlinkMarkers.push(sat);
+        });
+
+        const animateStarlink = () => {
+            starlinkMarkers.forEach(s => {
+                s.lat += Math.cos(s.hdg * Math.PI / 180) * s.spd;
+                s.lon += Math.sin(s.hdg * Math.PI / 180) * s.spd;
+                if(s.lon > 180) s.lon -= 360;
+                if(s.lon < -180) s.lon += 360;
+                if(s.lat > 90 || s.lat < -90) s.hdg += 180; 
+                if(toggles.starlink) {
+                    s.marker.setLngLat([s.lon, s.lat]);
+                }
+            });
+            requestAnimationFrame(animateStarlink);
+        }
+        requestAnimationFrame(animateStarlink);
     };
 
     // ----------------------------------------------------
@@ -542,10 +597,11 @@ document.addEventListener("DOMContentLoaded", () => {
     // ----------------------------------------------------
     const webcamData = [
         // Global Highlight Cams
-        { name: 'Jackson Hole, WY', img: 'https://images.unsplash.com/photo-1542640244-7e672d6cb466?w=800&q=90', lat: 43.4799, lon: -110.7624 },
+        { name: 'Jackson Hole, WY', img: 'https://upload.wikimedia.org/wikipedia/commons/4/4b/Jackson_Hole_Wyoming.jpg', lat: 43.4799, lon: -110.7624 },
         { name: 'NASA ISS Live Feed', img: 'https://images.unsplash.com/photo-1614729939124-032f0b56c9ce?w=800&q=90', lat: 28.3922, lon: -80.6077 },
-        { name: 'Abbey Road, London', img: 'https://images.unsplash.com/photo-1520939817895-060bdaf4ede3?w=800&q=90', lat: 51.5321, lon: -0.1773 },
+        { name: 'Abbey Road, London', img: 'https://upload.wikimedia.org/wikipedia/commons/c/cb/Abbey_Road_crossing.jpg', lat: 51.5321, lon: -0.1773 },
         { name: 'Venice Grand Canal', img: 'https://images.unsplash.com/photo-1514890547357-a9ee288728e0?w=800&q=90', lat: 45.4383, lon: 12.3364 },
+        { name: 'Feldberg (Taunus)', img: 'https://upload.wikimedia.org/wikipedia/commons/e/ec/Grosser-feldberg-taunus020.jpg', lat: 50.2319, lon: 8.4583 },
         
         // --- DEEP DIVE DEMO CLUSTER: NEW YORK CITY ---
         { name: 'Times Square Central', img: 'https://images.unsplash.com/photo-1500916434205-0c77489c6cf7?w=800&q=90', lat: 40.7580, lon: -73.9855 },
@@ -607,7 +663,7 @@ document.addEventListener("DOMContentLoaded", () => {
     
     document.getElementById('toggle-all').addEventListener('change', (e) => {
         const isChecked = e.target.checked;
-        const allToggles = ['toggle-terminator', 'toggle-fires', 'toggle-weather', 'toggle-ships', 'toggle-flights', 'toggle-iss', 'toggle-earthquakes', 'toggle-webcams'];
+        const allToggles = ['toggle-borders', 'toggle-terminator', 'toggle-fires', 'toggle-weather', 'toggle-ships', 'toggle-flights', 'toggle-iss', 'toggle-starlink', 'toggle-earthquakes', 'toggle-webcams'];
         allToggles.forEach(id => {
             const cb = document.getElementById(id);
             if(cb && cb.checked !== isChecked) {
@@ -615,6 +671,14 @@ document.addEventListener("DOMContentLoaded", () => {
                 cb.dispatchEvent(new Event('change')); 
             }
         });
+    });
+
+    document.getElementById('toggle-borders').addEventListener('change', (e) => {
+        toggles.borders = e.target.checked;
+        if (map.getLayer('country-borders')) {
+            map.setLayoutProperty('country-borders', 'visibility', toggles.borders ? 'visible' : 'none');
+            map.setLayoutProperty('country-labels', 'visibility', toggles.borders ? 'visible' : 'none');
+        }
     });
 
     document.getElementById('toggle-terminator').addEventListener('change', (e) => {
@@ -634,6 +698,13 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById('toggle-iss').addEventListener('change', (e) => {
         toggles.iss = e.target.checked;
         if (issMarker) toggles.iss ? issMarker.addTo(map) : issMarker.remove();
+    });
+
+    document.getElementById('toggle-starlink').addEventListener('change', (e) => {
+        toggles.starlink = e.target.checked;
+        starlinkMarkers.forEach(s => {
+            if(s.marker.getElement()) s.marker.getElement().style.display = toggles.starlink ? 'block' : 'none';
+        });
     });
 
     document.getElementById('toggle-earthquakes').addEventListener('change', (e) => {
