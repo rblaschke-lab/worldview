@@ -763,16 +763,16 @@ document.addEventListener("DOMContentLoaded", () => {
     // API: Live Webcams
     // ----------------------------------------------------
     const webcamData = [
-        { name: 'NEW YORK — TIMES SQUARE', lat: 40.758, lon: -73.985, vid: 'mRe-514tGdw' },
-        { name: 'TOKYO — SHIBUYA CROSSING', lat: 35.659, lon: 139.700, vid: 'W-unof_v-aE' },
-        { name: 'LONDON — TOWER BRIDGE', lat: 51.505, lon: -0.075, vid: '2S_mB_a6jW8' },
-        { name: 'SINGAPORE — MARINA BAY', lat: 1.283, lon: 103.860, vid: 'u8_7lE08u9U' },
-        { name: 'DUBAI — BURJ KHALIFA', lat: 25.197, lon: 55.274, vid: '5n-m93X3mS0' },
-        { name: 'VENICE — RIALTO BRIDGE', lat: 45.437, lon: 12.335, vid: 'haAt_yO-X_o' },
-        { name: 'RIO — COPACABANA', lat: -22.971, lon: -43.182, vid: '0zYpA1Fst7U' },
-        { name: 'BERLIN — BRANDENBURG GATE', lat: 52.516, lon: 13.377, vid: 'vY7Q1FmS_xY' },
-        { name: 'SYDNEY — HARBOUR BRIDGE', lat: -33.852, lon: 151.210, vid: '9e-e6L2N_L4' },
-        { name: 'HONG KONG — SKYLINE', lat: 22.285, lon: 114.157, vid: '8v_jZJ5rY00' }
+        { name: 'NEW YORK — TIMES SQUARE', lat: 40.758, lon: -73.985, vid: 'Gu-h5Jg6FH4' },      // EarthCam Times Square LIVE
+        { name: 'TOKYO — SHIBUYA CROSSING', lat: 35.659, lon: 139.700, vid: 'kA9JJHhRDmE' },      // Shibuya live cam
+        { name: 'LONDON — BIG BEN', lat: 51.500, lon: -0.124, vid: 'GYiEaJp5AEY' },               // London city live
+        { name: 'PARIS — EIFFEL TOWER', lat: 48.858, lon: 2.295, vid: 'uqzrqKPrWJg' },            // Eiffel Tower live
+        { name: 'SINGAPORE — MARINA BAY', lat: 1.283, lon: 103.860, vid: 'hUCR5K4RSBY' },         // Singapore skyline live
+        { name: 'DUBAI — BURJ KHALIFA', lat: 25.197, lon: 55.274, vid: 'Cp71JqR0a-s' },           // Dubai live cam
+        { name: 'VENICE — GRAND CANAL', lat: 45.437, lon: 12.335, vid: 'UqbBGT4oAFc' },           // Venice live
+        { name: 'BERLIN — ALEXANDERPLATZ', lat: 52.521, lon: 13.413, vid: 'L_gZ7-eVicw' },        // Berlin city live
+        { name: 'SYDNEY — OPERA HOUSE', lat: -33.857, lon: 151.215, vid: 'WMecpDX_x4I' },         // Sydney live
+        { name: 'HONG KONG — VICTORIA HARBOUR', lat: 22.285, lon: 114.157, vid: 'dSMr75mJOlY' }   // HK live harbor
     ];
 
     const initWebcams = () => {
