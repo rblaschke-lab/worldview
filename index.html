@@ -208,6 +208,13 @@
                     <span>Webcam Streams</span>
                     <label class="toggle-switch"><input type="checkbox" id="toggle-webcams"><span class="slider"></span></label>
                 </div>
+
+                <!-- SOLAR STORM WIDGET (inline in menu) -->
+                <div id="solar-hud" class="solar-widget">
+                    <div class="solar-title">&#9728; SOLAR STORM INDEX</div>
+                    <div class="solar-loading">CONNECTING TO NOAA SWPC...</div>
+                </div>
+
             </div>
         </section>
 
@@ -234,10 +241,6 @@
         </div>
     </div>
 
-    <div id="solar-hud" style="position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:900;background:rgba(0,5,20,0.85);border:1px solid rgba(0,200,255,0.3);backdrop-filter:blur(12px);padding:8px 14px;border-radius:4px;font-family:'Share Tech Mono',monospace;color:#ccd;min-width:220px;font-size:.7rem;">
-        <div style="color:#0af;font-size:.6rem;letter-spacing:2px;">☀ SOLAR STORM INDEX</div>
-        <div style="opacity:.5;font-size:.65rem;margin-top:4px;">CONNECTING TO NOAA SWPC...</div>
-    </div>
 
     <!-- Launch Tracker HUD: shown only on menu hover -->
     <div id="launch-hud" style="position:fixed;bottom:80px;left:280px;z-index:900;background:rgba(0,5,20,0.92);border:1px solid rgba(255,100,0,0.4);backdrop-filter:blur(14px);padding:10px 14px;border-radius:4px;font-family:'Share Tech Mono',monospace;color:#ccd;min-width:240px;max-width:270px;font-size:.7rem;opacity:0;pointer-events:none;transition:opacity 0.25s ease, transform 0.25s ease;transform:translateX(-8px);">

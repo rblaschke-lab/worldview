@@ -1468,16 +1468,25 @@ document.addEventListener("DOMContentLoaded", () => {
             const level = kp >= 8 ? 'EXTREME' : kp >= 7 ? 'SEVERE' : kp >= 6 ? 'STRONG' : kp >= 5 ? 'MODERATE' : kp >= 4 ? 'MINOR' : kp >= 2 ? 'QUIET' : 'CALM';
 
             if (solarHud) {
-                solarHud.style.borderColor = color + '80';
+                solarHud.style.borderColor = color + '55';
                 solarHud.innerHTML = `
-                    <div style="color:${color};font-size:.6rem;letter-spacing:2px;margin-bottom:4px;">&#9728; SOLAR STORM INDEX</div>
-                    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:3px;font-size:.68rem;">
-                        <div style="text-align:center;"><div style="color:${color};font-size:1.2rem;font-weight:bold;">${kp.toFixed(1)}</div><div style="opacity:.5;font-size:.55rem;">Kp INDEX</div></div>
-                        <div style="text-align:center;"><div style="color:#0ff;font-size:1.2rem;">${windSpeed}</div><div style="opacity:.5;font-size:.55rem;">km/s WIND</div></div>
-                        <div style="text-align:center;"><div style="color:${(parseFloat(bz)||0) < 0 ? '#ff6600' : '#00ff88'};font-size:1.2rem;">${bz}</div><div style="opacity:.5;font-size:.55rem;">Bz nT</div></div>
+                    <div class="solar-title">&#9728; SOLAR STORM INDEX</div>
+                    <div class="solar-grid">
+                        <div class="solar-cell">
+                            <span class="solar-val" style="color:${color};">${kp.toFixed(1)}</span>
+                            <span class="solar-lbl">Kp INDEX</span>
+                        </div>
+                        <div class="solar-cell">
+                            <span class="solar-val" style="color:#0ff;">${windSpeed}</span>
+                            <span class="solar-lbl">km/s WIND</span>
+                        </div>
+                        <div class="solar-cell">
+                            <span class="solar-val" style="color:${(parseFloat(bz)||0) < 0 ? '#ff6600' : '#00ff88'};">${bz}</span>
+                            <span class="solar-lbl">Bz nT</span>
+                        </div>
                     </div>
-                    <div style="text-align:center;margin-top:4px;color:${color};font-size:.6rem;letter-spacing:1px;">${level} GEOMAGNETIC ACTIVITY</div>
-                    ${kp >= 5 ? '<div style="color:#ffb000;font-size:.58rem;text-align:center;">&#9888; AURORA ALERT &mdash; HIGH LATITUDES</div>' : ''}
+                    <div class="solar-level" style="color:${color};">${level} GEOMAGNETIC ACTIVITY</div>
+                    ${kp >= 5 ? '<div class="solar-alert">&#9888; AURORA ALERT &mdash; HIGH LATITUDES</div>' : ''}
                 `;
             }
             // Aurora oval at Kp >= 4
