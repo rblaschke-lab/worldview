@@ -264,6 +264,7 @@ document.addEventListener("DOMContentLoaded", () => {
         initStarlink();
         initSatelliteTracker();     // NEW
         initIntelligenceCore();
+        initConflictZones();         // Conflict Zones
         
         // Dynamically update shadow every 60 seconds
         terminatorInterval = setInterval(() => {
@@ -1554,14 +1555,17 @@ document.addEventListener("DOMContentLoaded", () => {
     const initConflictZones = () => {
         CONFLICTS.forEach(c => {
             const col = CONFLICT_COLORS[c.severity] || '#ff6600';
+            // Use a self-contained SVG crosshair — no inner position:absolute children
+            // which caused MapLibre anchor miscalculation from marker #10+
             const el = document.createElement('div');
-            // Crosshair-style marker
-            el.style.cssText = `width:18px;height:18px;position:relative;cursor:pointer;`;
-            el.innerHTML = `
-                <div style="position:absolute;inset:0;border:1.5px solid ${col};border-radius:50%;box-shadow:0 0 10px 4px ${col}55;animation:pulse-ring 1.8s infinite;"></div>
-                <div style="position:absolute;top:50%;left:0;right:0;height:1px;background:${col};transform:translateY(-50%);"></div>
-                <div style="position:absolute;left:50%;top:0;bottom:0;width:1px;background:${col};transform:translateX(-50%);"></div>
-            `;
+            el.style.cssText = 'width:22px;height:22px;cursor:pointer;';
+            el.innerHTML = `<svg width="22" height="22" viewBox="0 0 22 22" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="11" cy="11" r="9" fill="none" stroke="${col}" stroke-width="1.5" opacity="0.9"/>
+                <line x1="0" y1="11" x2="22" y2="11" stroke="${col}" stroke-width="1"/>
+                <line x1="11" y1="0" x2="11" y2="22" stroke="${col}" stroke-width="1"/>
+                <circle cx="11" cy="11" r="2.5" fill="${col}" opacity="0.8"/>
+            </svg>`;
+            el.style.filter = `drop-shadow(0 0 4px ${col})`;
             const popup = new maplibregl.Popup({ offset: 14, maxWidth: '290px' }).setHTML(`
                 <div style="font-family:'Share Tech Mono',monospace;">
                 <h3 style="color:${col};margin:0 0 6px;border-bottom:1px solid ${col}55;padding-bottom:4px;">&#9881; ${c.name}</h3>
@@ -1572,7 +1576,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 <p style="font-size:.73rem;margin:3px 0;"><strong>Parties:</strong> ${c.parties}</p>
                 <p style="font-size:.7rem;opacity:.8;margin-top:5px;">${c.note}</p>
                 <p style="font-size:.58rem;opacity:.35;margin-top:6px;">Source: ACLED / SIPRI / UN OCHA 2025</p></div>`);
-            const m = new maplibregl.Marker({ element: el }).setLngLat([c.lon, c.lat]).setPopup(popup);
+            const m = new maplibregl.Marker({ element: el, anchor: 'center' })
+                .setLngLat([c.lon, c.lat])
+                .setPopup(popup);
             conflictMarkers.push(m);
             if (toggles.conflicts) m.addTo(map);
         });
@@ -1583,8 +1589,5 @@ document.addEventListener("DOMContentLoaded", () => {
         toggles.conflicts = e.target.checked;
         conflictMarkers.forEach(m => toggles.conflicts ? m.addTo(map) : m.remove());
     });
-
-    // Add to init calls — already called via initConflictZones setup below
-    initConflictZones();
 
 });
