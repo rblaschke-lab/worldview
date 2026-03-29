@@ -1,0 +1,1081 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Worldview — Global Command Center | Real-Time Intelligence Platform</title>
+    <meta name="description" content="Worldview is an open-source real-time global intelligence dashboard combining satellite imagery, geopolitical data, live threat feeds, and AI-driven anomaly detection into one unified command center.">
+    <meta property="og:title" content="Worldview — Global Command Center">
+    <meta property="og:description" content="Real-time satellite intelligence. Geopolitical threat maps. Live data from 40+ sources. Free and open source.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg: #010408;
+            --surface: rgba(255,255,255,0.03);
+            --surface2: rgba(255,255,255,0.06);
+            --border: rgba(255,255,255,0.08);
+            --amber: #ffb000;
+            --amber-dim: rgba(255,176,0,0.6);
+            --cyan: #00d4ff;
+            --cyan-dim: rgba(0,212,255,0.15);
+            --green: #00ff88;
+            --red: #ff3355;
+            --text: #e0e0e0;
+            --text-muted: rgba(255,255,255,0.45);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            overflow-x: hidden;
+        }
+
+        /* ── NAV ─────────────────────────────────── */
+        nav {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 100;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 18px 48px;
+            background: rgba(1,4,8,0.85);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+        }
+        .nav-logo {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 1.1rem;
+            color: var(--amber);
+            letter-spacing: 3px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .nav-logo .dot { 
+            width: 8px; height: 8px; background: var(--green);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        .nav-cta {
+            text-decoration: none;
+            background: linear-gradient(135deg, var(--amber), #ff8800);
+            color: #000;
+            font-weight: 700;
+            font-size: .85rem;
+            padding: 10px 24px;
+            border-radius: 6px;
+            letter-spacing: 0.5px;
+            transition: all .2s;
+        }
+        .nav-cta:hover { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(255,176,0,0.4); }
+
+        /* ── HERO ────────────────────────────────── */
+        #hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            padding: 120px 48px 80px;
+        }
+        .hero-bg {
+            position: absolute;
+            inset: 0;
+            background: 
+                radial-gradient(ellipse 80% 60% at 50% 0%, rgba(0,80,160,0.25) 0%, transparent 60%),
+                radial-gradient(ellipse 60% 40% at 80% 80%, rgba(255,140,0,0.08) 0%, transparent 50%),
+                radial-gradient(ellipse 40% 30% at 20% 60%, rgba(0,212,255,0.06) 0%, transparent 50%);
+        }
+        .hero-grid {
+            position: absolute;
+            inset: 0;
+            background-image: 
+                linear-gradient(rgba(0,150,255,0.04) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0,150,255,0.04) 1px, transparent 1px);
+            background-size: 60px 60px;
+            mask-image: radial-gradient(ellipse 80% 80% at 50% 0%, black 0%, transparent 80%);
+        }
+        .hero-content {
+            max-width: 800px;
+            text-align: center;
+            position: relative;
+            z-index: 2;
+        }
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(0,212,255,0.1);
+            border: 1px solid rgba(0,212,255,0.25);
+            padding: 7px 16px;
+            border-radius: 100px;
+            font-size: .75rem;
+            color: var(--cyan);
+            font-family: 'Share Tech Mono', monospace;
+            letter-spacing: 1px;
+            margin-bottom: 28px;
+        }
+        .hero-badge .live-dot {
+            width: 6px; height: 6px;
+            background: var(--green);
+            border-radius: 50%;
+            animation: pulse 1.5s infinite;
+        }
+        h1.hero-title {
+            font-size: clamp(3rem, 8vw, 6rem);
+            font-weight: 900;
+            line-height: 1.05;
+            letter-spacing: -2px;
+            margin-bottom: 24px;
+        }
+        .gradient-text {
+            background: linear-gradient(135deg, #fff 0%, var(--cyan) 40%, var(--amber) 80%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .hero-subtitle {
+            font-size: 1.2rem;
+            color: var(--text-muted);
+            line-height: 1.7;
+            max-width: 600px;
+            margin: 0 auto 40px;
+        }
+        .hero-actions {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .btn-primary {
+            text-decoration: none;
+            background: linear-gradient(135deg, var(--amber), #ff8800);
+            color: #000;
+            font-weight: 700;
+            padding: 16px 36px;
+            border-radius: 8px;
+            font-size: 1rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            transition: all .25s;
+        }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 12px 40px rgba(255,176,0,0.4); }
+        .btn-secondary {
+            text-decoration: none;
+            background: var(--surface2);
+            color: var(--text);
+            font-weight: 500;
+            padding: 16px 36px;
+            border-radius: 8px;
+            font-size: 1rem;
+            border: 1px solid var(--border);
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            transition: all .25s;
+        }
+        .btn-secondary:hover { background: var(--surface); border-color: rgba(255,255,255,0.2); transform: translateY(-2px); }
+
+        /* Hero image */
+        .hero-image-wrap {
+            position: relative;
+            margin: 80px auto -60px;
+            max-width: 900px;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 
+                0 0 0 1px rgba(0,212,255,0.15),
+                0 40px 120px rgba(0,0,0,0.8),
+                0 0 80px -20px rgba(0,150,255,0.3);
+        }
+        .hero-image-wrap img {
+            width: 100%;
+            display: block;
+        }
+        .hero-image-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to bottom, transparent 60%, var(--bg) 100%);
+        }
+        .hero-image-scan {
+            position: absolute;
+            left: 0; right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+            animation: scan 4s ease-in-out infinite;
+        }
+        @keyframes scan {
+            0% { top: 0; opacity: 1; }
+            90% { top: 100%; opacity: 0.3; }
+            100% { top: 0; opacity: 0; }
+        }
+
+        /* ── STATS ───────────────────────────────── */
+        #stats {
+            padding: 100px 48px 80px;
+            position: relative;
+        }
+        .stats-grid {
+            max-width: 1100px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 2px;
+            background: var(--border);
+            border-radius: 16px;
+            overflow: hidden;
+        }
+        @media (max-width: 768px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } }
+        .stat-card {
+            background: var(--surface);
+            padding: 40px 32px;
+            text-align: center;
+            transition: background .2s;
+        }
+        .stat-card:hover { background: var(--surface2); }
+        .stat-number {
+            font-size: 3rem;
+            font-weight: 900;
+            font-family: 'Share Tech Mono', monospace;
+            background: linear-gradient(135deg, #fff, var(--cyan));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            display: block;
+        }
+        .stat-label {
+            font-size: .8rem;
+            color: var(--text-muted);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-top: 8px;
+        }
+
+        /* ── SECTION HEADER ──────────────────────── */
+        .section-header {
+            text-align: center;
+            margin-bottom: 64px;
+        }
+        .section-tag {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: .7rem;
+            letter-spacing: 3px;
+            color: var(--amber);
+            text-transform: uppercase;
+            margin-bottom: 16px;
+        }
+        h2.section-title {
+            font-size: clamp(2rem, 4vw, 3rem);
+            font-weight: 800;
+            letter-spacing: -1px;
+            line-height: 1.15;
+        }
+        .section-desc {
+            color: var(--text-muted);
+            font-size: 1.05rem;
+            line-height: 1.7;
+            max-width: 560px;
+            margin: 16px auto 0;
+        }
+
+        /* ── FEATURES ────────────────────────────── */
+        #features {
+            padding: 100px 48px;
+        }
+        .features-grid {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+        }
+        @media (max-width: 900px) { .features-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 600px) { .features-grid { grid-template-columns: 1fr; } }
+        .feature-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 32px;
+            transition: all .3s;
+            position: relative;
+            overflow: hidden;
+        }
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 16px;
+            opacity: 0;
+            transition: opacity .3s;
+        }
+        .feature-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(255,255,255,0.15);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+        }
+        .feature-card:hover::before { opacity: 1; }
+        .feature-icon {
+            width: 52px; height: 52px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            margin-bottom: 20px;
+        }
+        .feature-card h3 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            letter-spacing: -0.3px;
+        }
+        .feature-card p {
+            color: var(--text-muted);
+            font-size: .9rem;
+            line-height: 1.65;
+        }
+        .tag-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 16px;
+        }
+        .tag {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: .65rem;
+            padding: 3px 8px;
+            border-radius: 4px;
+            background: rgba(255,255,255,0.05);
+            color: var(--text-muted);
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+
+        /* ── DATA LAYERS ─────────────────────────── */
+        #layers {
+            padding: 100px 48px;
+            background: linear-gradient(180deg, transparent 0%, rgba(0,50,100,0.1) 50%, transparent 100%);
+        }
+        .layers-content {
+            max-width: 1100px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 64px;
+            align-items: center;
+        }
+        @media (max-width: 768px) { .layers-content { grid-template-columns: 1fr; } }
+        .layers-image {
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            box-shadow: 0 30px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(0,212,255,0.1);
+            position: relative;
+        }
+        .layers-image img { width: 100%; display: block; }
+        .layers-image-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(0,212,255,0.05), transparent);
+        }
+        .layer-list {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .layer-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+            padding: 20px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            transition: all .25s;
+        }
+        .layer-item:hover {
+            background: var(--surface2);
+            border-color: rgba(255,255,255,0.12);
+            transform: translateX(4px);
+        }
+        .layer-item-icon {
+            width: 40px; height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            flex-shrink: 0;
+        }
+        .layer-item-text h4 {
+            font-size: .95rem;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        .layer-item-text p {
+            font-size: .8rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        /* ── INTELLIGENCE ────────────────────────── */
+        #intelligence {
+            padding: 100px 48px;
+        }
+        .intel-showcase {
+            max-width: 1100px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 48px;
+            align-items: center;
+        }
+        @media (max-width: 768px) { .intel-showcase { grid-template-columns: 1fr; } }
+        .intel-terminal {
+            background: rgba(0,0,0,0.6);
+            border: 1px solid rgba(0,212,255,0.2);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 40px rgba(0,212,255,0.1);
+        }
+        .terminal-bar {
+            background: rgba(0,212,255,0.08);
+            border-bottom: 1px solid rgba(0,212,255,0.15);
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .terminal-dot { width: 10px; height: 10px; border-radius: 50%; }
+        .terminal-title {
+            margin-left: 8px;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: .7rem;
+            color: var(--cyan);
+            letter-spacing: 1px;
+        }
+        .terminal-body {
+            padding: 24px;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: .75rem;
+            line-height: 1.9;
+        }
+        .t-line { display: flex; gap: 12px; align-items: baseline; }
+        .t-time { color: rgba(255,255,255,0.25); }
+        .t-tag { padding: 1px 6px; border-radius: 3px; font-size: .65rem; }
+        .t-tag.alert { background: rgba(255,50,50,0.2); color: #ff6666; border: 1px solid rgba(255,50,50,0.3); }
+        .t-tag.warn { background: rgba(255,176,0,0.15); color: var(--amber); border: 1px solid rgba(255,176,0,0.3); }
+        .t-tag.info { background: rgba(0,212,255,0.1); color: var(--cyan); border: 1px solid rgba(0,212,255,0.25); }
+        .t-tag.ok { background: rgba(0,255,136,0.1); color: var(--green); border: 1px solid rgba(0,255,136,0.25); }
+        .t-msg { color: #ccc; }
+        .t-cursor { display: inline-block; width: 8px; height: 14px; background: var(--cyan); animation: blink 1s infinite; vertical-align: middle; }
+
+        @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+        /* ── HOW IT WORKS ────────────────────────── */
+        #how {
+            padding: 100px 48px;
+            background: linear-gradient(180deg, transparent 0%, rgba(20,10,5,0.5) 100%);
+        }
+        .steps-grid {
+            max-width: 1000px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 32px;
+            position: relative;
+        }
+        .steps-grid::before {
+            content: '';
+            position: absolute;
+            top: 40px;
+            left: calc(16.66% + 20px);
+            right: calc(16.66% + 20px);
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border), var(--border), transparent);
+        }
+        @media (max-width: 700px) { .steps-grid { grid-template-columns: 1fr; } .steps-grid::before { display: none; } }
+        .step-card {
+            text-align: center;
+            padding: 32px 24px;
+        }
+        .step-number {
+            width: 56px; height: 56px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 24px;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 1.1rem;
+            font-weight: 700;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            color: var(--amber);
+            position: relative;
+            z-index: 2;
+        }
+        .step-card h3 { font-size: 1.05rem; font-weight: 700; margin-bottom: 10px; }
+        .step-card p { font-size: .88rem; color: var(--text-muted); line-height: 1.65; }
+
+        /* ── OPEN SOURCE ─────────────────────────── */
+        #open {
+            padding: 100px 48px;
+        }
+        .open-card {
+            max-width: 860px;
+            margin: 0 auto;
+            background: linear-gradient(135deg, rgba(0,80,160,0.15), rgba(255,140,0,0.08));
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 24px;
+            padding: 64px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .open-card::before {
+            content: '';
+            position: absolute;
+            top: -100px; left: 50%;
+            transform: translateX(-50%);
+            width: 400px; height: 400px;
+            background: radial-gradient(circle, rgba(0,150,255,0.15) 0%, transparent 70%);
+            pointer-events: none;
+        }
+        .open-card h2 { font-size: 2.5rem; font-weight: 800; margin-bottom: 20px; }
+        .open-card p { color: var(--text-muted); font-size: 1.05rem; line-height: 1.7; max-width: 520px; margin: 0 auto 32px; }
+        .github-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.12);
+            padding: 14px 28px;
+            border-radius: 100px;
+            font-size: .9rem;
+            font-weight: 600;
+            color: var(--text);
+            text-decoration: none;
+            transition: all .2s;
+        }
+        .github-badge:hover { background: rgba(255,255,255,0.1); transform: translateY(-2px); }
+
+        /* ── TECH STACK ──────────────────────────── */
+        #tech {
+            padding: 80px 48px;
+            border-top: 1px solid var(--border);
+        }
+        .tech-grid {
+            max-width: 900px;
+            margin: 0 auto;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 12px;
+        }
+        .tech-pill {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            padding: 10px 18px;
+            border-radius: 100px;
+            font-size: .82rem;
+            color: var(--text-muted);
+            transition: all .2s;
+        }
+        .tech-pill:hover { background: var(--surface2); color: var(--text); border-color: rgba(255,255,255,0.15); }
+        .tech-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+        /* ── CTA ─────────────────────────────────── */
+        #cta {
+            padding: 120px 48px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .cta-bg {
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(ellipse 70% 60% at 50% 50%, rgba(0,80,160,0.2) 0%, transparent 70%);
+        }
+        .cta-content { position: relative; z-index: 2; max-width: 700px; margin: 0 auto; }
+        #cta h2 { font-size: clamp(2rem, 5vw, 3.5rem); font-weight: 900; margin-bottom: 20px; }
+        #cta p { color: var(--text-muted); font-size: 1.1rem; line-height: 1.7; margin-bottom: 40px; }
+        .cta-disclaimer {
+            margin-top: 20px;
+            font-size: .75rem;
+            color: rgba(255,255,255,0.25);
+        }
+
+        /* ── FOOTER ──────────────────────────────── */
+        footer {
+            padding: 40px 48px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+        .footer-logo {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: .9rem;
+            color: var(--amber);
+            letter-spacing: 2px;
+        }
+        .footer-copy {
+            font-size: .78rem;
+            color: var(--text-muted);
+        }
+
+        /* ── ANIMATIONS ──────────────────────────── */
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(0.8); }
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-12px); }
+        }
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .fade-up { opacity: 0; }
+        .fade-up.visible { animation: fadeUp .7s ease forwards; }
+
+        /* ── SCROLLBAR ───────────────────────────── */
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-thumb { background: rgba(255,176,0,0.3); border-radius: 3px; }
+    </style>
+</head>
+<body>
+
+    <!-- NAV -->
+    <nav>
+        <div class="nav-logo">
+            <span class="dot"></span>
+            WORLDVIEW
+        </div>
+        <a href="./index.html" target="_blank" class="nav-cta">
+            <i class="fa-solid fa-satellite"></i> Open Command Center
+        </a>
+    </nav>
+
+    <!-- HERO -->
+    <section id="hero">
+        <div class="hero-bg"></div>
+        <div class="hero-grid"></div>
+        <div class="hero-content">
+            <div class="hero-badge">
+                <span class="live-dot"></span>
+                LIVE — 40+ DATA FEEDS ACTIVE
+            </div>
+            <h1 class="hero-title">
+                <span class="gradient-text">The World.<br>In Real Time.</span>
+            </h1>
+            <p class="hero-subtitle">
+                Worldview is an open-source global intelligence dashboard that fuses satellite imagery, 
+                geopolitical data, live threat feeds, and AI-driven anomaly detection into one 
+                seamless command interface.
+            </p>
+            <div class="hero-actions">
+                <a href="./index.html" target="_blank" class="btn-primary">
+                    <i class="fa-solid fa-globe"></i> Launch Worldview
+                </a>
+                <a href="#features" class="btn-secondary">
+                    <i class="fa-solid fa-chevron-down"></i> Explore Features
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- HERO IMAGE -->
+    <div style="padding: 0 48px; max-width: 1200px; margin: 0 auto;">
+        <div class="hero-image-wrap">
+            <div class="hero-image-scan"></div>
+            <img src="./assets/dashboard_mockup.png" alt="Worldview Command Center Dashboard" loading="lazy">
+            <div class="hero-image-overlay"></div>
+        </div>
+    </div>
+
+    <!-- STATS -->
+    <section id="stats">
+        <div class="stats-grid fade-up">
+            <div class="stat-card">
+                <span class="stat-number" data-target="40">0</span>
+                <span class="stat-label">Live Data Feeds</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-number" data-target="195">0</span>
+                <span class="stat-label">Countries Mapped</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-number" data-target="22">0</span>
+                <span class="stat-label">Map Layers</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-number" data-target="0">0</span>
+                <span class="stat-label" style="display:flex;align-items:center;justify-content:center;gap:6px;">
+                    <i class="fa-solid fa-lock" style="color:var(--green);font-size:.7rem;"></i>
+                    API Keys Required
+                </span>
+            </div>
+        </div>
+    </section>
+
+    <!-- FEATURES -->
+    <section id="features">
+        <div class="section-header fade-up">
+            <div class="section-tag">// CAPABILITIES</div>
+            <h2 class="section-title">Everything happening<br>on Earth. Now.</h2>
+            <p class="section-desc">Six intelligence categories. Dozens of curated data sources. One unified terminal interface.</p>
+        </div>
+
+        <div class="features-grid">
+            <div class="feature-card fade-up" style="--delay:.1s;">
+                <div class="feature-icon" style="background:rgba(255,80,80,0.12);">🔴</div>
+                <h3>Live Crisis Intelligence</h3>
+                <p>Real-time conflict zones, active war fronts, territorial disputes — updated continuously with click-through briefings on every flashpoint.</p>
+                <div class="tag-list">
+                    <span class="tag">ACLED</span>
+                    <span class="tag">UN OCHA</span>
+                    <span class="tag">NATO SITREP</span>
+                </div>
+            </div>
+
+            <div class="feature-card fade-up" style="--delay:.15s;">
+                <div class="feature-icon" style="background:rgba(0,212,255,0.1);">🛰️</div>
+                <h3>Orbital Tracking</h3>
+                <p>ISS position updated every 15 seconds. Starlink constellation. 500+ satellites and debris fields in real-time low-Earth orbit.</p>
+                <div class="tag-list">
+                    <span class="tag">NASA</span>
+                    <span class="tag">SpaceX TLE</span>
+                    <span class="tag">Celestrak</span>
+                </div>
+            </div>
+
+            <div class="feature-card fade-up" style="--delay:.2s;">
+                <div class="feature-icon" style="background:rgba(255,176,0,0.12);">🌐</div>
+                <h3>Geopolitical Maps</h3>
+                <p>Democracy vs. Autocracy (Freedom House). NATO, BRICS, SCO bloc memberships. Political regimes color-coded for instant recognition.</p>
+                <div class="tag-list">
+                    <span class="tag">Freedom House 2024</span>
+                    <span class="tag">SIPRI</span>
+                </div>
+            </div>
+
+            <div class="feature-card fade-up" style="--delay:.25s;">
+                <div class="feature-icon" style="background:rgba(0,255,136,0.1);">🔌</div>
+                <h3>Critical Infrastructure</h3>
+                <p>Global submarine cable networks. Hyperscale data centers by tier. Nuclear power plants with operational status and reactor counts.</p>
+                <div class="tag-list">
+                    <span class="tag">TeleGeography</span>
+                    <span class="tag">IAEA PRIS</span>
+                    <span class="tag">WNA</span>
+                </div>
+            </div>
+
+            <div class="feature-card fade-up" style="--delay:.3s;">
+                <div class="feature-icon" style="background:rgba(255,100,0,0.12);">🌋</div>
+                <h3>Environmental Hazards</h3>
+                <p>NASA FIRMS wildfire data. Active volcano alerts (Smithsonian GVP). Global seismic activity. Radiation hotspots worldwide.</p>
+                <div class="tag-list">
+                    <span class="tag">NASA FIRMS</span>
+                    <span class="tag">USGS</span>
+                    <span class="tag">Safecast</span>
+                </div>
+            </div>
+
+            <div class="feature-card fade-up" style="--delay:.35s;">
+                <div class="feature-icon" style="background:rgba(180,100,255,0.12);">🤖</div>
+                <h3>AI Intelligence Core</h3>
+                <p>Automated spatial anomaly detection across all live feeds. Rolling 3-alert window. Hover-to-reveal Intel circles on the map.</p>
+                <div class="tag-list">
+                    <span class="tag">Spatial ML</span>
+                    <span class="tag">Real-time</span>
+                    <span class="tag">5min refresh</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- DATA LAYERS -->
+    <section id="layers">
+        <div class="layers-content">
+            <div class="layers-image fade-up">
+                <img src="./assets/hero_globe.png" alt="Global data visualization">
+                <div class="layers-image-overlay"></div>
+            </div>
+            <div class="layer-list fade-up">
+                <div class="section-header" style="text-align:left; margin-bottom: 32px;">
+                    <div class="section-tag">// DATA LAYERS</div>
+                    <h2 class="section-title" style="font-size:2rem;">40+ sources.<br>One view.</h2>
+                </div>
+
+                <div class="layer-item">
+                    <div class="layer-item-icon" style="background:rgba(0,212,255,0.1);">
+                        <span style="font-size:1.1rem;">📡</span>
+                    </div>
+                    <div class="layer-item-text">
+                        <h4>Live Feeds</h4>
+                        <p>Weather radar · AIS shipping · EU aviation · ISS · Wildfires · Earthquakes · Internet outages · Solar activity</p>
+                    </div>
+                </div>
+
+                <div class="layer-item">
+                    <div class="layer-item-icon" style="background:rgba(255,176,0,0.1);">
+                        <span style="font-size:1.1rem;">🏛️</span>
+                    </div>
+                    <div class="layer-item-text">
+                        <h4>Political Intelligence</h4>
+                        <p>Regime classification · Geopolitical blocs · Active conflict zones with party briefings</p>
+                    </div>
+                </div>
+
+                <div class="layer-item">
+                    <div class="layer-item-icon" style="background:rgba(0,255,136,0.1);">
+                        <span style="font-size:1.1rem;">🌐</span>
+                    </div>
+                    <div class="layer-item-text">
+                        <h4>Infrastructure</h4>
+                        <p>Submarine fiber cables · Hyperscale data centers · Nuclear power plants · Nuclear arsenals (SIPRI 2024)</p>
+                    </div>
+                </div>
+
+                <div class="layer-item">
+                    <div class="layer-item-icon" style="background:rgba(255,50,50,0.1);">
+                        <span style="font-size:1.1rem;">🚀</span>
+                    </div>
+                    <div class="layer-item-text">
+                        <h4>Orbital & Space</h4>
+                        <p>Starlink network · Satellite tracker · Rocket launch calendar · Ghost fleet surveillance</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- INTELLIGENCE CORE -->
+    <section id="intelligence">
+        <div class="intel-showcase">
+            <div class="fade-up">
+                <div class="section-tag">// AI INTELLIGENCE CORE</div>
+                <h2 style="font-size:2.2rem;font-weight:800;margin-bottom:16px;letter-spacing:-1px;">
+                    Automated<br>Anomaly Detection.
+                </h2>
+                <p style="color:var(--text-muted);line-height:1.7;font-size:.95rem;margin-bottom:24px;">
+                    The Intelligence Core continuously scans all active data streams for spatial and temporal 
+                    anomalies — clustering events, cross-referencing feeds, and surfacing alerts 
+                    before they become headlines.
+                </p>
+                <ul style="list-style:none;display:flex;flex-direction:column;gap:12px;">
+                    <li style="display:flex;align-items:center;gap:12px;font-size:.9rem;color:var(--text-muted);">
+                        <i class="fa-solid fa-check" style="color:var(--green);"></i>
+                        Rolling 3-alert window — always fresh intelligence
+                    </li>
+                    <li style="display:flex;align-items:center;gap:12px;font-size:.9rem;color:var(--text-muted);">
+                        <i class="fa-solid fa-check" style="color:var(--green);"></i>
+                        5-minute scan cycle — near-real-time awareness
+                    </li>
+                    <li style="display:flex;align-items:center;gap:12px;font-size:.9rem;color:var(--text-muted);">
+                        <i class="fa-solid fa-check" style="color:var(--green);"></i>
+                        Hover-to-reveal map circles — zero visual noise
+                    </li>
+                    <li style="display:flex;align-items:center;gap:12px;font-size:.9rem;color:var(--text-muted);">
+                        <i class="fa-solid fa-check" style="color:var(--green);"></i>
+                        Pin-to-lock mode — freeze intel for deeper analysis
+                    </li>
+                </ul>
+            </div>
+            <div class="intel-terminal fade-up">
+                <div class="terminal-bar">
+                    <div class="terminal-dot" style="background:#ff5555;"></div>
+                    <div class="terminal-dot" style="background:#ffb000;"></div>
+                    <div class="terminal-dot" style="background:#50fa7b;"></div>
+                    <span class="terminal-title">INTELLIGENCE CORE — LIVE SCAN</span>
+                </div>
+                <div class="terminal-body">
+                    <div class="t-line">
+                        <span class="t-time">12:34:07</span>
+                        <span class="t-tag alert">ALERT</span>
+                        <span class="t-msg">Seismic cluster Zagros Mt. (M4.2+)</span>
+                    </div>
+                    <div class="t-line">
+                        <span class="t-time">12:34:12</span>
+                        <span class="t-tag warn">WARN</span>
+                        <span class="t-msg">Fire cluster Δ 847% — Yakutia</span>
+                    </div>
+                    <div class="t-line">
+                        <span class="t-time">12:34:18</span>
+                        <span class="t-tag info">INFO</span>
+                        <span class="t-msg">ISS approaching Europe corridor</span>
+                    </div>
+                    <div class="t-line">
+                        <span class="t-time">12:34:31</span>
+                        <span class="t-tag alert">ALERT</span>
+                        <span class="t-msg">Routing anomaly · AS15169 → Tehran</span>
+                    </div>
+                    <div class="t-line">
+                        <span class="t-time">12:34:44</span>
+                        <span class="t-tag ok">SCAN</span>
+                        <span class="t-msg">All feeds nominal. Next: 12:39:44</span>
+                    </div>
+                    <div class="t-line" style="margin-top:8px;">
+                        <span class="t-time">12:34:44</span>
+                        <span class="t-tag info">SYS</span>
+                        <span class="t-msg">Awaiting telemetry <span class="t-cursor"></span></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- HOW IT WORKS -->
+    <section id="how">
+        <div class="section-header fade-up">
+            <div class="section-tag">// HOW IT WORKS</div>
+            <h2 class="section-title">No setup. No keys.<br>Just open and watch.</h2>
+            <p class="section-desc">Worldview is designed for instant intelligence — zero configuration required.</p>
+        </div>
+        <div class="steps-grid">
+            <div class="step-card fade-up">
+                <div class="step-number">01</div>
+                <h3>Open the Dashboard</h3>
+                <p>Navigate to the Worldview URL. The command center loads instantly with live satellite imagery and all feeds active.</p>
+            </div>
+            <div class="step-card fade-up">
+                <div class="step-number">02</div>
+                <h3>Select Your Layers</h3>
+                <p>Toggle any combination of 22+ data layers from the sidebar — from seismic activity to undersea cables and nuclear sites.</p>
+            </div>
+            <div class="step-card fade-up">
+                <div class="step-number">03</div>
+                <h3>Drill Into Intelligence</h3>
+                <p>Click any marker for detailed briefings. Let the AI panel surface global anomalies automatically in real time.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- OPEN SOURCE -->
+    <section id="open">
+        <div class="open-card fade-up">
+            <div style="font-size:3rem;margin-bottom:24px;">🛰️</div>
+            <h2>Built open.<br><span class="gradient-text">Free forever.</span></h2>
+            <p>
+                Worldview is a passion project built with MapLibre GL, vanilla JavaScript, and 
+                a deep fascination with global events. No paywalls. No accounts. No tracking.
+                Just real-time intelligence for anyone who wants to understand the world.
+            </p>
+            <div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap;">
+                <a href="./index.html" target="_blank" class="btn-primary" style="font-size:.9rem;padding:12px 28px;">
+                    <i class="fa-solid fa-globe"></i> Open Worldview
+                </a>
+                <a href="https://github.com" target="_blank" class="github-badge">
+                    <i class="fa-brands fa-github"></i> View Source on GitHub
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- TECH STACK -->
+    <section id="tech">
+        <div style="text-align:center;margin-bottom:32px;">
+            <div class="section-tag">// BUILT WITH</div>
+        </div>
+        <div class="tech-grid">
+            <div class="tech-pill"><div class="tech-dot" style="background:#4fc3f7;"></div>MapLibre GL JS v4</div>
+            <div class="tech-pill"><div class="tech-dot" style="background:#ff9800;"></div>NASA GIBS WMTS</div>
+            <div class="tech-pill"><div class="tech-dot" style="background:#f6d860;"></div>Vanilla JavaScript</div>
+            <div class="tech-pill"><div class="tech-dot" style="background:#00d4ff;"></div>Esri Satellite Tiles</div>
+            <div class="tech-pill"><div class="tech-dot" style="background:#ff5555;"></div>NASA FIRMS API</div>
+            <div class="tech-pill"><div class="tech-dot" style="background:#50fa7b;"></div>USGS Earthquake Feed</div>
+            <div class="tech-pill"><div class="tech-dot" style="background:#bd93f9;"></div>OpenSky Network</div>
+            <div class="tech-pill"><div class="tech-dot" style="background:#ff6e6e;"></div>Launch Library 2</div>
+            <div class="tech-pill"><div class="tech-dot" style="background:#8be9fd;"></div>GitHub Pages</div>
+            <div class="tech-pill"><div class="tech-dot" style="background:#ffb000;"></div>TeleGeography</div>
+            <div class="tech-pill"><div class="tech-dot" style="background:#00ff88;"></div>IAEA PRIS</div>
+            <div class="tech-pill"><div class="tech-dot" style="background:#ff79c6;"></div>Freedom House 2024</div>
+        </div>
+    </section>
+
+    <!-- CTA -->
+    <section id="cta">
+        <div class="cta-bg"></div>
+        <div class="cta-content">
+            <h2 class="fade-up">Ready to see<br><span class="gradient-text">everything?</span></h2>
+            <p class="fade-up">
+                Open the Worldview Command Center and watch the world in real time.
+                Completely free. No registration required.
+            </p>
+            <a href="./index.html" target="_blank" class="btn-primary fade-up" style="font-size:1.1rem;padding:18px 48px;display:inline-flex;">
+                <i class="fa-solid fa-satellite-dish"></i> Launch Command Center
+            </a>
+            <p class="cta-disclaimer">Available on all devices · No installation · No account required</p>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer>
+        <div class="footer-logo">WORLDVIEW V6.1</div>
+        <div class="footer-copy">
+            Built by RB_Design 2026 · Open Source · All data from public APIs
+        </div>
+    </footer>
+
+    <script>
+        // Scroll animation observer
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach((entry, i) => {
+                if (entry.isIntersecting) {
+                    setTimeout(() => {
+                        entry.target.classList.add('visible');
+                    }, (entry.target.style.getPropertyValue('--delay') ? parseFloat(entry.target.style.getPropertyValue('--delay')) * 1000 : 0));
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.12 });
+
+        document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
+
+        // Animated counters
+        const animateCounter = (el, target, duration = 1800) => {
+            const start = performance.now();
+            const update = (now) => {
+                const progress = Math.min((now - start) / duration, 1);
+                const eased = 1 - Math.pow(1 - progress, 3);
+                el.textContent = Math.round(eased * target);
+                if (progress < 1) requestAnimationFrame(update);
+            };
+            requestAnimationFrame(update);
+        };
+
+        const counterObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const els = entry.target.querySelectorAll('[data-target]');
+                    els.forEach(el => animateCounter(el, parseInt(el.dataset.target)));
+                    counterObserver.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.3 });
+
+        const statsSection = document.getElementById('stats');
+        if (statsSection) counterObserver.observe(statsSection);
+    </script>
+
+</body>
+</html>

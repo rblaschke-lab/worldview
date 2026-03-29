@@ -329,3 +329,8 @@ input:checked + .slider:before { transform: translateX(18px); box-shadow: 0 0 5p
     #intelligence-panel { width: calc(100% - 28px); left: 14px; top: auto; bottom: 14px; }
     .maplibregl-ctrl-top-left { top: 65px; }
 }
+
+/* About button */
+#about-btn { display:block; margin:10px 0 4px; text-align:center; font-size:.62rem; letter-spacing:2px; color:rgba(255,176,0,0.35); text-decoration:none; padding:8px 0; border-top:1px solid rgba(255,176,0,0.08); transition:color .25s,border-color .25s; }
+#about-btn i { margin-right:5px; }
+#about-btn:hover { color:var(--amber); border-top-color:rgba(255,176,0,0.25); text-shadow:0 0 8px var(--amber-dim); }
