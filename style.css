@@ -185,9 +185,9 @@ input:checked + .slider:before { transform: translateX(18px); box-shadow: 0 0 5p
 ------------------------------------------------------- */
 #intelligence-panel {
     position: fixed;
-    top: 66px;          /* below MapLibre zoom control (~52px) */
-    left: 14px;
-    width: 340px;
+    top: 14px;          /* same line as zoom control */
+    left: 50px;         /* to the right of the 37px-wide zoom control */
+    width: 320px;
     z-index: 100;
     background: var(--panel-bg);
     border: 1px solid rgba(0,255,0,.25);
