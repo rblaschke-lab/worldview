@@ -1529,34 +1529,214 @@ document.addEventListener("DOMContentLoaded", () => {
     // ============================================================
     const conflictMarkers = [];
     const CONFLICTS = [
-        { name: 'Ukraine \u2014 Russia War', lat: 48.5, lon: 37.5, severity: 'CRITICAL', type: 'Interstate War', parties: 'Russia vs. Ukraine', note: 'Largest land war in Europe since WWII. ~500k+ casualties.' },
-        { name: 'Gaza \u2014 Israel Conflict', lat: 31.35, lon: 34.30, severity: 'CRITICAL', type: 'Military Operation', parties: 'Israel vs. Hamas', note: '2023-present. Gaza Strip.' },
-        { name: 'West Bank', lat: 32.1, lon: 35.2, severity: 'HIGH', type: 'Occupation / Violence', parties: 'Israel / Palestinian factions', note: 'Escalating clashes & settler violence.' },
-        { name: 'Sudan \u2014 Civil War', lat: 15.5, lon: 32.5, severity: 'CRITICAL', type: 'Civil War', parties: 'SAF vs. RSF', note: 'Largest humanitarian crisis in the world (2024).' },
-        { name: 'Myanmar \u2014 Civil War', lat: 20.0, lon: 96.5, severity: 'CRITICAL', type: 'Civil War', parties: 'Military Junta vs. PDF/EAOs', note: 'Junta losing territory. 3M+ displaced.' },
-        { name: 'Ethiopia \u2014 Amhara & Oromia', lat: 10.5, lon: 38.5, severity: 'HIGH', type: 'Civil Conflict', parties: 'ENDF vs. FANO / OLA', note: 'Ongoing fighting after Tigray peace deal.' },
-        { name: 'Somalia \u2014 Al-Shabaab', lat: 5.0, lon: 45.5, severity: 'HIGH', type: 'Insurgency', parties: 'SNDF/AMISOM vs. Al-Shabaab', note: 'Al-Shabaab controls large rural areas.' },
-        { name: 'Yemen \u2014 Civil War', lat: 15.5, lon: 44.2, severity: 'HIGH', type: 'Civil War / Proxy', parties: 'Houthis vs. Saudi-led coalition', note: 'Houthis attacking Red Sea shipping since 2023.' },
-        { name: 'Red Sea \u2014 Houthi Attacks', lat: 15.0, lon: 42.5, severity: 'HIGH', type: 'Maritime Conflict', parties: 'Houthis vs. US/UK/commercial shipping', note: 'Strikes on cargo vessels since Nov 2023.' },
-        { name: 'DR Congo \u2014 Eastern Conflict', lat: -1.5, lon: 29.0, severity: 'CRITICAL', type: 'Civil War', parties: 'FARDC vs. M23 / FDLR', note: 'M23 (Rwanda-backed) captured Goma Jan 2025.' },
-        { name: 'Sahel \u2014 Mali / Burkina Faso', lat: 14.5, lon: -3.5, severity: 'HIGH', type: 'Insurgency', parties: 'Juntas vs. JNIM / ISGS', note: 'Wagner/Russia-backed juntas vs. jihadist groups.' },
-        { name: 'Niger \u2014 Terrorism', lat: 16.0, lon: 8.0, severity: 'MODERATE', type: 'Insurgency', parties: 'Junta vs. ISGS / Ansarul Islam', note: 'Coup 2023. French forces expelled.' },
-        { name: 'Haiti \u2014 Gang Warfare', lat: 18.7, lon: -72.3, severity: 'CRITICAL', type: 'Gang Violence', parties: 'G9 Alliance vs. GPEP + state', note: 'Port-au-Prince ~80% gang-controlled in 2024.' },
-        { name: 'Mexico \u2014 Cartel Wars', lat: 25.0, lon: -107.0, severity: 'HIGH', type: 'Criminal Violence', parties: 'CJNG vs. Sinaloa + state', note: '>35,000 homicides/yr. Sinaloa internal split 2024.' },
-        { name: 'Iraq \u2014 IS Remnants', lat: 34.0, lon: 43.0, severity: 'MODERATE', type: 'Insurgency', parties: 'Iraqi forces vs. IS cells', note: 'IS still active in Kirkuk, Diyala, Anbar.' },
-        { name: 'Syria \u2014 Fragmented War', lat: 35.5, lon: 38.5, severity: 'HIGH', type: 'Civil War', parties: 'Multiple factions incl. HTS/SNA/SDF', note: 'HTS captured Damascus Dec 2024. Transition ongoing.' },
-        { name: 'Lebanon \u2014 Hezbollah / Israel', lat: 33.6, lon: 35.5, severity: 'HIGH', type: 'Military Conflict', parties: 'Israel vs. Hezbollah', note: 'Ceasefire Nov 2024, fragile. Ongoing violations.' },
-        { name: 'Pakistan \u2014 TTP Insurgency', lat: 33.0, lon: 70.5, severity: 'MODERATE', type: 'Insurgency', parties: 'Pakistan Army vs. TTP', note: 'Taliban-linked TTP attacks spiking since 2023.' },
-        { name: 'Nagorno-Karabakh / Armenia\u2013Azerbaijan', lat: 40.2, lon: 46.8, severity: 'MODERATE', type: 'Post-War Tension', parties: 'Azerbaijan / Armenia', note: 'AZ took NKR in Sept 2023. Border demarcation ongoing.' },
-        { name: 'Libya \u2014 Rival Governments', lat: 29.0, lon: 18.0, severity: 'MODERATE', type: 'Political-Military', parties: 'GNU (West) vs. LNA (East)', note: 'Fragile ceasefire 2020. Sporadic clashes continue.' },
+        {
+            name: 'Ukraine — Russia War', lat: 48.5, lon: 37.5, severity: 'CRITICAL',
+            type: 'Interstate War', since: 2022,
+            parties: [['🇷🇺 Russia', 'Aggressor'], ['🇺🇦 Ukraine', 'Defender']],
+            support: 'UA: NATO/EU aid. RU: Iran, DPRK, Belarus.',
+            casualties: '~500,000–700,000 (KIA + WIA, both sides)',
+            displaced: '~8M refugees, 5M internally displaced',
+            status: 'ACTIVE — Frontline mostly static, drone war escalating',
+            note: 'Largest land war in Europe since WWII. Started with full invasion Feb 24, 2022.'
+        },
+        {
+            name: 'Gaza — Israel Conflict', lat: 31.35, lon: 34.30, severity: 'CRITICAL',
+            type: 'Military Operation / Urban Warfare', since: 2023,
+            parties: [['🇮🇱 Israel (IDF)', 'Military operation'], ['🇵🇸 Hamas', 'Gaza de-facto govt']],
+            support: 'IL: US military aid. Hamas: Iran, Hezbollah.',
+            casualties: '>48,000 Palestinian dead (UN est.), ~1,200 Israeli on Oct 7',
+            displaced: '~1.9M Gazans (90% of population)',
+            status: 'ACTIVE — Ongoing IDF operations, humanitarian crisis',
+            note: 'Triggered by Hamas attack on Oct 7, 2023. Ceasefire negotiations ongoing.'
+        },
+        {
+            name: 'West Bank Escalation', lat: 32.1, lon: 35.2, severity: 'HIGH',
+            type: 'Occupation / Armed Clashes', since: 1967,
+            parties: [['🇮🇱 Israel (settlers/IDF)', 'Occupying force'], ['🇵🇸 Palestinian groups', 'Resistance']],
+            support: 'US veto in UNSC. PA security forces partially cooperate with IDF.',
+            casualties: '>700 Palestinians killed in 2024 (highest since 2nd Intifada)',
+            displaced: 'Tens of thousands in recent raids (Jenin, Tulkarm)',
+            status: 'ESCALATING — Large-scale IDF raids ongoing 2025',
+            note: 'Occupation since 1967. Settler violence and IDF incursions dramatically increased post-Oct 7.'
+        },
+        {
+            name: 'Sudan — Civil War', lat: 15.5, lon: 32.5, severity: 'CRITICAL',
+            type: 'Civil War', since: 2023,
+            parties: [['🇸🇩 SAF (Army)', 'Official military'], ['RSF (Rapid Support Forces)', 'Paramilitary']],
+            support: 'SAF: Egypt, Eritrea. RSF: UAE, Wagner/Russia.',
+            casualties: '>150,000 dead, >9M displaced',
+            displaced: 'Largest displacement crisis in the world (2024)',
+            status: 'ACTIVE — RSF controls most of Darfur, fighting in Khartoum',
+            note: 'Broke out Apr 15, 2023. Power struggle between Gen. Burhan (SAF) and Gen. Dagalo (RSF).'
+        },
+        {
+            name: 'Myanmar — Civil War', lat: 20.0, lon: 96.5, severity: 'CRITICAL',
+            type: 'Civil War / Junta vs. Resistance', since: 2021,
+            parties: [['Military Junta (SAC)', 'Coup govt since Feb 2021'], ['PDF + EAOs (30+ groups)', 'Pro-democracy resistance']],
+            support: 'Junta: China, Russia. PDF: limited Western support.',
+            casualties: '>50,000 dead, 3M+ displaced since coup',
+            displaced: '~3.2M internally displaced',
+            status: 'ACTIVE — Junta losing territory rapidly since Oct 2023 offensive',
+            note: 'Military coup Feb 1, 2021. Operation 1027 (Oct 2023) saw major rebel advances.'
+        },
+        {
+            name: 'Ethiopia — Amhara & Oromia', lat: 10.5, lon: 38.5, severity: 'HIGH',
+            type: 'Internal Armed Conflict', since: 2018,
+            parties: [['🇪🇹 ENDF (Ethiopian Army)', 'Federal government'], ['FANO / OLA', 'Amhara & Oromo armed groups']],
+            support: 'ENDF: Eritrea (limited). FANO/OLA: diaspora funding.',
+            casualties: 'Thousands dead; Tigray war (ended 2022): ~300,000-500,000',
+            displaced: '>4M total (all Ethiopian conflicts combined)',
+            status: 'ACTIVE — FANO controls parts of Amhara; OLA active in Oromia',
+            note: 'Post-Tigray peace deal (Nov 2022) new conflicts erupted in Amhara and Oromia regions.'
+        },
+        {
+            name: 'Somalia — Al-Shabaab', lat: 5.0, lon: 45.5, severity: 'HIGH',
+            type: 'Islamist Insurgency', since: 2006,
+            parties: [['🇸🇴 Somali Federal Govt + ATMIS', 'UN-backed government'], ['Al-Shabaab (AQ-affiliate)', 'Controls large rural areas']],
+            support: 'Govt: AU Mission (ATMIS), US airstrikes. AS: local taxation.',
+            casualties: '~500,000+ since 2007 (direct + famine-related)',
+            displaced: '~3.8M IDPs in Somalia',
+            status: 'ACTIVE — AS controls ~40% of territory, regular attacks on cities',
+            note: 'Al-Shabaab affiliated with Al-Qaeda since 2012. Controls rural areas, taxes population.'
+        },
+        {
+            name: 'Yemen — Civil War', lat: 15.5, lon: 44.2, severity: 'HIGH',
+            type: 'Civil War / Proxy Conflict', since: 2014,
+            parties: [['Houthis (Ansar Allah)', 'Controls Sanaa + Red Sea coast'], ['Saudi-led Coalition + IRG', 'UN-recognised govt']],
+            support: 'Houthis: Iran. Coalition: US/UK air support.',
+            casualties: '>150,000 combat dead; 377,000 total (war-related, UN)',
+            displaced: '~4.5M IDPs; world\'s worst humanitarian crisis (2021)',
+            status: 'CEASEFIRE (fragile) — Houthis attacking Red Sea since Nov 2023',
+            note: 'Houthi takeover 2014-15 sparked Saudi intervention. Houthis now attacking global shipping in solidarity with Gaza.'
+        },
+        {
+            name: 'Red Sea — Houthi Maritime War', lat: 15.0, lon: 42.5, severity: 'HIGH',
+            type: 'Maritime / Asymmetric Conflict', since: 2023,
+            parties: [['Houthis (Yemen)', 'Attacking commercial + military ships'], ['US/UK + Coalition', 'Defensive strikes on Houthi positions']],
+            support: 'Houthis: Iranian missiles, drones. Coalition: US carrier groups.',
+            casualties: '4 seafarers killed; multiple ships sunk',
+            displaced: 'N/A — Maritime conflict; shipping rerouted around Africa (+14 days)',
+            status: 'ACTIVE — Ongoing attacks on Red Sea shipping since Nov 19, 2023',
+            note: 'Houthis claim attacks are pro-Palestine. Global trade severely disrupted. Suez Canal traffic -50%.'
+        },
+        {
+            name: 'DR Congo — Eastern Conflict', lat: -1.5, lon: 29.0, severity: 'CRITICAL',
+            type: 'Civil War / Regional Proxy', since: 1996,
+            parties: [['🇨🇩 FARDC + FDLR', 'DRC government army'], ['M23 (Rwanda-backed)', 'Rebel group']],
+            support: 'M23: Rwanda (denied). FARDC: MONUSCO (withdrawing).',
+            casualties: '>6M dead (since 1996); ongoing thousands per year',
+            displaced: '~7M IDPs — largest in Africa',
+            status: 'CRITICAL — M23 captured Goma (Jan 2025), advancing on Bukavu',
+            note: 'World\'s most deadly ongoing conflict. M23 captures Goma, DRC\'s second city, Jan 2025.'
+        },
+        {
+            name: 'Sahel — Mali & Burkina Faso', lat: 14.5, lon: -3.5, severity: 'HIGH',
+            type: 'Jihadist Insurgency', since: 2012,
+            parties: [['Juntas (Mali + BF)', 'Military governments (post-coup)'], ['JNIM / ISGS', 'Al-Qaeda & IS affiliates']],
+            support: 'Juntas: Wagner/Russia, expelled French forces. JNIM: local recruits.',
+            casualties: '>15,000 civilians dead in Sahel 2023-2024',
+            displaced: '~3M across Mali, BF, Niger',
+            status: 'ACTIVE — JNIM controls large areas; mass atrocities ongoing',
+            note: 'Post-coup juntas expelled France, invited Wagner. Jihadist territory expanded despite Russian presence.'
+        },
+        {
+            name: 'Niger — Terrorism & Coup', lat: 16.0, lon: 8.0, severity: 'MODERATE',
+            type: 'Jihadist Insurgency + Political Crisis', since: 2015,
+            parties: [['Military Junta (CNSP)', 'Post-July 2023 coup govt'], ['ISGS + Ansarul Islam', 'IS & AQ affiliates']],
+            support: 'Junta: Mali, BF, Russia. West expelled after coup.',
+            casualties: '>2,000 civilians/military dead 2023',
+            displaced: '~350,000 IDPs',
+            status: 'ACTIVE — Junta consolidating power, jihadists expanding',
+            note: 'Military coup July 26, 2023. France and US lost bases. IS expanding in Tillabéri region.'
+        },
+        {
+            name: 'Haiti — Gang Warfare', lat: 18.7, lon: -72.3, severity: 'CRITICAL',
+            type: 'Criminal / Gang Warfare', since: 2021,
+            parties: [['G9 Family / Viv Ansanm coalition', '~200 armed groups, ~80% of Port-au-Prince'], ['Haitian National Police + MSS (Kenya-led)', 'Collapsing state security']],
+            support: 'Gangs: diaspora money, weapon trafficking. MSS: US-funded, Kenya-led.',
+            casualties: '>5,600 killed in 2024 (UN); >2,000 in Q1 2024 alone',
+            displaced: '~700,000 IDPs in Haiti',
+            status: 'CRITICAL — State near-collapse; PM resigned Mar 2024',
+            note: 'Accelerated after PM Moïse assassination 2021. Gang leader Barbecue controls capital approaches.'
+        },
+        {
+            name: 'Mexico — Cartel Wars', lat: 25.0, lon: -107.0, severity: 'HIGH',
+            type: 'Criminal / Narco Conflict', since: 2006,
+            parties: [['CJNG (Jalisco Cartel)', 'Expanding paramilitary cartel'], ['Sinaloa Cartel (split)', 'Los Chapitos vs. Mayos faction']],
+            support: 'Cartels: drug revenue, US weapons. Govt: US DEA support.',
+            casualties: '>450,000 murdered since 2006; ~35,000/yr currently',
+            displaced: '>400,000 internally displaced by cartel violence',
+            status: 'ACTIVE — Sinaloa civil war since Aug 2024; CJNG expanding',
+            note: 'Deadliest non-war conflict globally. Sinaloa internal split Aug 2024: Chapitos vs. Ismael Zambada faction.'
+        },
+        {
+            name: 'Iraq — IS Remnants', lat: 34.0, lon: 43.0, severity: 'MODERATE',
+            type: 'Counter-Insurgency', since: 2013,
+            parties: [['🇮🇶 Iraqi Security Forces + PMF', 'Government + Iran-backed militia'], ['Islamic State (IS)', 'Surviving sleeper cells']],
+            support: 'ISF: US air support, Iranian PMF. IS: self-financed cells.',
+            casualties: '>200,000 dead (IS peak 2014-2017); ongoing ~500/yr',
+            displaced: 'Most of 6M Iraqi IDPs returned; ~1.2M still displaced',
+            status: 'LOW INTENSITY — IS cells active in Kirkuk, Diyala, Anbar deserts',
+            note: 'IS "caliphate" defeated 2019, but cells persist. 1-2 attacks/week. Iran-backed PMF tensions rising.'
+        },
+        {
+            name: 'Syria — Post-War Transition', lat: 35.5, lon: 38.5, severity: 'HIGH',
+            type: 'Civil War → Transition', since: 2011,
+            parties: [['HTS (Hayat Tahrir al-Sham)', 'Controls most of Syria since Dec 2024'], ['SDF (Kurds)', 'NE Syria'], ['SNA + Turkey', 'NW border zone']],
+            support: 'HTS: Turkey (ambivalent). SDF: US. IS: self-financed.',
+            casualties: '>580,000 dead since 2011 (SOHR)',
+            displaced: '~7M refugees abroad, 7M+ IDPs — largest refugee crisis before Ukraine',
+            status: 'TRANSITION — Assad fell Dec 8, 2024; HTS forming new govt',
+            note: 'Assad regime collapsed Dec 8, 2024 after rebel offensive. HTS (ex-al-Nusra) now governing.'
+        },
+        {
+            name: 'Lebanon — Post-War Fragility', lat: 33.6, lon: 35.5, severity: 'HIGH',
+            type: 'Post-Conflict / Political Crisis', since: 2023,
+            parties: [['🇮🇱 Israel', 'Military operation in S. Lebanon'], ['Hezbollah (Iran-backed)', 'Dominant armed group']],
+            support: 'Hezbollah: Iran (weapons, money). Israel: US military aid.',
+            casualties: '>4,000 dead in Lebanon-Israel fighting, 2024; ~1,200 Hezbollah fighters',
+            displaced: '~1.2M displaced in Lebanon during conflict',
+            status: 'CEASEFIRE (Nov 2024) — Fragile; Hezbollah rebuilt; IDF partial withdrawal',
+            note: 'Full escalation Jun-Nov 2024. Ceasefire Nov 27, 2024. Hezbollah severely weakened (Nasrallah killed).'
+        },
+        {
+            name: 'Pakistan — TTP Insurgency', lat: 33.0, lon: 70.5, severity: 'MODERATE',
+            type: 'Islamist Insurgency', since: 2007,
+            parties: [['🇵🇰 Pakistan Army', 'Federal security forces'], ['TTP (Tehrik-i-Taliban)', 'Taliban-linked insurgency']],
+            support: 'Pakistan: Chinese military cooperation. TTP: Afghan Taliban support.',
+            casualties: '>80,000 dead (2007-present, all causes)',
+            displaced: '>500,000 IDPs in KPK/FATA regions',
+            status: 'ESCALATING — TTP attacks surged 70% since Afghan Taliban takeover 2021',
+            note: 'TTP attacks dramatically increased after Afghan Taliban return to power in 2021. Safe haven in Afghanistan.'
+        },
+        {
+            name: 'Nagorno-Karabakh Aftermath', lat: 40.2, lon: 46.8, severity: 'MODERATE',
+            type: 'Post-Conflict Ethnic Cleansing / Tensions', since: 1988,
+            parties: [['🇦🇿 Azerbaijan', 'Retook NKR Sept 2023'], ['🇦🇲 Armenia', 'Ceded NKR; border demarcation ongoing']],
+            support: 'Azerbaijan: Turkey, Israel (weapons). Armenia: Russia (failed to protect).',
+            casualties: '~7,000 dead in 2020 war; ~200 in Sept 2023 operation',
+            displaced: '~100,000 ethnic Armenians fled NKR in Sept 2023 (full depopulation)',
+            status: 'NO ACTIVE FIGHTING — Peace treaty negotiations ongoing 2025',
+            note: 'Azerbaijan\'s 24h "anti-terror" op (Sept 19-20, 2023) ended NKR existence. All Armenians fled.'
+        },
+        {
+            name: 'Libya — Rival Governments', lat: 29.0, lon: 18.0, severity: 'MODERATE',
+            type: 'Political-Military Standoff', since: 2011,
+            parties: [['GNU (Tripoli, West)', 'UN-recognised govt of Dbeibah'], ['LNA/GECOL (Benghazi, East)', 'Haftar\'s rival military command']],
+            support: 'GNU: Turkey troops. LNA: UAE, Russia/Wagner, Egypt.',
+            casualties: '>25,000 dead since 2011 civil war',
+            displaced: '>200,000 Libyans displaced; major migrant transit country',
+            status: 'FROZEN CONFLICT — Ceasefire Oct 2020; sporadic clashes; oil disputes',
+            note: 'Split since Gaddafi fall 2011. Two rival govts. Occasional fighting despite 2020 ceasefire.'
+        },
     ];
     const CONFLICT_COLORS = { CRITICAL: '#ff0000', HIGH: '#ff6600', MODERATE: '#ffb000' };
 
     const initConflictZones = () => {
+        const currentYear = new Date().getFullYear();
         CONFLICTS.forEach(c => {
             const col = CONFLICT_COLORS[c.severity] || '#ff6600';
-            // Use a self-contained SVG crosshair — no inner position:absolute children
-            // which caused MapLibre anchor miscalculation from marker #10+
+            const duration = currentYear - c.since;
             const el = document.createElement('div');
             el.style.cssText = 'width:22px;height:22px;cursor:pointer;';
             el.innerHTML = `<svg width="22" height="22" viewBox="0 0 22 22" xmlns="http://www.w3.org/2000/svg">
@@ -1566,16 +1746,38 @@ document.addEventListener("DOMContentLoaded", () => {
                 <circle cx="11" cy="11" r="2.5" fill="${col}" opacity="0.8"/>
             </svg>`;
             el.style.filter = `drop-shadow(0 0 4px ${col})`;
-            const popup = new maplibregl.Popup({ offset: 14, maxWidth: '290px' }).setHTML(`
-                <div style="font-family:'Share Tech Mono',monospace;">
-                <h3 style="color:${col};margin:0 0 6px;border-bottom:1px solid ${col}55;padding-bottom:4px;">&#9881; ${c.name}</h3>
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:3px;font-size:.73rem;margin-bottom:6px;">
-                    <div style="background:rgba(255,0,0,.06);padding:3px 6px;">TYPE: <strong>${c.type}</strong></div>
-                    <div style="background:rgba(255,0,0,.06);padding:3px 6px;">LEVEL: <strong style="color:${col};">${c.severity}</strong></div>
+
+            const partiesHtml = c.parties.map(([name, role]) =>
+                `<div style="background:rgba(255,0,0,.05);padding:3px 7px;border-left:2px solid ${col}55;">
+                    <div style="color:${col};font-size:.72rem;">${name}</div>
+                    <div style="opacity:.55;font-size:.62rem;">${role}</div>
+                </div>`
+            ).join('');
+
+            const popup = new maplibregl.Popup({ offset: 14, maxWidth: '320px' }).setHTML(`
+                <div style="font-family:'Share Tech Mono',monospace;font-size:.72rem;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;border-bottom:1px solid ${col}44;padding-bottom:5px;">
+                    <h3 style="color:${col};margin:0;font-size:.85rem;">&#9881; ${c.name}</h3>
+                    <span style="background:${col}22;border:1px solid ${col}55;color:${col};padding:1px 5px;font-size:.6rem;border-radius:2px;">${c.severity}</span>
                 </div>
-                <p style="font-size:.73rem;margin:3px 0;"><strong>Parties:</strong> ${c.parties}</p>
-                <p style="font-size:.7rem;opacity:.8;margin-top:5px;">${c.note}</p>
-                <p style="font-size:.58rem;opacity:.35;margin-top:6px;">Source: ACLED / SIPRI / UN OCHA 2025</p></div>`);
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:3px;margin-bottom:7px;">
+                    <div style="background:rgba(255,255,255,.04);padding:3px 6px;">TYPE<br><strong style="font-size:.75rem;">${c.type}</strong></div>
+                    <div style="background:rgba(255,255,255,.04);padding:3px 6px;">SINCE<br><strong style="font-size:.75rem;">${c.since} (${duration} yr${duration !== 1 ? 's' : ''})</strong></div>
+                </div>
+                <div style="font-size:.62rem;opacity:.5;margin-bottom:3px;letter-spacing:1px;">&#9876; PARTIES IN CONFLICT</div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:3px;margin-bottom:7px;">${partiesHtml}</div>
+                <div style="font-size:.62rem;opacity:.5;margin-bottom:2px;letter-spacing:1px;">&#9679; EXTERNAL SUPPORT</div>
+                <div style="background:rgba(255,255,255,.03);padding:4px 6px;margin-bottom:6px;font-size:.68rem;opacity:.85;">${c.support}</div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:3px;margin-bottom:6px;">
+                    <div><div style="font-size:.58rem;opacity:.5;letter-spacing:1px;">EST. CASUALTIES</div><div style="color:#ff6655;font-size:.68rem;margin-top:1px;">${c.casualties}</div></div>
+                    <div><div style="font-size:.58rem;opacity:.5;letter-spacing:1px;">DISPLACED</div><div style="color:#ffb000;font-size:.68rem;margin-top:1px;">${c.displaced}</div></div>
+                </div>
+                <div style="font-size:.62rem;opacity:.5;margin-bottom:2px;letter-spacing:1px;">&#9679; CURRENT STATUS</div>
+                <div style="background:${col}11;border:1px solid ${col}33;padding:4px 7px;font-size:.7rem;color:${col};margin-bottom:5px;">${c.status}</div>
+                <div style="font-size:.65rem;opacity:.65;border-top:1px solid rgba(255,255,255,.08);padding-top:5px;line-height:1.4;">${c.note}</div>
+                <div style="font-size:.55rem;opacity:.3;margin-top:5px;">Source: ACLED / SIPRI / UN OCHA / SOHR 2025</div>
+                </div>`);
+
             const m = new maplibregl.Marker({ element: el, anchor: 'center' })
                 .setLngLat([c.lon, c.lat])
                 .setPopup(popup);
