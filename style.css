@@ -15,7 +15,9 @@
 body, html { width: 100%; height: 100%; overflow: hidden; background: #000; color: var(--amber); }
 
 #map { position: absolute; inset: 0; z-index: 1; }
-.maplibregl-ctrl-bottom-right { display: none; }
+/* MapLibre Control Position Fix */
+.maplibregl-ctrl-bottom-right { bottom: 65px; right: 10px; display: block; }
+.maplibregl-ctrl-bottom-left { display: none; }
 
 /* -------------------------------------------------------
    GLOBAL NEWS TICKER (Marquee)
@@ -271,6 +273,33 @@ input:checked + .slider { background: rgba(255,176,0,0.1); }
     transition: all 0.3s;
 }
 
-/* Hide elements when ticker disabled */
-body.no-ticker .global-ticker { display: none !important; }
-body.no-ticker #sidebar, body.no-ticker #intelligence-panel { top: 0 !important; }
+/* -------------------------------------------------------
+   V7.1 MAP BRANDING & POPUPS
+------------------------------------------------------- */
+#map-branding {
+    position: fixed; bottom: 44px; left: 0; width: 100%;
+    z-index: 450; display: flex; justify-content: center;
+    pointer-events: none;
+}
+.branding-line {
+    font-size: 0.58rem; color: rgba(255,255,255,0.4);
+    letter-spacing: 1.5px; text-transform: uppercase;
+    background: rgba(0,0,0,0.3); padding: 4px 12px; border-radius: 100px;
+    backdrop-filter: blur(4px); pointer-events: auto;
+}
+.branding-line a { color: #fff; text-decoration: none; margin: 0 5px; opacity: 0.7; transition: 0.2s; }
+.branding-line a:hover { opacity: 1; text-shadow: 0 0 5px var(--amber); }
+
+/* Popup Dark Mode Correction */
+.maplibregl-popup-content {
+    background: var(--panel-bg) !important;
+    color: #fff !important;
+    border: 1px solid var(--glass-edge) !important;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.8) !important;
+    padding: 12px !important; border-radius: 4px !important;
+}
+.maplibregl-popup-tip { border-top-color: var(--panel-bg) !important; }
+.maplibregl-popup-close-button { color: #888 !important; outline: none !important; }
+
+/* Remove legacy elements */
+#about-btn { display: none !important; }

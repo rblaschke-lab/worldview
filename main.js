@@ -2,7 +2,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // ----------------------------------------------------
     // CONSTANTS & STATE (V7.0)
     // ----------------------------------------------------
-    const VERSION = "7.0";
+    const VERSION = "7.1";
     const toggles = {
         terminator: false, fires: false, weather: false, borders: false,
         ships: false, flights: false, iss: false, starlink: false, earthquakes: false, webcams: false,
@@ -42,7 +42,7 @@ document.addEventListener("DOMContentLoaded", () => {
         dragRotate: true, dragPan: true, scrollZoom: true
     });
 
-    map.addControl(new maplibregl.NavigationControl(), 'top-left');
+    map.addControl(new maplibregl.NavigationControl(), 'bottom-right');
 
     const statusText = document.getElementById("status-text");
     const setStatus = (msg) => { if(statusText) statusText.innerText = msg; };
@@ -612,6 +612,62 @@ document.addEventListener("DOMContentLoaded", () => {
         if (callsign.startsWith('CFG')) return "HOLIDAY CHARTER LOGISTICS";
         return "SCHEDULED GLOBAL OPS";
     };
+    // ----------------------------------------------------
+    // Aviation Simulation Relay (Fallback V7.1)
+    // ----------------------------------------------------
+    const AviationSimulationRelay = [
+        { call: 'DLH400', lat: 50.0333, lon: 8.5705, hdg: 275, alt: 36000, spd: 880, air: 'LUFTHANSA' },
+        { call: 'DLH710', lat: 48.3537, lon: 11.7860, hdg: 95, alt: 34000, spd: 840, air: 'LUFTHANSA' },
+        { call: 'DLH430', lat: 52.5588, lon: 13.2884, hdg: 260, alt: 32000, spd: 910, air: 'LUFTHANSA' },
+        { call: 'CFG152', lat: 50.1109, lon: 8.6821, hdg: 180, alt: 38000, spd: 820, air: 'CONDOR' },
+        { call: 'CFG788', lat: 28.1248, lon: -15.4300, hdg: 10, alt: 12000, spd: 450, air: 'CONDOR' },
+        { call: 'DLH510', lat: -23.5505, lon: -46.6333, hdg: 45, alt: 37000, spd: 890, air: 'LUFTHANSA' },
+        { call: 'DLH116', lat: 53.5511, lon: 9.9937, hdg: 195, alt: 22000, spd: 680, air: 'LUFTHANSA' },
+        { call: 'CFG221', lat: 39.4699, lon: -0.3763, hdg: 340, alt: 28000, spd: 740, air: 'CONDOR' }
+    ];
+
+    const renderFlightMarkers = (flights, isMock = false) => {
+        flightMarkers.forEach(m => m.marker.remove());
+        flightMarkers = [];
+        
+        flights.forEach(s => {
+            const callsign = (s.call || s[1]).trim();
+            const lon = s.lon || s[5];
+            const lat = s.lat || s[6];
+            const alt = s.alt || Math.round(s[7] * 3.28084);
+            const spd = s.spd || Math.round(s[9] * 3.6);
+            const hdg = s.hdg || s[10] || 0;
+            const airline = s.air || (callsign.startsWith('DLH') ? "LUFTHANSA" : "CONDOR");
+            const route = estimateRoute(callsign);
+
+            const el = document.createElement('div');
+            el.className = 'marker-flight';
+            el.innerHTML = airline === "CONDOR" ? planeSvg.replace('#ffb000', '#00ff88') : planeSvg;
+            
+            const marker = new maplibregl.Marker({ element: el, rotation: hdg, rotationAlignment: 'map', pitchAlignment: 'map' })
+                .setLngLat([lon, lat])
+                .setPopup(new maplibregl.Popup({ offset: 15, maxWidth: '280px' }).setHTML(`
+                    <div style="font-family:'Share Tech Mono',monospace; min-width:200px;">
+                        <h3 style="color:${airline === "CONDOR" ? '#00ff88' : '#ffb000'}; margin:0 0 8px; border-bottom:1px solid rgba(255,255,255,0.2); padding-bottom:5px;">
+                            <i class="fa-solid fa-plane-departure"></i> ${airline} ${isMock ? '<span style="font-size:0.6rem;opacity:0.5;">(SIM_RELAY)</span>' : ''}
+                        </h3>
+                        <div style="font-size:1.1rem; color:#fff; margin-bottom:8px;">FLIGHT: ${callsign}</div>
+                        <div style="background:rgba(255,255,255,0.05); padding:8px; border-radius:3px;">
+                            <div style="font-size:0.65rem; opacity:0.5; letter-spacing:1px;">ESTIMATED ROUTE</div>
+                            <div style="font-size:0.85rem; color:#0af; margin-bottom:10px;">${route}</div>
+                            <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                                <div><span style="opacity:0.4;font-size:10px;">ALT</span><br><strong>${alt} FT</strong></div>
+                                <div><span style="opacity:0.4;font-size:10px;">SPD</span><br><strong>${spd} KM/H</strong></div>
+                            </div>
+                        </div>
+                        <div style="font-size:0.6rem; opacity:0.3; margin-top:10px; text-align:right;">SOURCE: ${isMock ? 'INTELLIGENCE SIMULATION' : 'OPENSKY NETWORK'}</div>
+                    </div>
+                `));
+            
+            if (toggles.flights) marker.addTo(map);
+            flightMarkers.push({ marker, lon, lat, hdg, spd: (s.spd || s[9]) / 1000000 });
+        });
+    };
 
     const fetchFlights = async () => {
         setStatus("SCANNING GLOBAL AIRSPACE (OPENSKY RELAY)...");
@@ -619,56 +675,22 @@ document.addEventListener("DOMContentLoaded", () => {
             const res = await fetch('https://opensky-network.org/api/states/all');
             const data = await res.json();
             
-            flightMarkers.forEach(m => m.marker.remove());
-            flightMarkers = [];
-            
             const fleetStates = data.states.filter(s => {
                 const callsign = (s[1] || "").trim().toUpperCase();
                 return callsign.startsWith('DLH') || callsign.startsWith('CFG');
             }).slice(0, 50);
 
-            fleetStates.forEach(s => {
-                const callsign = s[1].trim();
-                const lon = s[5];
-                const lat = s[6];
-                const alt = Math.round(s[7] * 3.28084);
-                const spd = Math.round(s[9] * 3.6);
-                const hdg = s[10] || 0;
-                const airline = callsign.startsWith('DLH') ? "LUFTHANSA" : "CONDOR";
-                const route = estimateRoute(callsign);
-
-                const el = document.createElement('div');
-                el.className = 'marker-flight';
-                el.innerHTML = airline === "CONDOR" ? planeSvg.replace('#ffb000', '#00ff88') : planeSvg;
-                
-                const marker = new maplibregl.Marker({ element: el, rotation: hdg, rotationAlignment: 'map', pitchAlignment: 'map' })
-                    .setLngLat([lon, lat])
-                    .setPopup(new maplibregl.Popup({ offset: 15, maxWidth: '280px' }).setHTML(`
-                        <div style="font-family:'Share Tech Mono',monospace; min-width:200px;">
-                            <h3 style="color:${airline === "CONDOR" ? '#00ff88' : '#ffb000'}; margin:0 0 8px; border-bottom:1px solid rgba(255,255,255,0.2); padding-bottom:5px;">
-                                <i class="fa-solid fa-plane-departure"></i> ${airline}
-                            </h3>
-                            <div style="font-size:1.1rem; color:#fff; margin-bottom:8px;">FLIGHT: ${callsign}</div>
-                            <div style="background:rgba(255,255,255,0.05); padding:8px; border-radius:3px;">
-                                <div style="font-size:0.65rem; opacity:0.5; letter-spacing:1px;">ESTIMATED ROUTE</div>
-                                <div style="font-size:0.85rem; color:#0af; margin-bottom:10px;">${route}</div>
-                                <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
-                                    <div><span style="opacity:0.4;font-size:10px;">ALT</span><br><strong>${alt} FT</strong></div>
-                                    <div><span style="opacity:0.4;font-size:10px;">SPD</span><br><strong>${spd} KM/H</strong></div>
-                                </div>
-                            </div>
-                            <div style="font-size:0.6rem; opacity:0.3; margin-top:10px; text-align:right;">SOURCE: OPENSKY NETWORK</div>
-                        </div>
-                    `));
-                
-                marker.addTo(map);
-                if (!toggles.flights) marker.getElement().style.display = 'none';
-                flightMarkers.push({ marker, lon, lat, hdg, spd: s[9] / 1000000 });
-            });
-            setStatus(`GLOBAL AIRSPACE SCANNED: ${fleetStates.length} TARGETS IDENTIFIED.`);
+            if (fleetStates.length > 0) {
+                renderFlightMarkers(fleetStates, false);
+                setStatus(`GLOBAL AIRSPACE SCANNED: ${fleetStates.length} TARGETS IDENTIFIED.`);
+            } else {
+                renderFlightMarkers(AviationSimulationRelay, true);
+                setStatus(`LIMITED DATA // INITIATING AVIATION SIMULATION RELAY.`);
+            }
         } catch (error) {
-            console.error("Aviation fetch error:", error);
-            setStatus("AIRSPACE SCAN FAILED: RELAY TIMEOUT.");
+            console.warn("Aviation fetch error - switching to simulation relay.");
+            renderFlightMarkers(AviationSimulationRelay, true);
+            setStatus("AIRSPACE SCAN FAILED: RELAY TIMEOUT // SIMULATION ACTIVE.");
         }
     };
 
