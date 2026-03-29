@@ -1,13 +1,14 @@
 :root {
     --amber: #ffb000;
-    --amber-dim: rgba(255, 176, 0, 0.4);
-    --bg-dark: #0a0a09;
-    --panel-bg: rgba(4, 6, 16, 0.92);
-    --neon-green: #00ff00;
-    --neon-blue: #00f2fe;
-    --neon-red: #ff3300;
-    --ticker-bg: rgba(0, 0, 0, 0.85);
+    --amber-dim: rgba(255, 176, 0, 0.25);
+    --bg-dark: #07080a;
+    --panel-bg: hsla(220, 20%, 8%, 0.9);
+    --neon-green: #00ff88;
+    --neon-blue: #00d4ff;
+    --neon-red: #ff3344;
+    --ticker-bg: rgba(0, 0, 0, 0.92);
     --mobile-nav-h: 65px;
+    --glass-edge: rgba(255, 255, 255, 0.08);
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Share Tech Mono', monospace; }
@@ -39,11 +40,12 @@ body, html { width: 100%; height: 100%; overflow: hidden; background: #000; colo
     white-space: nowrap;
     padding-left: 100%;
     display: inline-block;
-    animation: marquee 90s linear infinite;
-    font-size: 1.15rem;
-    color: #ffffff;
+    animation: marquee 120s linear infinite;
+    font-size: 1.1rem;
+    color: var(--amber);
     text-transform: uppercase;
-    letter-spacing: 2px;
+    letter-spacing: 3px;
+    font-weight: 500;
 }
 
 .ticker-content:hover { animation-play-state: paused; cursor: pointer; }
@@ -104,40 +106,69 @@ body, html { width: 100%; height: 100%; overflow: hidden; background: #000; colo
 }
 
 /* -------------------------------------------------------
-   DESKTOP PANELS (Legacy structure preserved but refined)
+   DESKTOP PANELS (Premium Glassmorphism V7.0)
 ------------------------------------------------------- */
-#sidebar {
-    position: fixed; top: 14px; right: 14px; width: 300px; z-index: 100;
-    background: var(--panel-bg); border: 1px solid var(--amber-dim);
-    border-right: 3px solid var(--amber); border-radius: 3px;
-    box-shadow: 0 4px 30px rgba(0,0,0,.6), 0 0 18px var(--amber-dim);
-    backdrop-filter: blur(14px); max-height: 38px; overflow: hidden;
-    transition: max-height 0.38s cubic-bezier(0.4,0,0.2,1);
+.terminal-panel {
+    position: fixed; z-index: 100;
+    background: var(--panel-bg);
+    border: 1px solid var(--glass-edge);
+    border-radius: 4px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.8), inset 0 0 0 1px rgba(255,255,255,0.03);
+    backdrop-filter: blur(18px);
+    overflow: hidden;
+    transition: all 0.45s cubic-bezier(0.19, 1, 0.22, 1);
 }
-#sidebar:hover { max-height: 90vh; overflow-y: auto; }
+
+#sidebar {
+    top: 52px; right: 14px; width: 300px;
+    border-right: 3px solid var(--amber);
+    max-height: 42px;
+}
+#sidebar:hover { max-height: 90vh; overflow-y: auto; width: 320px; box-shadow: 0 0 30px var(--amber-dim); }
 
 #intelligence-panel {
-    position: fixed; top: 14px; left: 55px; width: 320px; z-index: 100;
-    background: var(--panel-bg); border: 1px solid rgba(0,255,0,.25);
-    border-left: 3px solid var(--neon-green); border-radius: 3px;
-    box-shadow: 0 4px 30px rgba(0,0,0,.6), 0 0 16px rgba(0,255,0,0.2);
-    backdrop-filter: blur(14px); max-height: 38px; overflow: hidden;
-    color: var(--neon-green); transition: max-height 0.38s cubic-bezier(0.4,0,0.2,1);
+    top: 52px; left: 14px; width: 240px;
+    border-left: 3px solid var(--neon-green);
+    max-height: 42px;
 }
-#intelligence-panel:hover { max-height: 85vh; }
+#intelligence-panel:hover { max-height: 85vh; width: 320px; box-shadow: 0 0 30px rgba(0,255,136,0.15); }
 
 /* CRT Scanline Overlay */
-.terminal-panel::before, #intelligence-panel::before {
-    content: " "; display: block; position: absolute; inset: 0;
+.terminal-panel::before {
+    content: ""; display: block; position: absolute; inset: 0;
     pointer-events: none; z-index: 100;
-    background: linear-gradient(rgba(18,16,16,0) 50%, rgba(0,0,0,.1) 50%),
-                linear-gradient(90deg, rgba(255,0,0,.02), rgba(0,255,0,.01), rgba(0,0,255,.02));
-    background-size: 100% 4px, 6px 100%; opacity: .4;
+    background: linear-gradient(rgba(18,16,16,0) 50%, rgba(0,0,0,.08) 50%);
+    background-size: 100% 3px; opacity: 0.25;
 }
 
 /* Header & Typography */
-header h1 { font-size: 1rem; letter-spacing: 2px; text-shadow: 0 0 6px var(--amber); white-space: nowrap; }
-.version { font-size: .75rem; vertical-align: top; opacity: .7; }
+header {
+    padding: 10px 14px; display: flex; flex-direction: column; gap: 2px;
+    position: relative; border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+header h1, header h2 { font-size: 0.85rem; letter-spacing: 2px; font-weight: 700; margin: 0; }
+#sidebar header h1 { color: var(--amber); }
+#intelligence-panel header h2 { color: var(--neon-green); font-size: 0.8rem; }
+
+.version { font-size: 0.6rem; opacity: 0.4; }
+.byline {
+    position: absolute; top: 12px; right: 14px;
+    font-size: 0.52rem; opacity: 0.3; letter-spacing: 1.5px;
+    text-transform: uppercase;
+}
+.sidebar-expand-hint {
+    font-size: 0.5rem; text-align: right; margin-top: 1px;
+    opacity: 0.3; letter-spacing: 2px; font-weight: 400;
+}
+.sub-header {
+    font-size: 0.55rem; opacity: 0.5; display: flex; align-items: center;
+    gap: 4px; margin-top: 1px; letter-spacing: 1px; color: #fff;
+}
+.blinking-cursor {
+    width: 6px; height: 10px; background: currentColor;
+    animation: cursor-blink 1s step-end infinite;
+}
+@keyframes cursor-blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
 .category-title {
     font-size: .75rem; text-transform: uppercase; letter-spacing: 1px;
     display: flex; align-items: center; justify-content: space-between;
@@ -150,11 +181,29 @@ header h1 { font-size: 1rem; letter-spacing: 2px; text-shadow: 0 0 6px var(--amb
 .toggle-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 12px; }
 .control-item { display: flex; justify-content: space-between; align-items: center; font-size: 0.72rem; min-height: 28px; }
 
-.toggle-switch { position: relative; width: 32px; height: 14px; border: 1px solid var(--amber); cursor: pointer; }
-.slider { position: absolute; inset: 0; background: rgba(0,0,0,.6); transition: .3s; }
-.slider:before { position: absolute; content: ""; height: 10px; width: 10px; left: 1px; bottom: 1px; background: var(--amber); transition: .3s; }
-input:checked + .slider { background: var(--amber-dim); }
-input:checked + .slider:before { transform: translateX(18px); box-shadow: 0 0 5px var(--amber); }
+/* Hardware Toggles (V7.0 Aero-Switch) */
+.toggle-switch {
+    position: relative; width: 42px; height: 18px;
+    background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1);
+    box-shadow: inset 0 2px 5px rgba(0,0,0,0.5); border-radius: 20px;
+    cursor: pointer;
+}
+.slider {
+    position: absolute; inset: 0; transition: 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+.slider:before {
+    position: absolute; content: "";
+    height: 12px; width: 12px; left: 3px; bottom: 2px;
+    background: #444; border-radius: 50%;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.8), inset 0 1px 1px rgba(255,255,255,0.2);
+    transition: .3s;
+}
+input:checked + .slider:before {
+    transform: translateX(23px);
+    background: var(--amber);
+    box-shadow: 0 0 12px var(--amber-dim), inset 0 1px 1px rgba(255,255,255,0.4);
+}
+input:checked + .slider { background: rgba(255,176,0,0.1); }
 
 /* -------------------------------------------------------
    POWER OUTAGE MARKERS
