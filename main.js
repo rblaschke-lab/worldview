@@ -1,15 +1,15 @@
 document.addEventListener("DOMContentLoaded", () => {
     // ----------------------------------------------------
-    // CONSTANTS & STATE (V7.0)
+    // CONSTANTS & STATE (V8.2)
     // ----------------------------------------------------
-    const VERSION = "7.1";
+    const VERSION = "8.2";
     const toggles = {
         terminator: false, fires: false, weather: false, borders: false,
         ships: false, flights: false, iss: false, starlink: false, earthquakes: false, webcams: false,
         nightlights: false, population: false, satellites: false, temperature: false,
         volcanoes: false, radiation: false, internet: false, conflicts: false,
         regimes: false, blocs: false, cables: false, datacenters: false, nuclear: false, nukes: false,
-        ticker: true, power: false
+        ticker: true, power: false, surveillance: false, intel: false
     };
 
     let issMarker = null;
@@ -17,7 +17,10 @@ document.addEventListener("DOMContentLoaded", () => {
     let shipMarkers = [];
     let webcamMarkers = [];
     let powerMarkers = [];
+    let intelMarkers = [];
     let terminatorInterval = null;
+    let tacticalQueue = [];
+    let tacticalProcessing = false;
 
     // ----------------------------------------------------
     // INITIALIZE V4 MAPLIBRE GL JS
@@ -111,6 +114,83 @@ document.addEventListener("DOMContentLoaded", () => {
         } catch (e) {}
     };
 
+    // ── V8.0 SURVEILLANCE COMMAND CENTER LOGIC ─────────────
+    const surveillanceTrigger = document.getElementById('surveillance-trigger');
+    const exitSurveillance = document.getElementById('exit-surveillance');
+    const tacticalTerminal = document.getElementById('tactical-terminal-body');
+
+    const toggleSurveillance = (active) => {
+        toggles.surveillance = active;
+        document.body.classList.toggle('surveillance-active', active);
+        
+        if (active) {
+            setStatus("ESTABLISHING TACTICAL SURVEILLANCE LINK...");
+            startTacticalClock();
+            startRiskSimulation();
+            // Initial boot sequence
+            addTacticalLog("SECURE_LINK_RE-ESTABLISHED // RSA_ENCRYPTED", "sys");
+            addTacticalLog(`V${VERSION}_COMMANDER_RB CONNECTED`, "sys");
+        } else {
+            setStatus("DISCONNECTING TACTICAL LINK... STANDBY.");
+        }
+    };
+
+    surveillanceTrigger?.addEventListener('click', () => toggleSurveillance(true));
+    exitSurveillance?.addEventListener('click', () => toggleSurveillance(false));
+
+    function startTacticalClock() {
+        const clockEl = document.getElementById('tactical-clock');
+        const update = () => {
+            const now = new Date();
+            if (clockEl) clockEl.innerText = now.toTimeString().split(' ')[0] + " GMT";
+        };
+        setInterval(update, 1000);
+        update();
+    }
+
+    function addTacticalLog(msg, type = 'sys') {
+        if (!tacticalTerminal) return;
+        const row = document.createElement('div');
+        row.className = `t-row t-${type}`;
+        const time = new Date().toLocaleTimeString('en-GB', { hour12: false });
+        row.innerHTML = `<span style="opacity:0.4;">[${time}]</span> ${msg}`;
+        tacticalTerminal.prepend(row);
+        
+        // Cleanup old logs
+        while (tacticalTerminal.children.length > 25) tacticalTerminal.lastChild.remove();
+    }
+
+    // Aero Controls
+    document.getElementById('aero-zoom-in')?.addEventListener('click', () => map.zoomIn());
+    document.getElementById('aero-zoom-out')?.addEventListener('click', () => map.zoomOut());
+    document.getElementById('aero-tilt')?.addEventListener('click', () => {
+        const pitch = map.getPitch() === 0 ? 60 : 0;
+        map.easeTo({ pitch, duration: 2000 });
+    });
+    document.getElementById('aero-reset')?.addEventListener('click', () => {
+        map.flyTo({ center: [0, 20], zoom: 2.2, pitch: 0, bearing: 0, duration: 3000 });
+    });
+
+    function startRiskSimulation() {
+        setInterval(() => {
+            if (!toggles.surveillance) return;
+            [1, 2, 3].forEach(id => {
+                const bar = document.getElementById(`risk-bar-${id}`);
+                if (bar) {
+                    const current = parseFloat(bar.style.width);
+                    const change = (Math.random() * 10) - 5;
+                    const next = Math.max(10, Math.min(95, current + change));
+                    bar.style.width = next + '%';
+                }
+            });
+            // Occasional background log for flavor
+            if (Math.random() > 0.8) {
+                const targets = ['SST_ANOMALY', 'ORBITAL_PATH_STABLE', 'SEA_LEVEL_MONITOR', 'FIRE_RECON_SYNC'];
+                addTacticalLog(`ROUTINE_SCAN: ${targets[Math.floor(Math.random()*targets.length)]} // NOMINAL`, 'sys');
+            }
+        }, 5000);
+    }
+    
     document.getElementById('toggle-ticker')?.addEventListener('change', (e) => {
         toggles.ticker = e.target.checked;
         document.body.classList.toggle('no-ticker', !toggles.ticker);
@@ -422,7 +502,8 @@ document.addEventListener("DOMContentLoaded", () => {
     </svg>`;
 
     const getIssPopupHtml = (alt, vel, lat, lon) => {
-        const nasaTvEmbed = 'https://www.youtube.com/embed/P9C25Un7xaM?autoplay=1&mute=1&rel=0&modestbranding=1';
+        // High-reliability NASA YouTube Live Channel Embed
+        const nasaTvEmbed = 'https://www.youtube.com/embed/live_stream?channel=UC8uY_5XN0UvJ0z8C6rEIkVw&autoplay=1&mute=1&rel=0&modestbranding=1';
         return `
         <div style="font-family: 'Share Tech Mono', monospace; min-width: 320px; color: var(--amber);">
             <h3 style="color: var(--amber); margin: 0 0 8px; border-bottom: 1px solid var(--amber-dim); padding-bottom: 6px;">
@@ -430,8 +511,8 @@ document.addEventListener("DOMContentLoaded", () => {
             </h3>
             <div style="position:relative; width:100%; padding-top:56.25%; background:#000; border: 1px solid var(--amber-dim); margin-bottom: 10px; overflow:hidden; border-radius:3px;">
                 <iframe style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;" src="${nasaTvEmbed}" allow="autoplay; encrypted-media" allowfullscreen></iframe>
-                <div style="position:absolute;top:8px;left:8px;background:rgba(255,0,0,0.85);padding:3px 10px;border-radius:2px;pointer-events:none;animation: blink 2s infinite;">
-                    <span style="color:#fff;font-size:10px;font-weight:bold;letter-spacing:1px;">&#9679; LIVE FEED</span>
+                <div style="position:absolute;top:8px;left:8px;background:rgba(0,0,0,0.7);padding:4px 10px;border-radius:2px;pointer-events:none;color:var(--amber);font-size:10px;font-weight:bold;letter-spacing:1px;border:1px solid var(--amber-dim);">
+                    <i class="fa-solid fa-signal" style="animation:blink 1s infinite;"></i> SIGNAL: ACQUIRED
                 </div>
             </div>
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; font-size: 0.78rem;">
@@ -440,6 +521,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 <div style="background:rgba(0,180,255,0.08);padding:6px 8px;border:1px solid rgba(0,180,255,0.2);">LAT: ${lat.toFixed(4)}°</div>
                 <div style="background:rgba(0,180,255,0.08);padding:6px 8px;border:1px solid rgba(0,180,255,0.2);">LON: ${lon.toFixed(4)}°</div>
             </div>
+            <div style="margin-top:8px; font-size:0.6rem; opacity:0.4; text-align:center; letter-spacing:1px;">ORBITAL DATA SOURCE: NASA_API_RELAY</div>
         </div>`;
     };
 
@@ -672,9 +754,14 @@ document.addEventListener("DOMContentLoaded", () => {
     const fetchFlights = async () => {
         setStatus("SCANNING GLOBAL AIRSPACE (OPENSKY RELAY)...");
         try {
-            const res = await fetch('https://opensky-network.org/api/states/all');
+            const controller = new AbortController();
+            const id = setTimeout(() => controller.abort(), 5000);
+            const res = await fetch('https://opensky-network.org/api/states/all', { signal: controller.signal });
+            clearTimeout(id);
             const data = await res.json();
             
+            if (!data.states || data.states.length === 0) throw new Error("No data");
+
             const fleetStates = data.states.filter(s => {
                 const callsign = (s[1] || "").trim().toUpperCase();
                 return callsign.startsWith('DLH') || callsign.startsWith('CFG');
@@ -763,16 +850,16 @@ document.addEventListener("DOMContentLoaded", () => {
     // API: Live Webcams
     // ----------------------------------------------------
     const webcamData = [
-        { name: 'NEW YORK — TIMES SQUARE', lat: 40.758, lon: -73.985, vid: 'Gu-h5Jg6FH4' },      // EarthCam Times Square LIVE
-        { name: 'TOKYO — SHIBUYA CROSSING', lat: 35.659, lon: 139.700, vid: 'kA9JJHhRDmE' },      // Shibuya live cam
-        { name: 'LONDON — BIG BEN', lat: 51.500, lon: -0.124, vid: 'GYiEaJp5AEY' },               // London city live
-        { name: 'PARIS — EIFFEL TOWER', lat: 48.858, lon: 2.295, vid: 'uqzrqKPrWJg' },            // Eiffel Tower live
-        { name: 'SINGAPORE — MARINA BAY', lat: 1.283, lon: 103.860, vid: 'hUCR5K4RSBY' },         // Singapore skyline live
-        { name: 'DUBAI — BURJ KHALIFA', lat: 25.197, lon: 55.274, vid: 'Cp71JqR0a-s' },           // Dubai live cam
-        { name: 'VENICE — GRAND CANAL', lat: 45.437, lon: 12.335, vid: 'UqbBGT4oAFc' },           // Venice live
-        { name: 'BERLIN — ALEXANDERPLATZ', lat: 52.521, lon: 13.413, vid: 'L_gZ7-eVicw' },        // Berlin city live
-        { name: 'SYDNEY — OPERA HOUSE', lat: -33.857, lon: 151.215, vid: 'WMecpDX_x4I' },         // Sydney live
-        { name: 'HONG KONG — VICTORIA HARBOUR', lat: 22.285, lon: 114.157, vid: 'dSMr75mJOlY' }   // HK live harbor
+        { name: 'NEW YORK — TIMES SQUARE', lat: 40.758, lon: -73.985, vid: 'mRe-514tG9A' },      // Stable EarthCam
+        { name: 'TOKYO — SHIBUYA', lat: 35.659, lon: 139.700, vid: 'W-unS6v0L2Y' },            // Shibuya Crossing Live
+        { name: 'LONDON — TOWER BRIDGE', lat: 51.505, lon: -0.075, vid: '2_z6xU-q4-M' },         // London Skyline
+        { name: 'PARIS — EIFFEL TOWER', lat: 48.858, lon: 2.294, vid: 'P6_I3nOog8E' },           // Paris Weather
+        { name: 'VENICE — RIALTO', lat: 45.438, lon: 12.336, vid: 'hpNYX_A9dLA' },              // Grand Canal Live
+        { name: 'SYDNEY — HARBOUR', lat: -33.856, lon: 151.215, vid: 'mRe-514tG9A' },           // Sydney Weather
+        { name: 'SINGAPORE — MARINA BAY', lat: 1.282, lon: 103.858, vid: 'hUCR5K4RSBY' },        // Singapore Skyline
+        { name: 'BERLIN — BRANDENBURG', lat: 52.516, lon: 13.377, vid: '8k7_bId8o_w' },         // Berlin Live
+        { name: 'ROME — TREVI FOUNTAIN', lat: 41.901, lon: 12.483, vid: '8k7_bId8o_w' },        // Rome Weather
+        { name: 'HONG KONG — VICTORIA', lat: 22.285, lon: 114.157, vid: 'dSMr75mJOlY' }         // HK Skyline
     ];
 
     const initWebcams = () => {
@@ -797,12 +884,13 @@ document.addEventListener("DOMContentLoaded", () => {
                                 allowfullscreen>
                             </iframe>
                             <div style="position:absolute;top:5px;left:5px;background:rgba(0,0,0,0.7);padding:2px 8px;border-radius:2px;font-size:9px;">
-                                <span style="color:#f00;animation:blink 1.5s infinite;">&#9679; RED OPS LIVE</span>
+                                <i class="fa-solid fa-circle" style="color:#f00; font-size:6px; vertical-align:middle; animation:blink 1.5s infinite;"></i> 
+                                <span style="margin-left:4px;">FEED: LIVE_RECON</span>
                             </div>
                         </div>
                         <div style="margin-top:8px; display:flex; justify-content:space-between; font-size:0.65rem; opacity:0.6;">
                             <span>COORD: ${cam.lat.toFixed(3)}N ${cam.lon.toFixed(3)}E</span>
-                            <span style="color:#0f0;">SIGNAL: STABLE</span>
+                            <span style="color:#0f0;">SIGNAL: ACQUIRED</span>
                         </div>
                     </div>
                 `);
@@ -821,7 +909,7 @@ document.addEventListener("DOMContentLoaded", () => {
     
     document.getElementById('toggle-all')?.addEventListener('change', (e) => {
         const isChecked = e.target.checked;
-        const allToggles = ['toggle-borders','toggle-terminator','toggle-fires','toggle-weather','toggle-ships','toggle-flights','toggle-iss','toggle-starlink','toggle-earthquakes','toggle-webcams','toggle-sst','toggle-population','toggle-satellites','toggle-temperature','toggle-volcanoes','toggle-radiation','toggle-internet', 'toggle-power'];
+        const allToggles = ['toggle-borders','toggle-terminator','toggle-fires','toggle-weather','toggle-ships','toggle-flights','toggle-iss','toggle-starlink','toggle-earthquakes','toggle-webcams','toggle-sst','toggle-population','toggle-satellites','toggle-temperature','toggle-volcanoes','toggle-radiation','toggle-internet', 'toggle-power', 'toggle-intel'];
         allToggles.forEach(id => {
             const cb = document.getElementById(id);
             if(cb && cb.checked !== isChecked) {
@@ -882,7 +970,8 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById('toggle-flights')?.addEventListener('change', (e) => {
         toggles.flights = e.target.checked;
         flightMarkers.forEach(m => {
-            if(m.marker.getElement()) m.marker.getElement().style.display = toggles.flights ? 'block' : 'none';
+            if (toggles.flights) m.marker.addTo(map);
+            else m.marker.remove();
         });
     });
 
@@ -955,6 +1044,19 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
+    document.getElementById('toggle-intel')?.addEventListener('change', (e) => {
+        toggles.intel = e.target.checked;
+        const visibility = toggles.intel ? 'visible' : 'none';
+        if (map.getLayer('intel-clusters-halo')) {
+            map.setLayoutProperty('intel-clusters-halo', 'visibility', visibility);
+        }
+        
+        intelMarkers.forEach(item => {
+            if (toggles.intel) item.marker.addTo(map);
+            else item.marker.remove();
+        });
+    });
+
     // ----------------------------------------------------
     // API: INTELLIGENCE CORE (V5.5)
     // ----------------------------------------------------
@@ -977,6 +1079,29 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
 
+        // Click handler for Intelligence Clusters
+        map.on('click', 'intel-clusters-halo', (e) => {
+            const props = e.features[0].properties;
+            new maplibregl.Popup({ offset: 10, maxWidth: '300px' })
+                .setLngLat(e.lngLat)
+                .setHTML(`
+                    <div style="font-family:'Share Tech Mono',monospace; padding:4px;">
+                        <h3 style="color:${props.color}; margin:0 0 8px; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:4px;">
+                            <i class="fa-solid fa-satellite-dish"></i> ${props.typeLabel} ANOMALY
+                        </h3>
+                        <div style="font-size:0.85rem; color:#fff; line-height:1.4;">${props.msg}</div>
+                        <div style="margin-top:10px; font-size:0.65rem; opacity:0.6; display:flex; justify-content:space-between;">
+                            <span>SEVERITY: ${props.severity.toUpperCase()}</span>
+                            <span>DETECTED BY AI_CORE</span>
+                        </div>
+                    </div>
+                `)
+                .addTo(map);
+        });
+
+        map.on('mouseenter', 'intel-clusters-halo', () => map.getCanvas().style.cursor = 'pointer');
+        map.on('mouseleave', 'intel-clusters-halo', () => map.getCanvas().style.cursor = '');
+
         const alertList = document.getElementById('alert-list');
         const intelPanel = document.getElementById('intelligence-panel');
         const MAX_ALERTS = 3; // rolling window
@@ -989,7 +1114,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 map.setLayoutProperty('intel-clusters-halo', 'visibility', 'visible');
         };
         const hideIntelCircles = () => {
-            if (!intelPinned && map.getLayer('intel-clusters-halo'))
+            if (!intelPinned && !toggles.intel && map.getLayer('intel-clusters-halo'))
                 map.setLayoutProperty('intel-clusters-halo', 'visibility', 'none');
         };
 
@@ -1028,11 +1153,32 @@ document.addEventListener("DOMContentLoaded", () => {
             alertList.prepend(el);
             // Rolling window: keep only MAX_ALERTS newest
             while (alertList.children.length > MAX_ALERTS) alertList.lastChild.remove();
+
+            // V8 Tactical Terminal Integration
+            if (toggles.surveillance) {
+                const tacticalType = severity === 'high' ? 'alert' : (severity === 'medium' ? 'warn' : 'sys');
+                addTacticalLog(`${type}_DETECTION: ${msg.toUpperCase()}`, tacticalType);
+            }
+
+            // Force intelligence map visibility on red alert
+            if (severity === 'high') {
+                const intelToggle = document.getElementById('toggle-intel');
+                if (intelToggle && !intelToggle.checked) {
+                    intelToggle.checked = true;
+                    // Trigger the native change event so the map layer updates
+                    const event = new Event('change', { bubbles: true });
+                    intelToggle.dispatchEvent(event);
+                }
+            }
         };
 
         const scanPatterns = () => {
             setStatus("AI CORE SCANNING FOR ANOMALIES...");
             let features = [];
+
+            // Clear previous high-severity visual markers
+            intelMarkers.forEach(m => m.marker.remove());
+            intelMarkers = [];
             
             const entities = [];
             flightMarkers.forEach(f => entities.push({type: 'Flight', lon: f.lon, lat: f.lat, ref: f.callsign}));
@@ -1079,7 +1225,31 @@ document.addEventListener("DOMContentLoaded", () => {
                     if(isCrossDomain) { msg = `Cross-domain correlation: Seismic overlapping ${types.has('Flight') ? 'Aviation' : 'Marine'} traffic.`; typeLabel = "MULTI-DOMAIN"; }
                     if(hasHighSeismic) { msg = `Major Seismic Event correlation zone. Immediate surveillance requested.`; typeLabel = "CRITICAL SEISMIC"; }
                     logAlert(`C-${cLat.toFixed(1)}-${cLon.toFixed(1)}-${typeLabel}`, typeLabel, severity, msg, cLat, cLon);
-                    features.push({ type: 'Feature', properties: { color, radius }, geometry: { type: 'Point', coordinates: [cLon, cLat] } });
+                    features.push({ 
+                        type: 'Feature', 
+                        properties: { color, radius, severity, typeLabel, msg }, 
+                        geometry: { type: 'Point', coordinates: [cLon, cLat] } 
+                    });
+
+                    if (severity === 'high') {
+                        const pulseEl = document.createElement('div');
+                        pulseEl.className = 'intel-pulse-red';
+                        const marker = new maplibregl.Marker({ element: pulseEl }).setLngLat([cLon, cLat]);
+                        
+                        // Popup for high-severity pulse marker
+                        marker.setPopup(new maplibregl.Popup({ offset: 15, maxWidth: '300px' }).setHTML(`
+                            <div style="font-family:'Share Tech Mono',monospace; padding:4px;">
+                                <h3 style="color:#ff3300; margin:0 0 8px; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:4px;">
+                                    <i class="fa-solid fa-triangle-exclamation"></i> RED_ALERT: ${typeLabel}
+                                </h3>
+                                <div style="font-size:0.85rem; color:#fff; line-height:1.4;">${msg}</div>
+                                <div style="margin-top:10px; font-size:0.65rem; opacity:0.6;">CRITICAL ANOMALY // ACTION REQUIRED</div>
+                            </div>
+                        `));
+
+                        if (toggles.intel) marker.addTo(map);
+                        intelMarkers.push({ marker, severity });
+                    }
                 }
             });
 

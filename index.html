@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Worldview V7.0 | Global Command Center</title>
+    <title>Worldview V8.0 | Global Command Center</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -16,7 +16,7 @@
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <link rel="stylesheet" href="./style.css?v=7.4">
+    <link rel="stylesheet" href="./style.css?v=8.0">
 </head>
 <body class="theme-clean">
     <div id="map"></div>
@@ -31,7 +31,7 @@
     <div id="sidebar" class="terminal-panel">
         <header>
             <div class="header-top-row header-main">
-                <h1>WORLDVIEW <span class="version">V7.1</span></h1>
+                <h1>WORLDVIEW <span class="version">V8.2</span></h1>
                 <div class="sidebar-expand-hint">▼ EXPAND</div>
             </div>
             <div class="header-top-row header-meta">
@@ -54,6 +54,13 @@
                 <span style="font-size:0.65rem;opacity:0.7;">GLOBAL NEWS BAND</span>
                 <label class="toggle-switch">
                     <input type="checkbox" id="toggle-ticker" checked>
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="control-item" style="margin-top:5px;">
+                <span style="font-size:0.65rem;opacity:0.7;color:var(--neon-green);"><i class="fa-solid fa-satellite-dish"></i> INTELLIGENCE MAP</span>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="toggle-intel">
                     <span class="slider"></span>
                 </label>
             </div>
@@ -139,8 +146,13 @@
                     <div class="control-item"><span>Sat &amp; Debris</span><label class="toggle-switch"><input type="checkbox" id="toggle-satellites"><span class="slider"></span></label></div>
                 </div>
                 <div class="control-item launch-trigger-item" id="launch-tracker-trigger" style="margin-top:6px;cursor:pointer;border-top:1px solid rgba(255,100,0,0.2);padding-top:6px;">
-                    <span style="color:#ff8844;">&#128640; Launch Tracker</span>
+                    <span style="color:#ff8844;">🚀 Launch Tracker</span>
                     <i class="fa-solid fa-chevron-right" style="color:#ff6600;font-size:.75rem;"></i>
+                </div>
+                <!-- V8.0 Tactical Toggle -->
+                <div class="control-item surveillance-trigger-item" id="surveillance-trigger" style="margin-top:6px;cursor:pointer;border-top:1px solid rgba(0,212,255,0.2);padding-top:6px;">
+                    <span style="color:#00d4ff;letter-spacing:1px;font-weight:bold;">🛰️ Surveillance Command</span>
+                    <i class="fa-solid fa-chevron-right" style="color:#00d4ff;font-size:.75rem;"></i>
                 </div>
             </div>
         </section>
@@ -199,13 +211,77 @@
 
     <!-- BOTTOM NEWS TICKER (Desktop Focus) -->
     <div id="ticker-bottom" class="global-ticker">
-        <div class="ticker-content" id="ticker-content-bottom">LOADED GLOBAL COMMAND INTERFACE V7.0 // STANDBY FOR SATELLITE RELAY...</div>
+        <div class="ticker-content" id="ticker-content-bottom">LOADED GLOBAL COMMAND INTERFACE V8.0 // STANDBY FOR SATELLITE RELAY...</div>
     </div>
 
     <!-- Launch Tracker HUD -->
     <div id="launch-hud">
-        <div style="color:#ff6600;font-size:.6rem;letter-spacing:2px;margin-bottom:6px;">&#128640; UPCOMING LAUNCHES</div>
+        <div style="color:#ff6600;font-size:.6rem;letter-spacing:2px;margin-bottom:6px;">🚀 UPCOMING LAUNCHES</div>
         <div id="launch-feed" style="opacity:.5;font-size:.65rem;">CONNECTING TO LAUNCH LIBRARY...</div>
+    </div>
+
+    <!-- V8.0 Aerospace Surveillance Overlay -->
+    <div id="surveillance-overlay">
+        <!-- CRT Global FX -->
+        <div class="surveillance-scanlines"></div>
+        <div class="surveillance-grid"></div>
+
+        <!-- Tactical Top Bar -->
+        <header class="tactical-header">
+            <div class="th-left">
+                <div class="th-signal"><span class="th-dot"></span> SECURE_LINK_ACTIVE</div>
+                <h1 class="th-title">SYSTEM MONITOR: GLOBAL THREAT ANALYSIS</h1>
+            </div>
+            <div class="th-right">
+                <div class="th-stat">USER: <span>COMMANDER_RB</span></div>
+                <div class="th-stat">CORE: <span>V8.04_ALPHA</span></div>
+                <div id="tactical-clock" class="th-stat">00:00:00</div>
+            </div>
+        </header>
+
+        <!-- Left Column: Terminal & Risks -->
+        <div class="tactical-left">
+            <div class="t-panel">
+                <div class="t-panel-header"><i class="fa-solid fa-terminal"></i> LIVE_TELEMETRY</div>
+                <div id="tactical-terminal-body" class="t-panel-body terminal-text">
+                    <div class="t-row t-sys">SYSTEM INITIALIZED // WAITING FOR DATA...</div>
+                </div>
+            </div>
+            <div class="t-panel">
+                <div class="t-panel-header"><i class="fa-solid fa-chart-line"></i> GLOBAL_RISK_INDICATORS</div>
+                <div class="t-panel-body">
+                    <div class="risk-bar-wrap"><span>TARGET_SCAN_INTENSITY</span><div class="risk-bar-bg"><div id="risk-bar-1" class="risk-bar-fill" style="width: 45%;"></div></div></div>
+                    <div class="risk-bar-wrap"><span>GEO_POLITICAL_TENSION</span><div class="risk-bar-bg"><div id="risk-bar-2" class="risk-bar-fill" style="width: 62%; background: #ffb000;"></div></div></div>
+                    <div class="risk-bar-wrap"><span>ATMOSPHERIC_ANOMALIES</span><div class="risk-bar-bg"><div id="risk-bar-3" class="risk-bar-fill" style="width: 28%; background: #00ff88;"></div></div></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column: Assets & Logs -->
+        <div class="tactical-right">
+            <div class="t-panel">
+                <div class="t-panel-header"><i class="fa-solid fa-shield-halved"></i> ASSET_STATUS</div>
+                <div id="asset-status-list" class="t-panel-body">
+                    <div class="asset-item"><span>NASA_ISS_LINK</span> <span class="asset-ok">STABLE</span></div>
+                    <div class="asset-item"><span>OPENSKY_RELAY</span> <span class="asset-warn">LIMITED</span></div>
+                    <div class="asset-item"><span>USGS_SEISMIC</span> <span class="asset-ok">ACTIVE</span></div>
+                    <div class="asset-item"><span>FIRMS_WILDFIRE</span> <span class="asset-ok">SYNCED</span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer / Tactical Controls -->
+        <footer class="tactical-footer">
+            <div class="tf-left">
+                <button id="exit-surveillance" class="tactical-btn exit-btn">[ EXIT_COMMAND ]</button>
+            </div>
+            <div id="aero-controls" class="tf-right">
+                <button id="aero-zoom-in" class="aero-btn"><i class="fa-solid fa-plus"></i></button>
+                <button id="aero-zoom-out" class="aero-btn"><i class="fa-solid fa-minus"></i></button>
+                <button id="aero-tilt" class="aero-btn">3D</button>
+                <button id="aero-reset" class="aero-btn">RST</button>
+            </div>
+        </footer>
     </div>
 
     <!-- Orientation Hint -->
@@ -217,14 +293,13 @@
     <!-- Layer Legend (shown dynamically for SST / Temp layers) -->
     <div id="layer-legend" style="display:none;"></div>
 
-    <!-- MAP BRANDING FOOTER (V7.1) -->
+    <!-- MAP BRANDING FOOTER (V8.0) -->
     <div id="map-branding">
         <div class="branding-line">
             - RB Design 2026 - Global AI Intelligence Architecture - <a href="./about.html" target="_blank">About the App</a> -
         </div>
     </div>
 
-    <script src="./main.js?v=7.1"></script>
+    <script src="./main.js?v=8.0"></script>
 </body>
 </html>
-ml>

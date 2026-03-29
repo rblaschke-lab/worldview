@@ -196,29 +196,56 @@ header h2 { font-size: 0.85rem; letter-spacing: 2.5px; font-weight: 700; margin:
 .toggle-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 12px; }
 .control-item { display: flex; justify-content: space-between; align-items: center; font-size: 0.72rem; min-height: 28px; }
 
-/* Hardware Toggles (V7.0 Aero-Switch) */
+/* Hardware Toggles (V8.1 Aero-Switch) */
 .toggle-switch {
-    position: relative; width: 42px; height: 18px;
-    background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1);
-    box-shadow: inset 0 2px 5px rgba(0,0,0,0.5); border-radius: 20px;
-    cursor: pointer;
+    position: relative; width: 44px; height: 16px;
+    background: rgba(40,45,50,0.8); border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 4px; cursor: pointer; transition: all 0.3s;
+    overflow: hidden; display: block;
+}
+.toggle-switch input {
+    opacity: 0; width: 0; height: 0; position: absolute;
 }
 .slider {
-    position: absolute; inset: 0; transition: 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    position: absolute; inset: 0; background: rgba(0,0,0,0.4);
+    transition: 0.2s ease-in-out;
 }
 .slider:before {
     position: absolute; content: "";
-    height: 12px; width: 12px; left: 3px; bottom: 2px;
-    background: #444; border-radius: 50%;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.8), inset 0 1px 1px rgba(255,255,255,0.2);
-    transition: .3s;
+    height: 100%; width: 18px; left: 0; top: 0;
+    background: #555; border-right: 1px solid rgba(255,255,255,0.1);
+    box-shadow: 2px 0 5px rgba(0,0,0,0.3);
+    transition: 0.2s ease-in-out;
+}
+input:checked + .slider {
+    background: rgba(0,255,255,0.15);
 }
 input:checked + .slider:before {
-    transform: translateX(23px);
-    background: var(--amber);
-    box-shadow: 0 0 12px var(--amber-dim), inset 0 1px 1px rgba(255,255,255,0.4);
+    transform: translateX(26px);
+    background: var(--neon-cyan);
+    box-shadow: -2px 0 10px rgba(0,255,255,0.4);
 }
-input:checked + .slider { background: rgba(255,176,0,0.1); }
+.control-item:hover .toggle-switch {
+    border-color: rgba(0,255,255,0.3);
+}
+
+/* -------------------------------------------------------
+   INTELLIGENCE PULSE MARKERS
+------------------------------------------------------- */
+@keyframes pulse-red-alert {
+    0% { transform: translate(-50%, -50%) scale(0.8); opacity: 0.8; box-shadow: 0 0 0 0 rgba(255,51,0,0.7); }
+    70% { transform: translate(-50%, -50%) scale(1.2); opacity: 0.3; box-shadow: 0 0 0 20px rgba(255,51,0,0); }
+    100% { transform: translate(-50%, -50%) scale(0.8); opacity: 0.8; box-shadow: 0 0 0 0 rgba(255,51,0,0); }
+}
+.intel-pulse-red {
+    width: 60px; height: 60px;
+    background: rgba(255,51,0,0.2);
+    border: 2px solid #ff3300;
+    border-radius: 50%;
+    animation: pulse-red-alert 2s infinite;
+    cursor: pointer;
+    z-index: 10;
+}
 
 /* -------------------------------------------------------
    POWER OUTAGE MARKERS
@@ -398,3 +425,141 @@ body.no-ticker #intelligence-panel { top: 14px !important; }
 .legend-title { font-size: 0.5rem; letter-spacing: 1.5px; color: rgba(255,255,255,0.5); text-align: center; text-transform: uppercase; margin-bottom: 3px; }
 .legend-bar { width: 100%; height: 6px; border-radius: 3px; opacity: 0.85; }
 .legend-labels { display: flex; justify-content: space-between; width: 100%; font-size: 0.42rem; color: rgba(255,255,255,0.4); margin-top: 2px; }
+
+/* -------------------------------------------------------
+   V8.0 AEROSPACE SURVEILLANCE THEME
+------------------------------------------------------- */
+#surveillance-overlay {
+    position: fixed; inset: 0; z-index: 9000;
+    pointer-events: none; opacity: 0;
+    visibility: hidden; transition: opacity 0.8s ease, visibility 0.8s;
+}
+
+/* Master Toggle Logic */
+body.surveillance-active #surveillance-overlay { opacity: 1; visibility: visible; }
+body.surveillance-active #sidebar, 
+body.surveillance-active #intelligence-panel, 
+body.surveillance-active .global-ticker,
+body.surveillance-active #mobile-nav,
+body.surveillance-active #mobile-menu-btn,
+body.surveillance-active #map-branding,
+body.surveillance-active .maplibregl-ctrl { 
+    opacity: 0 !important; pointer-events: none !important; 
+}
+
+/* CRT & Grid Visuals */
+.surveillance-scanlines {
+    position: absolute; inset: 0; z-index: 10;
+    background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.15) 50%);
+    background-size: 100% 4px; pointer-events: none;
+    animation: scanline-scroll 10s linear infinite;
+}
+@keyframes scanline-scroll { from { background-position: 0 0; } to { background-position: 0 100%; } }
+
+.surveillance-grid {
+    position: absolute; inset: 0; z-index: 5;
+    background-image: 
+        radial-gradient(circle at center, transparent 0%, rgba(0,0,0,0.4) 100%),
+        linear-gradient(rgba(0, 212, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 212, 255, 0.03) 1px, transparent 1px);
+    background-size: cover, 50px 50px, 50px 50px;
+    pointer-events: none;
+}
+
+/* Tactical Header */
+.tactical-header {
+    position: absolute; top: 0; left: 0; width: 100%;
+    padding: 24px 40px; display: flex; justify-content: space-between;
+    background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent);
+    z-index: 20; color: var(--neon-blue);
+}
+.th-signal { font-size: 0.7rem; letter-spacing: 2px; margin-bottom: 4px; display: flex; align-items: center; gap: 8px; }
+.th-dot { width: 6px; height: 6px; background: var(--neon-blue); border-radius: 50%; box-shadow: 0 0 8px var(--neon-blue); animation: pulse-glow 1.5s infinite; }
+.th-title { font-size: 1.6rem; font-weight: 800; letter-spacing: -0.5px; margin: 0; text-transform: uppercase; }
+.th-stat { font-size: 0.8rem; letter-spacing: 1px; color: rgba(0,212,255,0.6); text-align: right; margin-bottom: 2px; }
+.th-stat span { color: #fff; font-weight: bold; }
+
+/* Panels */
+.tactical-left, .tactical-right {
+    position: absolute; top: 120px; z-index: 20;
+    display: flex; flex-direction: column; gap: 24px;
+    pointer-events: auto;
+}
+.tactical-left { left: 40px; width: 340px; }
+.tactical-right { right: 40px; width: 280px; }
+
+.t-panel {
+    background: rgba(7, 8, 10, 0.7);
+    border: 1px solid rgba(0, 212, 255, 0.15);
+    border-radius: 2px; overflow: hidden;
+    backdrop-filter: blur(10px);
+}
+.t-panel-header {
+    padding: 10px 14px; background: rgba(0, 212, 255, 0.1);
+    font-size: 0.75rem; letter-spacing: 2px; font-weight: bold;
+    color: var(--neon-blue); border-bottom: 1px solid rgba(0, 212, 255, 0.1);
+}
+.t-panel-body { padding: 14px; }
+
+/* Terminal */
+.terminal-text { height: 220px; font-size: 0.75rem; line-height: 1.5; color: rgba(255,255,255,0.8); overflow-y: hidden; }
+.t-row { margin-bottom: 8px; padding-left: 12px; border-left: 2px solid transparent; transition: all 0.5s; }
+.t-sys { border-left-color: var(--neon-blue); color: var(--neon-blue); }
+.t-alert { border-left-color: var(--neon-red); color: var(--neon-red); }
+.t-warn { border-left-color: var(--amber); color: var(--amber); }
+
+/* Risks */
+.risk-bar-wrap { margin-bottom: 15px; }
+.risk-bar-wrap span { display: block; font-size: 0.6rem; letter-spacing: 1.5px; margin-bottom: 6px; color: rgba(255,255,255,0.4); }
+.risk-bar-bg { width: 100%; height: 4px; background: rgba(255,255,255,0.05); }
+.risk-bar-fill { height: 100%; background: var(--neon-blue); transition: width 3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 0 10px currentColor; }
+
+/* Assets */
+.asset-item { display: flex; justify-content: space-between; font-size: 0.7rem; margin-bottom: 8px; letter-spacing: 1px; }
+.asset-ok { color: var(--neon-green); font-weight: bold; }
+.asset-warn { color: var(--amber); font-weight: bold; }
+
+/* Footer & Aero Controls */
+.tactical-footer {
+    position: absolute; bottom: 0; left: 0; width: 100%;
+    padding: 30px 40px; display: flex; justify-content: space-between; align-items: flex-end;
+    background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+    z-index: 20;
+}
+
+.tactical-btn {
+    background: rgba(0, 212, 255, 0.1);
+    border: 1px solid var(--neon-blue);
+    color: var(--neon-blue);
+    padding: 10px 20px; font-size: 0.8rem; letter-spacing: 2px;
+    cursor: pointer; transition: all 0.3s; pointer-events: auto;
+}
+.tactical-btn:hover { background: var(--neon-blue); color: #000; box-shadow: 0 0 20px var(--neon-blue); }
+.exit-btn { border-color: var(--neon-red); color: var(--neon-red); background: rgba(255, 51, 68, 0.05); }
+.exit-btn:hover { background: var(--neon-red); color: #fff; box-shadow: 0 0 20px var(--neon-red); }
+
+/* Aerospace Map Controls */
+.aero-btn {
+    width: 48px; height: 48px;
+    background: rgba(7, 8, 10, 0.7);
+    border: 1px solid rgba(0, 212, 255, 0.3);
+    color: var(--neon-blue);
+    font-size: 0.9rem; margin-left: 12px;
+    cursor: pointer; transition: all 0.3s; pointer-events: auto;
+    backdrop-filter: blur(5px);
+}
+.aero-btn:hover { border-color: var(--neon-blue); box-shadow: 0 0 15px var(--neon-blue); color: #fff; }
+
+@keyframes pulse-glow {
+    0% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(1.1); }
+    100% { opacity: 1; transform: scale(1); }
+}
+
+/* Mobile Adjustments for Surveillance Overlay */
+@media (max-width: 900px) {
+    .tactical-header { padding: 15px 20px; }
+    .th-title { font-size: 1.1rem; }
+    .tactical-left, .tactical-right { display: none; } /* Hide heavy side panels on mobile */
+    .tactical-footer { padding: 15px 20px; }
+}
