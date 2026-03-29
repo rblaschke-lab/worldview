@@ -51,7 +51,8 @@ document.addEventListener("DOMContentLoaded", () => {
         terminator: false, fires: false, weather: false, borders: false,
         ships: false, flights: false, iss: false, starlink: false, earthquakes: false, webcams: false,
         nightlights: false, population: false, satellites: false, temperature: false,
-        volcanoes: false, radiation: false, internet: false, conflicts: false
+        volcanoes: false, radiation: false, internet: false, conflicts: false,
+        regimes: false, blocs: false, cables: false, datacenters: false, nuclear: false, nukes: false
     };
 
     map.on('load', () => {
@@ -250,21 +251,36 @@ document.addEventListener("DOMContentLoaded", () => {
         initVolcanoes();            // Active Volcanoes
         initRadiationSites();       // Radiation Hotspots
         fetchSolarStorm();          // Solar Storm / Kp Index
-        setInterval(fetchSolarStorm, 60000); // Refresh every minute
+        setInterval(fetchSolarStorm, 120000); // 2min
         fetchInternetOutages();     // Internet Outages (IODA)
-        setInterval(fetchInternetOutages, 300000); // Refresh every 5 min
+        setInterval(fetchInternetOutages, 300000); // 5min
         fetchLaunches();                    // Rocket Launch Tracker
-        setInterval(fetchLaunches, 600000); // Refresh every 10 min
+        setInterval(fetchLaunches, 600000); // 10min
         fetchISS();
-        setInterval(fetchISS, 5000);
+        setInterval(fetchISS, 15000);       // ISS: 15s (reduced from 5s)
         initGhostFleet();
         fetchEarthquakes();
+        setInterval(fetchEarthquakes, 600000); // Earthquake: 10min refresh
         fetchFlights();
+        setInterval(fetchFlights, 300000);     // Flights: 5min refresh
         initWebcams();
         initStarlink();
-        initSatelliteTracker();     // NEW
+        initSatelliteTracker();
         initIntelligenceCore();
-        initConflictZones();         // Conflict Zones
+        initConflictZones();
+        initRegimeMap();            // Democracy / Autocracy
+        initGeoBlocs();             // NATO / BRICS / SCO
+        initUnderseaCables();       // Undersea Cable Routes
+        initDataCenters();          // Hyperscale Data Centers
+        initNuclearLayer();         // Nuclear Power Plants + Arsenal
+
+        // Category collapse logic
+        document.querySelectorAll('.cat-toggle').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const section = btn.closest('.collapsible-section');
+                if (section) section.classList.toggle('open');
+            });
+        });
         
         // Dynamically update shadow every 60 seconds
         terminatorInterval = setInterval(() => {
@@ -1619,6 +1635,510 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // ============================================================
+    // REGIME MAP — Democracy vs Autocracy (Freedom House 2024)
+    // ============================================================
+    const regimeMarkers = [];
+    const initRegimeMap = () => {
+        // [lon, lat, country, regime, fh_score, note]
+        // Regime: D=Free Democracy, H=Hybrid/Partly Free, A=Authoritarian
+        const countries = [
+            // DEMOCRACIES (Free)
+            [-77.04,38.89,'USA','D',83,'Federal republic. Electoral democracy.'],
+            [-3.44,55.38,'UK','D',93,'Parliamentary monarchy.'],
+            [2.35,48.85,'France','D',90,'Republic. Strong institutions.'],
+            [13.38,52.52,'Germany','D',94,'Federal parliamentary republic.'],
+            [12.48,41.89,'Italy','D',89,'Parliamentary republic.'],
+            [2.17,41.39,'Spain','D',90,'Constitutional monarchy.'],
+            [4.89,52.37,'Netherlands','D',98,'Constitutional monarchy.'],
+            [18.07,59.33,'Sweden','D',100,'Constitutional monarchy.'],
+            [10.75,59.91,'Norway','D',100,'Constitutional monarchy.'],
+            [12.57,55.68,'Denmark','D',97,'Constitutional monarchy.'],
+            [24.94,60.17,'Finland','D',100,'Republic.'],
+            [-8.61,41.56,'Portugal','D',97,'Republic.'],
+            [23.72,37.98,'Greece','D',85,'Republic.'],
+            [19.04,47.5,'Hungary','H',57,'Competitive authoritarian (Orbán).'],
+            [21.01,52.23,'Poland','D',83,'Republic, liberalizing post-2024.'],
+            [14.44,50.08,'Czech Republic','D',94,'Parliamentary republic.'],
+            [17.11,48.15,'Slovakia','H',72,'Populist drift under Fico.'],
+            [26.1,44.44,'Romania','D',84,'Republic.'],
+            [23.32,42.7,'Bulgaria','H',75,'Structural corruption issues.'],
+            [16.37,48.21,'Austria','D',93,'Federal republic.'],
+            [7.45,46.96,'Switzerland','D',96,'Direct democracy.'],
+            [4.34,50.85,'Belgium','D',96,'Federal monarchy.'],
+            [6.13,49.61,'Luxembourg','D',98,'Constitutional monarchy.'],
+            [-6.27,53.33,'Ireland','D',97,'Republic.'],
+            [28.05,53.9,'Belarus','A',11,'Lukashenko dictatorship since 1994.'],
+            [30.52,50.45,'Ukraine','H',61,'Wartime democracy.'],
+            [44.83,41.69,'Georgia','H',60,'Hybrid, GD party backsliding 2024.'],
+            [49.89,40.41,'Azerbaijan','A',14,'Aliyev family dynasty.'],
+            [44.51,40.18,'Armenia','H',54,'Post-revolution fragile democracy.'],
+            [27.56,53.9,'Lithuania','D',93,'Baltic republic.'],
+            [24.11,56.95,'Latvia','D',90,'Baltic republic.'],
+            [25.27,54.69,'Estonia','D',95,'Baltic republic.'],
+            [21.44,41.99,'North Macedonia','H',71,'Reforms ongoing.'],
+            [19.82,41.33,'Albania','H',68,'Reforms toward EU accession.'],
+            [18.42,43.86,'Bosnia','H',54,'Fractured ethnic politics.'],
+            [20.46,44.80,'Serbia','H',56,'Vučić populism, media pressure.'],
+            [20.93,42.66,'Kosovo','H',69,'Young democracy.'],
+            [19.25,42.44,'Montenegro','H',68,'Long-ruling DPS now in opposition.'],
+            [-79.38,43.65,'Canada','D',99,'Federal parliamentary democracy.'],
+            [151.21,-33.87,'Australia','D',97,'Federal parliamentary democracy.'],
+            [174.78,-36.87,'New Zealand','D',99,'Parliamentary democracy.'],
+            [139.69,35.69,'Japan','D',96,'Constitutional monarchy.'],
+            [126.98,37.57,'South Korea','D',83,'Republic.'],
+            [121.5,25.05,'Taiwan','D',94,'De facto democracy.'],
+            [103.82,1.35,'Singapore','H',47,'Dominant party state (PAP).'],
+            [100.52,13.75,'Thailand','H',36,'Military-monitored democracy.'],
+            [-70.67,-33.45,'Chile','D',94,'Republic.'],
+            [-58.4,-34.6,'Argentina','D',83,'Republic.'],
+            [-43.18,-22.91,'Brazil','D',79,'Federal republic.'],
+            [-77.04,38.89,'Colombia','D',67,'Republic, security challenges.'],
+            [-66.86,10.49,'Venezuela','A',16,'Maduro autocracy.'],
+            [-77.04,-12.04,'Peru','H',70,'Democratic dysfunction.'],
+            [-47.93,-15.78,'Bolivia','H',66,'Partial backsliding.'],
+            // HYBRID / PARTLY FREE
+            [37.61,55.75,'Russia','A',16,'Putin autocracy.'],
+            [32.85,39.93,'Turkey','H',34,'Erdoğan competitive authoritarian.'],
+            [51.43,35.69,'Iran','A',14,'Theocratic republic.'],
+            [44.37,33.34,'Iraq','H',41,'Fragile democracy, militia influence.'],
+            [35.5,38.5,'Syria','A',0,'HTS governance, post-Assad.'],
+            [35.22,31.77,'Israel','D',77,'Democracy, occupation complicates.'],
+            [36.81,3.24,'Ethiopia','H',22,'Authoritarian with formal elections.'],
+            [3.39,6.45,'Nigeria','H',45,'Federal republic, governance issues.'],
+            [31.24,30.06,'Egypt','A',23,'Al-Sisi military state.'],
+            [13.51,2.12,'Niger','A',9,'Military junta 2023.'],
+            [-7.99,12.36,'Guinea','A',6,'Military junta 2021.'],
+            [15.5,32.5,'Sudan','A',5,'SAF/RSF military conflict state.'],
+            [20.0,96.5,'Myanmar','A',5,'Military junta 2021.'],
+            [48.5,37.5,'Kazakhstan','A',24,'Authoritarian, post-Nazarbayev.'],
+            [69.28,41.3,'Uzbekistan','A',17,'Authoritarian.'],
+            [37.88,-6.17,'Kenya','H',57,'Republic.'],
+            [28.28,-25.75,'South Africa','D',79,'Constitutional republic.'],
+            [31.03,-17.83,'Zimbabwe','A',27,'Mnangagwa regime.'],
+            [90.41,23.81,'Bangladesh','H',40,'Sheikh Hasina overthrown 2024.'],
+            [72.88,19.08,'India','D',66,'Largest democracy (backsliding noted).'],
+            [74.35,30.37,'Pakistan','H',38,'Hybrid civil-military.'],
+            [104.93,11.57,'Cambodia','A',24,'Hun family dynasty.'],
+            [102.6,17.97,'Laos','A',14,'Single-party communist.'],
+            [105.83,21.03,'Vietnam','A',20,'Single-party communist.'],
+            [116.39,39.91,'China','A',9,'CCP single-party state.'],
+            [125.73,39.03,'North Korea','A',3,'Kim dynasty totalitarianism.'],
+            [37.62,55.75,'Russia','A',16,'Repeat'],
+            [39.27,17.32,'Eritrea','A',3,'One of world\'s most closed states.'],
+            [57.5,23.6,'Saudi Arabia','A',8,'Absolute monarchy.'],
+            [54.37,24.47,'UAE','A',18,'Federation of monarchies.'],
+            [51.53,25.29,'Qatar','A',25,'Emirate, press freedoms improving.'],
+            [50.6,26.22,'Bahrain','A',13,'Absolute monarchy.'],
+            [58.59,23.61,'Oman','A',20,'Absolute monarchy.'],
+            [47.48,29.37,'Kuwait','H',36,'Constitutional emirate.'],
+            [35.22,33.36,'Palestine','H',35,'Split: PA (WB) vs Hamas (Gaza).'],
+            [55.27,25.2,'Lebanon','H',43,'Sectarian system, Hezbollah influence.'],
+            [36.82,34.02,'Libya','A',9,'Split governance, militia fragmentation.'],
+            [32.5,14.0,'Algeria','A',34,'Military-guided state.'],
+            [9.54,33.89,'Tunisia','A',37,'Saied dismantled democracy 2021.'],
+            [4.0,13.51,'Cameroon','A',24,'Biya 40-year rule.'],
+            [29.36,-1.0,'DR Congo','A',20,'Fragile state.'],
+            [30.06,-1.94,'Rwanda','A',22,'Kagame authoritarian.'],
+            [85.32,27.72,'Nepal','D',69,'Federal republic.'],
+            [80.0,7.87,'Sri Lanka','H',56,'Democratic recovery post-crisis.'],
+            [46.86,-11.7,'Madagascar','A',37,'Political instability.'],
+            [-4.01,5.36,'Ivory Coast','H',49,'Electoral reforms ongoing.'],
+        ];
+
+        const col = { D:'#3399ff', H:'#ffb000', A:'#ff3300' };
+        const label = { D:'DEMOCRACY', H:'HYBRID / PARTLY FREE', A:'AUTHORITARIAN' };
+        const fh = { D:'Free', H:'Partly Free', A:'Not Free' };
+
+        countries.forEach(([lon, lat, country, regime, score, note]) => {
+            const c = col[regime] || '#888';
+            const el = document.createElement('div');
+            el.style.cssText = `width:10px;height:10px;border-radius:50%;background:${c};cursor:pointer;opacity:0.85;border:1px solid ${c}88;`;
+            el.style.filter = `drop-shadow(0 0 3px ${c})`;
+            const popup = new maplibregl.Popup({ offset: 8, maxWidth: '260px' }).setHTML(`
+                <div style="font-family:'Share Tech Mono',monospace;font-size:.72rem;">
+                <h3 style="color:${c};margin:0 0 5px;border-bottom:1px solid ${c}44;padding-bottom:4px;">${country}</h3>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:3px;margin-bottom:5px;">
+                    <div style="background:${c}11;padding:3px 6px;"><div style="opacity:.5;font-size:.6rem;">REGIME</div><div style="color:${c};font-size:.7rem;">${label[regime]}</div></div>
+                    <div style="background:${c}11;padding:3px 6px;"><div style="opacity:.5;font-size:.6rem;">STATUS</div><div style="font-size:.7rem;">${fh[regime]}</div></div>
+                </div>
+                <div style="margin-bottom:4px;"><span style="opacity:.5;font-size:.6rem;">FREEDOM HOUSE SCORE: </span><strong style="color:${c};">${score}/100</strong></div>
+                <div style="font-size:.65rem;opacity:.7;line-height:1.4;">${note}</div>
+                <div style="font-size:.55rem;opacity:.3;margin-top:5px;">Source: Freedom House 2024</div>
+                </div>`);
+            const m = new maplibregl.Marker({ element: el, anchor: 'center' })
+                .setLngLat([lon, lat]).setPopup(popup);
+            regimeMarkers.push(m);
+            if (toggles.regimes) m.addTo(map);
+        });
+    };
+
+    // ============================================================
+    // GEOPOLITICAL BLOCS — NATO / BRICS / SCO / AUKUS / Neutral
+    // ============================================================
+    const blocMarkers = [];
+    const initGeoBlocs = () => {
+        // [lon, lat, country, bloc, since, note]
+        const blocs = [
+            // NATO (29 + 2 members as of 2024)
+            [-77.04,38.89,'USA','NATO',1949,'Founding member. Largest contributor.'],
+            [-3.44,55.38,'UK','NATO',1949,'Nuclear power, P5 member.'],
+            [2.35,48.85,'France','NATO',1949,'Nuclear power, rejoined integrated command 2009.'],
+            [13.38,52.52,'Germany','NATO',1955,'Largest non-nuclear European economy.'],
+            [12.48,41.89,'Italy','NATO',1949,'Founding member. US bases (Aviano, Sigonella).'],
+            [2.17,41.39,'Spain','NATO',1982,''],
+            [4.89,52.37,'Netherlands','NATO',1949,'Founding member. US nuclear sharing.'],
+            [18.07,59.33,'Sweden','NATO',2024,'Joined Mar 2024 (Russia\'s war triggered decision).'],
+            [24.94,60.17,'Finland','NATO',2023,'Joined Apr 2023. 1,300km Russia border.'],
+            [12.57,55.68,'Denmark','NATO',1949,'Founding member. Greenland key.'],
+            [10.75,59.91,'Norway','NATO',1949,'Russia border. Svalbard strategic.'],
+            [-8.61,41.56,'Portugal','NATO',1949,'Founding member. Azores strategic.'],
+            [-6.27,53.33,'Ireland','NATO',0,'NEUTRAL — EU member, not NATO.'],
+            [19.04,47.5,'Hungary','NATO',1999,'Orbán blocks Ukraine aid frequently.'],
+            [21.01,52.23,'Poland','NATO',1999,'Largest NATO military buildup in Europe.'],
+            [14.44,50.08,'Czech Republic','NATO',1999,''],
+            [17.11,48.15,'Slovakia','NATO',1999,''],
+            [26.1,44.44,'Romania','NATO',2004,'US Aegis Ashore missile defense site.'],
+            [23.32,42.7,'Bulgaria','NATO',2004,''],
+            [16.37,48.21,'Austria','NATO',0,'NEUTRAL — Constitutional neutrality.'],
+            [27.56,53.9,'Lithuania','NATO',2004,'Russia Kaliningrad border.'],
+            [24.11,56.95,'Latvia','NATO',2004,''],
+            [25.27,54.69,'Estonia','NATO',2004,''],
+            [-79.38,43.65,'Canada','NATO',1949,'Founding member. NORAD.'],
+            [151.21,-33.87,'Australia','NATO',0,'AUKUS (not NATO). US-UK-AU pact.'],
+            [174.78,-36.87,'New Zealand','NATO',0,'Five Eyes. Not AUKUS.'],
+            [139.69,35.69,'Japan','NATO',0,'US alliance. Not NATO but quasi-allied.'],
+            [126.98,37.57,'South Korea','NATO',0,'US alliance. Not NATO.'],
+            [32.85,39.93,'Turkey','NATO',1952,'Member but complex — S-400, vetoes.'],
+            [23.72,37.98,'Greece','NATO',1952,''],
+            [19.82,41.33,'Albania','NATO',2009,''],
+            [19.25,42.44,'Montenegro','NATO',2017,''],
+            [21.44,41.99,'North Macedonia','NATO',2020,''],
+            // BRICS
+            [37.61,55.75,'Russia','BRICS',2006,'Founding. Sanctioned. War in Ukraine.'],
+            [116.39,39.91,'China','BRICS',2006,'Founding. World\'s 2nd economy.'],
+            [-47.93,-15.78,'Brazil','BRICS',2006,'Founding. Largest LatAm economy. Lula.'],
+            [72.88,19.08,'India','BRICS',2006,'Founding. Largest democracy. Non-aligned.'],
+            [28.28,-25.75,'South Africa','BRICS',2010,'Only African founding member.'],
+            [51.43,35.69,'Iran','BRICS',2024,'Joined Jan 2024. Sanctioned.'],
+            [31.24,30.06,'Egypt','BRICS',2024,'Joined Jan 2024.'],
+            [24.68,59.44,'Ethiopia','BRICS',2024,'Joined Jan 2024.'],
+            [54.37,24.47,'UAE','BRICS',2024,'Joined 2024. Hedging strategy.'],
+            // SCO (Shanghai Cooperation Organisation)
+            [69.28,41.3,'Uzbekistan','SCO',2001,''],
+            [74.35,30.37,'Pakistan','SCO',2017,''],
+            [71.43,51.18,'Kazakhstan','SCO',2001,''],
+            [74.6,42.87,'Kyrgyzstan','SCO',2001,''],
+            [68.75,38.56,'Tajikistan','SCO',2001,''],
+            [85.32,27.72,'Nepal','SCO',0,'Observer.'],
+            // AUKUS
+            [133.77,-25.27,'Australia','AUKUS',2021,'Nuclear submarine tech transfer.'],
+            // Core neutrals
+            [7.45,46.96,'Switzerland','NEUTRAL',0,'Traditional armed neutrality.'],
+            [19.04,47.5,'Hungary','NATO',1999,'See NATO entry'],
+            [-106.34,23.63,'Mexico','NEUTRAL',0,'Non-aligned. US relations complex.'],
+            [88.37,22.57,'India','NEUTRAL',0,'Strategic autonomy. SCO + BRICS + Quad.'],
+        ];
+
+        const cols = { NATO:'#4488ff', BRICS:'#ff4400', SCO:'#ff8800', AUKUS:'#00ffcc', NEUTRAL:'#888888' };
+        blocs.forEach(([lon, lat, country, bloc, since, note]) => {
+            const c = cols[bloc] || '#888';
+            const el = document.createElement('div');
+            const size = bloc === 'NEUTRAL' ? '7px' : '10px';
+            el.style.cssText = `width:${size};height:${size};border-radius:50%;background:transparent;border:2px solid ${c};cursor:pointer;`;
+            el.style.filter = `drop-shadow(0 0 3px ${c})`;
+            const popup = new maplibregl.Popup({ offset: 8, maxWidth: '240px' }).setHTML(`
+                <div style="font-family:'Share Tech Mono',monospace;font-size:.72rem;">
+                <h3 style="color:${c};margin:0 0 5px;border-bottom:1px solid ${c}44;padding-bottom:3px;">${country}</h3>
+                <div style="background:${c}22;padding:4px 7px;border-left:2px solid ${c};margin-bottom:5px;">
+                    <strong>${bloc}</strong>${since ? ` &mdash; Member since ${since}` : ' &mdash; Non-member'}
+                </div>
+                <div style="font-size:.65rem;opacity:.75;">${note || 'No additional data.'}</div>
+                </div>`);
+            const m = new maplibregl.Marker({ element: el, anchor: 'center' })
+                .setLngLat([lon, lat]).setPopup(popup);
+            blocMarkers.push(m);
+            if (toggles.blocs) m.addTo(map);
+        });
+    };
+
+    // ============================================================
+    // UNDERSEA CABLES — Major global submarine cable routes
+    // Simplified polylines for the ~20 most strategic cable systems
+    // ============================================================
+    const initUnderseaCables = () => {
+        const cables = [
+            { name: 'TAT-14 (Transatlantic)', color: '#00ccff', coords: [[-74,40],[-30,48],[-8,56],[-5.5,50],[1,51]] },
+            { name: 'AEA (Transatlantic 2)', color: '#00ccff', coords: [[-80.9,24.5],[-30,30],[-10,35],[0,51]] },
+            { name: 'SAT-3 (Africa West)', color: '#ff8800', coords: [[-8.7,41.7],[-16,12],[0,5],[5,4],[15,-3],[33,-26],[31,30]] },
+            { name: 'SEACOM (Africa East)', color: '#ff8800', coords: [[31,30],[44,12],[45,-4],[55,-21],[44,-12],[58.5,23.6],[72,20]] },
+            { name: 'SEA-ME-WE 3', color: '#ff00cc', coords: [[2,51],[36,36],[44,12],[57,23],[72,20],[80,6],[100,4],[110,3],[121,14],[128,33],[140,35]] },
+            { name: 'FLAG (Fibre Link Around Globe)', color: '#ffff00', coords: [[0,51],[36,36],[44,12],[57,23],[72,20],[80,6],[100,4],[103,1],[121,24],[140,36]] },
+            { name: 'Trans-Pacific (TPE)', color: '#00ff88', coords: [[-118,34],[-157,20],[-170,0],[135,34],[126,37],[121,26],[120,22]] },
+            { name: 'FASTER (Trans-Pacific)', color: '#00ff88', coords: [[-122,38],[-157,21],[130,34],[121,26]] },
+            { name: 'Unity / EAC-C2C', color: '#00ff88', coords: [[-118,34],[-157,21],[135,34]] },
+            { name: 'PEACE Cable', color: '#ff6600', coords: [[-7,53],[36,36],[44,12],[57,23],[67,24],[80,26],[104,1],[120,22]] },
+            { name: 'South Atlantic (SACS)', color: '#ff4444', coords: [[-8.8,38.7],[-43.2,-22.9]] },
+            { name: 'MAREA (Microsoft/Facebook)', color: '#00ccff', coords: [[-74,40.7],[-8.6,41.5]] },
+            { name: 'DUNANT (Google)', color: '#00ccff', coords: [[-80.9,24.5],[-8.6,43.5]] },
+            { name: 'Havfrue (Amazon/Google)', color: '#00ccff', coords: [[-71.06,42.36],[0,51],[10.7,55.7]] },
+            { name: 'Grace Hopper (Google)', color: '#8888ff', coords: [[-74,40.7],[-8.6,43.5],[-8.6,41.5]] },
+            { name: 'AA-1 (Asia-Africa)', color: '#ffaa00', coords: [[36,36],[44,12],[57,23],[80,26],[103,1],[121,25]] },
+            { name: 'Jupiter (Google)', color: '#00ff88', coords: [[-121,38],[-157,21],[127,37],[130,34]] },
+            { name: 'Submarine Arctic Link', color: '#aaaaff', coords: [[30,69],[15,69],[0,60],[-12,65],[-55,75],[-100,70]] },
+            { name: 'ROTACS (Russia-Japan)', color: '#ff8888', coords: [[37.6,55.8],[143.0,46.5],[141.3,38.3]] },
+            { name: 'SJC (South Japan Cable)', color: '#88ff88', coords: [[103,1],[121,25],[128,26],[132,34],[141,35]] },
+        ];
+
+        const geojson = {
+            type: 'FeatureCollection',
+            features: cables.map(c => ({
+                type: 'Feature',
+                properties: { name: c.name, color: c.color },
+                geometry: { type: 'LineString', coordinates: c.coords }
+            }))
+        };
+
+        map.addSource('cables-src', { type: 'geojson', data: geojson });
+        map.addLayer({
+            id: 'cables-layer',
+            type: 'line',
+            source: 'cables-src',
+            layout: { visibility: 'none', 'line-join': 'round', 'line-cap': 'round' },
+            paint: {
+                'line-color': ['get', 'color'],
+                'line-width': 1.5,
+                'line-opacity': 0.75
+            }
+        });
+
+        // Popup on cable click
+        map.on('click', 'cables-layer', (e) => {
+            const { name, color } = e.features[0].properties;
+            new maplibregl.Popup({ maxWidth: '220px' })
+                .setLngLat(e.lngLat)
+                .setHTML(`<div style="font-family:'Share Tech Mono',monospace;">
+                    <h3 style="color:${color};margin:0 0 5px;">🔌 ${name}</h3>
+                    <div style="font-size:.68rem;opacity:.7;">Submarine fiber optic cable system</div>
+                    <div style="font-size:.6rem;opacity:.4;margin-top:5px;">Source: TeleGeography 2024</div>
+                </div>`)
+                .addTo(map);
+        });
+        map.on('mouseenter', 'cables-layer', () => { map.getCanvas().style.cursor = 'pointer'; });
+        map.on('mouseleave', 'cables-layer', () => { map.getCanvas().style.cursor = ''; });
+    };
+
+    // ============================================================
+    // DATA CENTERS — Hyperscale cloud regions (AWS/Google/Azure/etc)
+    // ============================================================
+    const dcMarkers = [];
+    const initDataCenters = () => {
+        const dcs = [
+            // [lon, lat, name, provider, tier, note]
+            [-77.49,38.99,'US-East (N.Virginia)','AWS + Azure + Google','Tier 1','Largest cloud hub globally. Both AWS us-east-1 and Azure East US.'],
+            [-87.63,41.88,'US-Central (Chicago)','AWS + Azure','Tier 1','Major US inland hub.'],
+            [-118.24,34.05,'US-West (Los Angeles)','AWS + Azure + Google','Tier 1','West Coast hub.'],
+            [-122.33,47.61,'US-West-2 (Seattle/Oregon)','AWS + Google','Tier 1','Amazon HQ + large Google campus.'],
+            [-47.93,-15.78,'Brazil (São Paulo)','AWS + Azure + Google','Tier 1','Largest LatAm cloud hub.'],
+            [-3.7,40.42,'Europe (Spain/Madrid)','AWS + Azure + Google','Tier 1','Growing Southern Europe hub.'],
+            [2.35,48.85,'Europe (Paris)','AWS + Azure + Google','Tier 1','French sovereign cloud priority.'],
+            [13.38,52.52,'Europe (Germany/Frankfurt)','AWS + Azure + Google','Tier 1','Europe data sovereignty hub.'],
+            [-0.13,51.51,'Europe (UK/London)','AWS + Azure + Google','Tier 1','Largest European DC market.'],
+            [18.07,59.33,'Nordics (Stockholm)','AWS + Google','Tier 2','Arctic cooling advantage.'],
+            [24.94,60.17,'Nordics (Finland)','Google','Tier 2','Google carbon-neutral arctic DC.'],
+            [28.95,41.01,'Middle East (Istanbul)','AWS + Azure','Tier 2','Bridge to MENA region.'],
+            [55.27,25.2,'Middle East (Dubai/UAE)','AWS + Azure + Google','Tier 1','MENA hub. Hyperscale boom.'],
+            [51.53,25.29,'Middle East (Qatar/Doha)','Azure + Google','Tier 2','Sovereign cloud for Gulf states.'],
+            [39.19,21.49,'Middle East (KSA/Riyadh)','AWS + Azure + Google','Tier 1','Vision 2030 digital hub.'],
+            [31.24,30.06,'Africa (Cairo/Egypt)','AWS + Azure','Tier 2','North Africa hub.'],
+            [28.28,-25.75,'Africa (Johannesburg)','AWS + Azure + Google','Tier 2','Sub-Saharan Africa primary hub.'],
+            [3.39,6.45,'Africa (Nigeria/Lagos)','Google + Azure','Tier 3','Emerging hub for West Africa.'],
+            [72.88,19.08,'South Asia (Mumbai)','AWS + Azure + Google','Tier 1','India\'s primary cloud hub.'],
+            [77.21,28.66,'South Asia (Delhi)','AWS + Azure + Google','Tier 1','India secondary hub.'],
+            [80.28,13.09,'South Asia (Chennai)','AWS + Azure','Tier 2','India South DC cluster.'],
+            [88.37,22.57,'South Asia (Kolkata)','AWS','Tier 3','Emerging region.'],
+            [90.41,23.81,'South Asia (Dhaka)','Azure','Tier 3','New addition.'],
+            [67.09,24.86,'South Asia (Karachi)','Azure','Tier 3','Pakistan emerging.'],
+            [103.82,1.35,'Southeast Asia (Singapore)','AWS + Azure + Google + Meta','Tier 1','APAC data hub. Major peering point.'],
+            [106.85,-6.21,'Southeast Asia (Jakarta)','AWS + Azure + Google','Tier 2','Indonesia 270M users.'],
+            [100.52,13.75,'Southeast Asia (Bangkok)','AWS + Azure + Google','Tier 2','Thailand expansion.'],
+            [101.69,3.16,'Southeast Asia (Malaysia)','AWS + Azure + Google','Tier 2','Johor DC boom 2024-25.'],
+            [121.5,25.05,'East Asia (Taipei)','AWS + Google + Azure','Tier 2','Taiwan DC cluster.'],
+            [114.11,22.55,'East Asia (Hong Kong)','AWS + Azure + Google','Tier 1','Financial hub. China gateway.'],
+            [113.26,23.13,'East Asia (Guangzhou)','Alibaba + Tencent + Huawei','Tier 1','Pearl River Delta megacluster.'],
+            [121.47,31.23,'East Asia (Shanghai)','Alibaba + Tencent','Tier 1','China\'s largest cloud hub.'],
+            [116.39,39.91,'East Asia (Beijing)','Alibaba + Baidu + ByteDance','Tier 1','China state + hyperscale mix.'],
+            [126.98,37.57,'East Asia (Seoul)','AWS + Azure + Google + Samsung','Tier 1','Korea hyperscale hub.'],
+            [139.69,35.69,'East Asia (Tokyo)','AWS + Azure + Google','Tier 1','Japan primary hub.'],
+            [135.49,34.69,'East Asia (Osaka)','AWS + Azure + Google','Tier 2','Japan secondary/DR site.'],
+            [151.21,-33.87,'Oceania (Sydney)','AWS + Azure + Google','Tier 1','Australia primary hub.'],
+            [144.96,-37.81,'Oceania (Melbourne)','AWS + Azure','Tier 2','Australia secondary.'],
+            [172.63,-43.53,'Oceania (Auckland)','Google + AWS','Tier 3','NZ hub.'],
+        ];
+
+        const tierColors = { 'Tier 1': '#00ffcc', 'Tier 2': '#ffb000', 'Tier 3': '#888888' };
+        dcs.forEach(([lon, lat, name, provider, tier, note]) => {
+            const c = tierColors[tier] || '#888';
+            const el = document.createElement('div');
+            const sz = tier === 'Tier 1' ? '14px' : tier === 'Tier 2' ? '10px' : '7px';
+            el.style.cssText = `width:${sz};height:${sz};cursor:pointer;`;
+            el.innerHTML = `<svg width="${sz}" height="${sz}" viewBox="0 0 14 14" xmlns="http://www.w3.org/2000/svg">
+                <rect x="1" y="1" width="12" height="12" rx="2" fill="${c}22" stroke="${c}" stroke-width="1.5"/>
+                <rect x="3" y="3" width="8" height="2.5" rx="1" fill="${c}" opacity="0.7"/>
+                <rect x="3" y="7" width="8" height="2.5" rx="1" fill="${c}" opacity="0.5"/>
+            </svg>`;
+            el.style.filter = `drop-shadow(0 0 4px ${c})`;
+            const popup = new maplibregl.Popup({ offset: 8, maxWidth: '270px' }).setHTML(`
+                <div style="font-family:'Share Tech Mono',monospace;font-size:.72rem;">
+                <h3 style="color:${c};margin:0 0 5px;border-bottom:1px solid ${c}44;padding-bottom:3px;">💾 ${name}</h3>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:3px;margin-bottom:5px;">
+                    <div style="background:${c}11;padding:3px 6px;"><div style="opacity:.5;font-size:.6rem;">PROVIDERS</div><div style="font-size:.62rem;">${provider}</div></div>
+                    <div style="background:${c}11;padding:3px 6px;"><div style="opacity:.5;font-size:.6rem;">TIER</div><div style="color:${c};">${tier}</div></div>
+                </div>
+                <div style="font-size:.65rem;opacity:.75;line-height:1.4;">${note}</div>
+                <div style="font-size:.55rem;opacity:.3;margin-top:5px;">Source: Cloud provider public docs 2024</div>
+                </div>`);
+            const m = new maplibregl.Marker({ element: el, anchor: 'center' })
+                .setLngLat([lon, lat]).setPopup(popup);
+            dcMarkers.push(m);
+            if (toggles.datacenters) m.addTo(map);
+        });
+    };
+
+    // ============================================================
+    // NUCLEAR — Power Plants (operational) + Arsenal (9 states)
+    // ============================================================
+    const nuclearMarkers = [];
+    const nukeArsenalMarkers = [];
+    const initNuclearLayer = () => {
+        // Nuclear Power Plants — [lon, lat, name, country, reactors, capacity_gw, status, note]
+        const plants = [
+            [35.87,31.82,'Barakah NPP','UAE',4,5.6,'OPERATIONAL','First Arab nuclear power plant. APR-1400 reactors.'],
+            [29.15,48.22,'Zaporizhzhia NPP','Ukraine',6,5.7,'OCCUPIED','Largest in Europe. Russian-occupied since Mar 2022.'],
+            [28.33,54.63,'Ignalina NPP','Lithuania',0,0,'SHUT DOWN','Shut down 2009 (EU requirement). Chernobyl-type reactor.'],
+            [30.1,51.39,'Chernobyl','Ukraine',0,0,'SARCOPHAGUS','Destroyed 1986. New confinement structure 2016.'],
+            [53.97,26.22,'Bushehr NPP','Iran',1,0.95,'OPERATIONAL','Iran\'s only NPP. Russian-built VVER-1000.'],
+            [72.3,21.7,'Kakrapar NPP','India',2,0.44,'OPERATIONAL','PHWR reactors. NPCIL operated.'],
+            [76.4,29.9,'Narora NPP','India',2,0.44,'OPERATIONAL',''],
+            [80.28,12.5,'Madras NPP','India',2,0.44,'OPERATIONAL',''],
+            [74.12,15.42,'Kaiga NPP','India',4,0.88,'OPERATIONAL',''],
+            [76.72,9.2,'Kudankulam NPP','India',2,2.0,'OPERATIONAL','Russian-built. Largest in India.'],
+            [91.95,22.16,'Rooppur NPP','Bangladesh',2,2.4,'BUILDING','Russian Rosatom build. Online ~2025.'],
+            [126.42,35.41,'Hanul NPP','South Korea',6,5.9,'OPERATIONAL',''],
+            [129.38,35.64,'Hanbit NPP','South Korea',6,5.9,'OPERATIONAL',''],
+            [129.31,35.29,'Kori NPP','South Korea',4,4.0,'OPERATIONAL','Oldest SK plant. Kori-1 shut 2017.'],
+            [126.72,37.71,'Wolsong NPP','South Korea',4,2.8,'OPERATIONAL','CANDU heavy water reactors.'],
+            [140.54,41.18,'Higashidori NPP','Japan',1,1.1,'SUSPENDED','Post-Fukushima shutdown.'],
+            [141.0,37.42,'Fukushima Daiichi','Japan',0,0,'DECOMMISSION','Meltdown 2011. ~40yr decommission ongoing.'],
+            [136.43,35.72,'Takahama NPP','Japan',4,3.3,'PARTIAL','2 reactors restarted post-Fukushima.'],
+            [136.2,35.55,'Mihama NPP','Japan',1,0.83,'OPERATIONAL',''],
+            [140.38,38.26,'Ōnagawa NPP','Japan',3,2.2,'OPERATIONAL','Restarted 2024.'],
+            [121.63,29.88,'Qinshan NPP','China',9,6.6,'OPERATIONAL','First Chinese-built NPP.'],
+            [120.52,30.44,'Sanmen NPP','China',2,2.5,'OPERATIONAL','First AP1000 globally.'],
+            [113.51,22.76,'Daya Bay NPP','China',2,1.97,'OPERATIONAL','HTR-PM demo reactor adjacent.'],
+            [108.43,21.7,'Fangchenggang NPP','China',2,2.0,'OPERATIONAL','ACPR-1000. Hualong-1 under const.'],
+            [119.45,35.72,'Tianwan NPP','China',6,6.1,'OPERATIONAL','Largest Russian-Chinese cooperation project.'],
+            [121.8,37.7,'Hongyanhe NPP','China',6,6.1,'OPERATIONAL',''],
+            [113.34,22.08,'Taiwan: Maanshan','Taiwan',2,1.9,'RETIRING','Unit 2 retired May 2023. Last plant closing.'],
+            [150.14,35.34,'Tokai Daini','Japan',1,1.1,'SUSPENDED',''],
+            [33.55,36.35,'Akkuyu NPP','Turkey',4,4.8,'BUILDING','Russian Rosatom build. First reactor 2025.'],
+            [51.43,35.69,'Iran (all sites)','Iran',1,0.95,'OPERATIONAL','See Bushehr above.'],
+            [27.52,48.09,'Cernavodă NPP','Romania',2,1.4,'OPERATIONAL','CANDU type. Expanding +2 units.'],
+            [30.39,46.84,'South Ukraine NPP','Ukraine',3,3.0,'OPERATIONAL','War threat.'],
+            [33.76,47.83,'Rivne NPP','Ukraine',4,2.8,'OPERATIONAL',''],
+            [30.17,49.84,'Khmelnytskyi NPP','Ukraine',2,2.0,'OPERATIONAL',''],
+            [27.33,48.68,'Pivdennoukrainsk','Ukraine',3,3.0,'OPERATIONAL',''],
+            [37.33,53.26,'Smolensk NPP','Russia',3,3.0,'OPERATIONAL','RBMK reactors (Chernobyl type).'],
+            [33.87,67.46,'Kola NPP','Russia',4,1.76,'OPERATIONAL','Northernmost NPP. Oldest operating.'],
+            [56.75,56.84,'Beloyarsk NPP','Russia',2,0.88,'OPERATIONAL','BN-800 fast breeder reactor.'],
+            [49.22,52.37,'Balakovo NPP','Russia',4,4.0,'OPERATIONAL','Largest in Russia.'],
+            [37.77,55.23,'Novovoronezh NPP','Russia',5,4.1,'OPERATIONAL','VVER-1200 Gen III+ demonstration.'],
+            [34.28,67.45,'Leningrad NPP','Russia',4,4.0,'OPERATIONAL','Also RBMK type. Being replaced.'],
+            [54.93,56.81,'Sverdlovsk (Ural)','Russia',1,0.88,'BUILDING',''],
+            [-74.96,41.08,'Indian Point NPP','USA',0,0,'SHUT DOWN','NY plant. Closed 2021.'],
+            [-90.06,34.32,'Grand Gulf NPP','USA',1,1.3,'OPERATIONAL',''],
+            [-84.06,41.97,'Davis-Besse','USA',1,0.89,'OPERATIONAL','Near-miss events history.'],
+            [-76.27,40.26,'Three Mile Island','USA',0,0,'RESTARTING','TMI Unit 1 restarting 2028 (Microsoft contract).'],
+            [-77.79,34.8,'Brunswick NPP','USA',2,1.9,'OPERATIONAL',''],
+            [-80.27,32.14,'Virgil C. Summer','USA',1,0.97,'OPERATIONAL',''],
+            [-81.12,33.33,'Oconee NPP','USA',3,2.6,'OPERATIONAL',''],
+            [-88.07,44.32,'Point Beach NPP','USA',2,1.0,'OPERATIONAL',''],
+            [-1.58,53.82,'Sellafield','UK',0,0,'DECOMMISSION','Largest nuclear site in Europe. Contamination risk.'],
+            [-3.04,54.41,'Heysham NPP','UK',4,2.5,'OPERATIONAL','AGR reactors.'],
+            [-4.72,53.41,'Wylfa NPP','UK',0,0,'SHUT DOWN','Magnox plant. Site for new Wylfa Newydd.'],
+            [1.47,43.56,'Golfech NPP','France',2,2.7,'OPERATIONAL',''],
+            [4.73,43.78,'Marcoule / Tricastin','France',4,3.6,'OPERATIONAL',''],
+            [0.63,46.97,'Civaux NPP','France',2,2.7,'OPERATIONAL','Newest French plant.'],
+            [6.02,47.33,'Bugey + Cruas NPP','France',4,2.6,'OPERATIONAL',''],
+            [8.04,47.91,'Leibstadt NPP','Switzerland',1,1.2,'OPERATIONAL',''],
+            [7.59,47.52,'Beznau NPP','Switzerland',2,0.73,'OPERATIONAL','Oldest operational NPP in world (1969).'],
+        ];
+
+        plants.forEach(([lon, lat, name, country, reactors, capacity, status, note]) => {
+            const statusColors = { 'OPERATIONAL':'#00ff88', 'BUILDING':'#ffb000', 'SUSPENDED':'#ff8800', 'SHUT DOWN':'#888', 'DECOMMISSION':'#ff4444', 'SARCOPHAGUS':'#ff0000', 'OCCUPIED':'#ff0000', 'PARTIAL':'#00ff88', 'RESTARTING':'#00ffcc', 'RETIRING':'#ff8800' };
+            const c = statusColors[status] || '#888';
+            const el = document.createElement('div');
+            el.style.cssText = `width:12px;height:12px;cursor:pointer;`;
+            el.innerHTML = `<svg width="12" height="12" viewBox="0 0 12 12" xmlns="http://www.w3.org/2000/svg">
+                <polygon points="6,1 11,10 1,10" fill="${c}33" stroke="${c}" stroke-width="1.2"/>
+                <circle cx="6" cy="7.5" r="1.5" fill="${c}"/>
+            </svg>`;
+            el.style.filter = `drop-shadow(0 0 3px ${c})`;
+            const popup = new maplibregl.Popup({ offset: 8, maxWidth: '270px' }).setHTML(`
+                <div style="font-family:'Share Tech Mono',monospace;font-size:.72rem;">
+                <h3 style="color:${c};margin:0 0 5px;border-bottom:1px solid ${c}44;padding-bottom:3px;">☢ ${name}</h3>
+                <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:3px;margin-bottom:5px;">
+                    <div style="background:${c}11;padding:3px;text-align:center;"><div style="opacity:.5;font-size:.55rem;">COUNTRY</div><div style="font-size:.65rem;">${country}</div></div>
+                    <div style="background:${c}11;padding:3px;text-align:center;"><div style="opacity:.5;font-size:.55rem;">REACTORS</div><div style="color:${c};">${reactors}</div></div>
+                    <div style="background:${c}11;padding:3px;text-align:center;"><div style="opacity:.5;font-size:.55rem;">CAPACITY</div><div style="font-size:.65rem;">${capacity} GW</div></div>
+                </div>
+                <div style="background:${c}22;border:1px solid ${c}55;padding:3px 7px;color:${c};margin-bottom:4px;font-size:.7rem;">${status}</div>
+                <div style="font-size:.65rem;opacity:.75;line-height:1.4;">${note}</div>
+                <div style="font-size:.55rem;opacity:.3;margin-top:5px;">Source: IAEA PRIS / WNA 2024</div>
+                </div>`);
+            const m = new maplibregl.Marker({ element: el, anchor: 'center' })
+                .setLngLat([lon, lat]).setPopup(popup);
+            nuclearMarkers.push(m);
+            if (toggles.nuclear) m.addTo(map);
+        });
+
+        // Nuclear Arsenal — 9 states
+        const arsenals = [
+            [-77.04,38.89,'USA',5244,'Active: 1,670 deployed. Trident, B61, Minuteman III. Reducing under New START.'],
+            [37.61,55.75,'Russia',5889,'Largest stockpile. ~1,674 deployed. Sarmat, Kinzhal, Poseidon.'],
+            [116.39,39.91,'China',500,'Rapidly expanding. Estimated 500-700 by 2030.'],
+            [-3.44,55.38,'UK',225,'Trident SLBM. Increasing cap to 260 (2021 review).'],
+            [2.35,48.85,'France',290,'Independent deterrent. ASMP-A cruise + M51 SLBM.'],
+            [72.88,19.08,'India',172,'Growing program. Agni-V ICBM capability.'],
+            [74.35,30.37,'Pakistan',170,'Rival program. Ghauri/Shaheen missiles. F-16 nuclear role.'],
+            [35.22,31.77,'Israel',90,'Undeclared. Jericho III ICBM. Dimona facility.'],
+            [125.73,39.03,'North Korea',50,'Estimated 40-60. ICBM Hwasong-17 can reach continental USA.'],
+        ];
+        arsenals.forEach(([lon, lat, country, warheads, note]) => {
+            const el = document.createElement('div');
+            el.style.cssText = 'width:18px;height:18px;cursor:pointer;';
+            el.innerHTML = `<svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="9" cy="9" r="8" fill="rgba(255,0,0,0.1)" stroke="#ff0000" stroke-width="1.5"/>
+                <text x="9" y="13" text-anchor="middle" font-size="10" fill="#ff0000">☢</text>
+            </svg>`;
+            el.style.filter = 'drop-shadow(0 0 5px #ff0000)';
+            const popup = new maplibregl.Popup({ offset: 10, maxWidth: '260px' }).setHTML(`
+                <div style="font-family:'Share Tech Mono',monospace;font-size:.72rem;">
+                <h3 style="color:#ff0000;margin:0 0 5px;border-bottom:1px solid #ff000044;padding-bottom:3px;">☢ ${country} — NUCLEAR ARSENAL</h3>
+                <div style="background:rgba(255,0,0,.08);border:1px solid rgba(255,0,0,.3);padding:6px 8px;margin-bottom:5px;">
+                    <div style="font-size:.6rem;opacity:.5;">ESTIMATED WARHEADS</div>
+                    <div style="color:#ff0000;font-size:1.3rem;font-weight:bold;">${warheads.toLocaleString()}</div>
+                </div>
+                <div style="font-size:.65rem;opacity:.75;line-height:1.4;">${note}</div>
+                <div style="font-size:.55rem;opacity:.3;margin-top:5px;">Source: SIPRI Yearbook 2024</div>
+                </div>`);
+            const m = new maplibregl.Marker({ element: el, anchor: 'center' })
+                .setLngLat([lon, lat]).setPopup(popup);
+            nukeArsenalMarkers.push(m);
+            if (toggles.nukes) m.addTo(map);
+        });
+    };
+
+    // ============================================================
     // CONFLICT ZONES (curated 2025 data — no API key needed)
     // ============================================================
     const conflictMarkers = [];
@@ -1904,6 +2424,37 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById('toggle-conflicts')?.addEventListener('change', (e) => {
         toggles.conflicts = e.target.checked;
         conflictMarkers.forEach(m => toggles.conflicts ? m.addTo(map) : m.remove());
+    });
+
+    document.getElementById('toggle-regimes')?.addEventListener('change', (e) => {
+        toggles.regimes = e.target.checked;
+        regimeMarkers.forEach(m => toggles.regimes ? m.addTo(map) : m.remove());
+    });
+
+    document.getElementById('toggle-blocs')?.addEventListener('change', (e) => {
+        toggles.blocs = e.target.checked;
+        blocMarkers.forEach(m => toggles.blocs ? m.addTo(map) : m.remove());
+    });
+
+    document.getElementById('toggle-cables')?.addEventListener('change', (e) => {
+        toggles.cables = e.target.checked;
+        if (map.getLayer('cables-layer'))
+            map.setLayoutProperty('cables-layer', 'visibility', toggles.cables ? 'visible' : 'none');
+    });
+
+    document.getElementById('toggle-datacenters')?.addEventListener('change', (e) => {
+        toggles.datacenters = e.target.checked;
+        dcMarkers.forEach(m => toggles.datacenters ? m.addTo(map) : m.remove());
+    });
+
+    document.getElementById('toggle-nuclear')?.addEventListener('change', (e) => {
+        toggles.nuclear = e.target.checked;
+        nuclearMarkers.forEach(m => toggles.nuclear ? m.addTo(map) : m.remove());
+    });
+
+    document.getElementById('toggle-nukes')?.addEventListener('change', (e) => {
+        toggles.nukes = e.target.checked;
+        nukeArsenalMarkers.forEach(m => toggles.nukes ? m.addTo(map) : m.remove());
     });
 
 });

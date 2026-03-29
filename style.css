@@ -100,16 +100,45 @@ header h1 {
 }
 #sidebar:hover .sidebar-expand-hint { opacity: 0; }
 
-.menu-group { margin-bottom: 12px; }
-.category-title {
-    font-size: .78rem; margin-bottom: 6px;
-    text-transform: uppercase; letter-spacing: 1px;
-    border-bottom: 1px dashed var(--amber-dim); padding-bottom: 4px;
-    display: flex; align-items: center; gap: 8px;
+.menu-group { margin-bottom: 8px; }
+.override-group {
+    border-bottom: 1px dotted rgba(0,255,255,.25);
+    padding-bottom: 8px; margin-bottom: 8px;
 }
+.category-title {
+    font-size: .75rem;
+    text-transform: uppercase; letter-spacing: 1px;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 5px 6px;
+    cursor: pointer;
+    border-left: 2px solid var(--amber-dim);
+    transition: border-color .2s, background .2s;
+    user-select: none;
+}
+.category-title:hover { border-left-color: var(--amber); background: rgba(255,176,0,.04); }
+.category-title span { display: flex; align-items: center; gap: 6px; }
+.cat-arrow { font-size: .6rem; opacity: .6; transition: transform .3s; }
+.collapsible-section.open .cat-arrow { transform: rotate(180deg); }
+.cat-body {
+    max-height: 0; overflow: hidden;
+    transition: max-height .35s cubic-bezier(0.4,0,0.2,1), padding .3s;
+    padding: 0 2px;
+}
+.collapsible-section.open .cat-body {
+    max-height: 300px;
+    padding: 6px 2px 4px;
+}
+/* 2-column grid for toggle items */
+.toggle-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px 8px;
+}
+.toggle-grid .control-item { font-size: .7rem; padding-left: 4px; }
 .control-item {
     display: flex; justify-content: space-between;
     align-items: center; font-size: .78rem; padding-left: 10px;
+    min-height: 26px;
 }
 
 /* Toggle switch */

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Worldview V6.0 | Global Command Center</title>
+    <title>Worldview V6.1 | Global Command Center</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -16,7 +16,7 @@
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <link rel="stylesheet" href="./style.css?v=6.0">
+    <link rel="stylesheet" href="./style.css?v=6.1">
 </head>
 <body class="theme-clean">
     <div id="map"></div>
@@ -25,16 +25,17 @@
 
     <div id="sidebar" class="terminal-panel">
         <header>
-            <h1>WORLDVIEW <span class="version">V6.0</span></h1>
+            <h1>WORLDVIEW <span class="version">V6.1</span></h1>
             <span class="sidebar-expand-hint">▼ EXPAND</span>
             <span class="byline" style="color:var(--amber);">by RB_Design 2026</span>
             <div class="sub-header"><span class="blinking-cursor">_</span> SATELLITE UPLINK ACTIVE</div>
         </header>
         <div class="sidebar-body">
 
-        <section class="menu-group" style="border-bottom: 1px dotted rgba(0, 255, 0, 0.3); padding-bottom: 15px; margin-bottom: 15px;">
+        <!-- OVERRIDE ALL -->
+        <section class="menu-group override-group">
             <div class="control-item">
-                <strong style="color: #0ff;">OVERRIDE: ALL SYSTEMS</strong>
+                <strong style="color:#0ff;font-size:.7rem;letter-spacing:1px;">⚡ OVERRIDE: ALL SYSTEMS</strong>
                 <label class="toggle-switch">
                     <input type="checkbox" id="toggle-all">
                     <span class="slider"></span>
@@ -42,158 +43,171 @@
             </div>
         </section>
 
-        <section class="menu-group">
-            <h2 class="category-title"><i class="fa-solid fa-globe"></i> ENVIRONMENT</h2>
-            <div class="control-item">
-                <span>Solar Terminator (Night)</span>
-                <label class="toggle-switch">
-                    <input type="checkbox" id="toggle-terminator">
-                    <span class="slider"></span>
-                </label>
-            </div>
-            <div class="control-item" style="margin-top: 8px;">
-                <span>NASA Active Wildfires</span>
-                <label class="toggle-switch">
-                    <input type="checkbox" id="toggle-fires">
-                    <span class="slider"></span>
-                </label>
-            </div>
-            <div class="control-item" style="margin-top: 8px;">
-                <span>Global Seismic Activity</span>
-                <label class="toggle-switch">
-                    <input type="checkbox" id="toggle-earthquakes">
-                    <span class="slider"></span>
-                </label>
-            </div>
-            <div class="control-item" style="margin-top: 8px;">
-                <span>Night Light Pollution</span>
-                <label class="toggle-switch">
-                    <input type="checkbox" id="toggle-nightlights">
-                    <span class="slider"></span>
-                </label>
-            </div>
-            <div class="control-item" style="margin-top: 8px;">
-                <span>Population Density</span>
-                <label class="toggle-switch">
-                    <input type="checkbox" id="toggle-population">
-                    <span class="slider"></span>
-                </label>
-            </div>
-            <div class="control-item" style="margin-top: 8px;">
-                <span>Surface Temperature</span>
-                <label class="toggle-switch">
-                    <input type="checkbox" id="toggle-temperature">
-                    <span class="slider"></span>
-                </label>
+        <!-- LIVE FEEDS -->
+        <section class="menu-group collapsible-section" id="sec-live">
+            <h2 class="category-title cat-toggle" data-target="sec-live">
+                <span><i class="fa-solid fa-signal"></i> LIVE FEEDS</span>
+                <i class="fa-solid fa-chevron-down cat-arrow"></i>
+            </h2>
+            <div class="cat-body">
+                <div class="toggle-grid">
+                    <div class="control-item">
+                        <span>Weather Radar</span>
+                        <label class="toggle-switch"><input type="checkbox" id="toggle-weather"><span class="slider"></span></label>
+                    </div>
+                    <div class="control-item">
+                        <span>AIS Shipping</span>
+                        <label class="toggle-switch"><input type="checkbox" id="toggle-ships"><span class="slider"></span></label>
+                    </div>
+                    <div class="control-item">
+                        <span>EU Aviation</span>
+                        <label class="toggle-switch"><input type="checkbox" id="toggle-flights"><span class="slider"></span></label>
+                    </div>
+                    <div class="control-item">
+                        <span>ISS Track</span>
+                        <label class="toggle-switch"><input type="checkbox" id="toggle-iss"><span class="slider"></span></label>
+                    </div>
+                    <div class="control-item">
+                        <span>NASA Wildfires</span>
+                        <label class="toggle-switch"><input type="checkbox" id="toggle-fires"><span class="slider"></span></label>
+                    </div>
+                    <div class="control-item">
+                        <span>Seismic Activity</span>
+                        <label class="toggle-switch"><input type="checkbox" id="toggle-earthquakes"><span class="slider"></span></label>
+                    </div>
+                    <div class="control-item">
+                        <span>Internet Outages</span>
+                        <label class="toggle-switch"><input type="checkbox" id="toggle-internet"><span class="slider"></span></label>
+                    </div>
+                    <div class="control-item">
+                        <span>Solar Terminator</span>
+                        <label class="toggle-switch"><input type="checkbox" id="toggle-terminator"><span class="slider"></span></label>
+                    </div>
+                </div>
             </div>
         </section>
 
-        <section class="menu-group">
-            <h2 class="category-title"><i class="fa-solid fa-cloud-bolt"></i> WEATHER</h2>
-            <div class="control-item">
-                <span>Multi-Spectrum Radar</span>
-                <label class="toggle-switch">
-                    <input type="checkbox" id="toggle-weather">
-                    <span class="slider"></span>
-                </label>
+        <!-- POLITICAL -->
+        <section class="menu-group collapsible-section" id="sec-political">
+            <h2 class="category-title cat-toggle" data-target="sec-political">
+                <span><i class="fa-solid fa-landmark"></i> POLITICAL</span>
+                <i class="fa-solid fa-chevron-down cat-arrow"></i>
+            </h2>
+            <div class="cat-body">
+                <div class="toggle-grid">
+                    <div class="control-item">
+                        <span>Regime Map</span>
+                        <label class="toggle-switch"><input type="checkbox" id="toggle-regimes"><span class="slider"></span></label>
+                    </div>
+                    <div class="control-item">
+                        <span>Geopolitical Blocs</span>
+                        <label class="toggle-switch"><input type="checkbox" id="toggle-blocs"><span class="slider"></span></label>
+                    </div>
+                    <div class="control-item">
+                        <span>Active War Zones</span>
+                        <label class="toggle-switch"><input type="checkbox" id="toggle-conflicts"><span class="slider"></span></label>
+                    </div>
+                </div>
             </div>
         </section>
 
-        <section class="menu-group">
-            <h2 class="category-title"><i class="fa-solid fa-ship"></i> SURVEILLANCE</h2>
-            <div class="control-item">
-                <span>Military & Cargo AIS</span>
-                <label class="toggle-switch">
-                    <input type="checkbox" id="toggle-ships">
-                    <span class="slider"></span>
-                </label>
+        <!-- INFRASTRUCTURE -->
+        <section class="menu-group collapsible-section" id="sec-infra">
+            <h2 class="category-title cat-toggle" data-target="sec-infra">
+                <span><i class="fa-solid fa-network-wired"></i> INFRASTRUCTURE</span>
+                <i class="fa-solid fa-chevron-down cat-arrow"></i>
+            </h2>
+            <div class="cat-body">
+                <div class="toggle-grid">
+                    <div class="control-item">
+                        <span>Undersea Cables</span>
+                        <label class="toggle-switch"><input type="checkbox" id="toggle-cables"><span class="slider"></span></label>
+                    </div>
+                    <div class="control-item">
+                        <span>Data Centers</span>
+                        <label class="toggle-switch"><input type="checkbox" id="toggle-datacenters"><span class="slider"></span></label>
+                    </div>
+                    <div class="control-item">
+                        <span>Nuclear Plants</span>
+                        <label class="toggle-switch"><input type="checkbox" id="toggle-nuclear"><span class="slider"></span></label>
+                    </div>
+                    <div class="control-item">
+                        <span>Nuclear Arsenal</span>
+                        <label class="toggle-switch"><input type="checkbox" id="toggle-nukes"><span class="slider"></span></label>
+                    </div>
+                </div>
             </div>
         </section>
 
-        <section class="menu-group">
-            <h2 class="category-title"><i class="fa-solid fa-plane-radar"></i> AVIATION</h2>
-            <div class="control-item">
-                <span>EU Airspace Traffic</span>
-                <label class="toggle-switch">
-                    <input type="checkbox" id="toggle-flights">
-                    <span class="slider"></span>
-                </label>
+        <!-- ENVIRONMENT -->
+        <section class="menu-group collapsible-section" id="sec-env">
+            <h2 class="category-title cat-toggle" data-target="sec-env">
+                <span><i class="fa-solid fa-globe"></i> ENVIRONMENT</span>
+                <i class="fa-solid fa-chevron-down cat-arrow"></i>
+            </h2>
+            <div class="cat-body">
+                <div class="toggle-grid">
+                    <div class="control-item">
+                        <span>Night Lights</span>
+                        <label class="toggle-switch"><input type="checkbox" id="toggle-nightlights"><span class="slider"></span></label>
+                    </div>
+                    <div class="control-item">
+                        <span>Population</span>
+                        <label class="toggle-switch"><input type="checkbox" id="toggle-population"><span class="slider"></span></label>
+                    </div>
+                    <div class="control-item">
+                        <span>Surface Temp</span>
+                        <label class="toggle-switch"><input type="checkbox" id="toggle-temperature"><span class="slider"></span></label>
+                    </div>
+                </div>
             </div>
         </section>
 
-        <section class="menu-group">
-            <h2 class="category-title"><i class="fa-solid fa-satellite"></i> ORBITAL</h2>
-            <div class="control-item">
-                <span>ISS Telemetry</span>
-                <label class="toggle-switch">
-                    <input type="checkbox" id="toggle-iss">
-                    <span class="slider"></span>
-                </label>
-            </div>
-            <div class="control-item" style="margin-top: 8px;">
-                <span>Starlink Network</span>
-                <label class="toggle-switch">
-                    <input type="checkbox" id="toggle-starlink">
-                    <span class="slider"></span>
-                </label>
-            </div>
-            <div class="control-item" style="margin-top: 8px;">
-                <span>Satellite &amp; Debris</span>
-                <label class="toggle-switch">
-                    <input type="checkbox" id="toggle-satellites">
-                    <span class="slider"></span>
-                </label>
-            </div>
-            <div class="control-item" style="margin-top: 8px; cursor:pointer; border-top: 1px solid rgba(255,100,0,0.2); padding-top: 8px;" id="launch-tracker-trigger">
-                <span style="color:#ff8844;">&#128640; Launch Tracker</span>
-                <i class="fa-solid fa-chevron-right" style="color:#ff6600; font-size:.75rem;"></i>
+        <!-- ORBITAL -->
+        <section class="menu-group collapsible-section" id="sec-orbital">
+            <h2 class="category-title cat-toggle" data-target="sec-orbital">
+                <span><i class="fa-solid fa-satellite"></i> ORBITAL</span>
+                <i class="fa-solid fa-chevron-down cat-arrow"></i>
+            </h2>
+            <div class="cat-body">
+                <div class="toggle-grid">
+                    <div class="control-item">
+                        <span>Starlink Net</span>
+                        <label class="toggle-switch"><input type="checkbox" id="toggle-starlink"><span class="slider"></span></label>
+                    </div>
+                    <div class="control-item">
+                        <span>Sat &amp; Debris</span>
+                        <label class="toggle-switch"><input type="checkbox" id="toggle-satellites"><span class="slider"></span></label>
+                    </div>
+                </div>
+                <div class="control-item launch-trigger-item" id="launch-tracker-trigger" style="margin-top:6px;cursor:pointer;border-top:1px solid rgba(255,100,0,0.2);padding-top:6px;">
+                    <span style="color:#ff8844;">&#128640; Launch Tracker</span>
+                    <i class="fa-solid fa-chevron-right" style="color:#ff6600;font-size:.75rem;"></i>
+                </div>
             </div>
         </section>
 
-        <section class="menu-group">
-            <h2 class="category-title"><i class="fa-solid fa-crosshairs"></i> CONFLICTS</h2>
-            <div class="control-item">
-                <span>Active War Zones</span>
-                <label class="toggle-switch">
-                    <input type="checkbox" id="toggle-conflicts">
-                    <span class="slider"></span>
-                </label>
-            </div>
-        </section>
-
-        <section class="menu-group">
-            <h2 class="category-title"><i class="fa-solid fa-video"></i> WEBCAMS</h2>
-            <div class="control-item">
-                <span>Global Live Streams</span>
-                <label class="toggle-switch">
-                    <input type="checkbox" id="toggle-webcams">
-                    <span class="slider"></span>
-                </label>
-            </div>
-        </section>
-
-        <section class="menu-group">
-            <h2 class="category-title"><i class="fa-solid fa-triangle-exclamation"></i> HAZARDS</h2>
-            <div class="control-item">
-                <span>Active Volcanoes</span>
-                <label class="toggle-switch">
-                    <input type="checkbox" id="toggle-volcanoes">
-                    <span class="slider"></span>
-                </label>
-            </div>
-            <div class="control-item" style="margin-top: 8px;">
-                <span>Radiation Sites</span>
-                <label class="toggle-switch">
-                    <input type="checkbox" id="toggle-radiation">
-                    <span class="slider"></span>
-                </label>
-            </div>
-            <div class="control-item" style="margin-top: 8px;">
-                <span>Internet Outages</span>
-                <label class="toggle-switch">
-                    <input type="checkbox" id="toggle-internet">
-                    <span class="slider"></span>
-                </label>
+        <!-- HAZARDS -->
+        <section class="menu-group collapsible-section" id="sec-hazards">
+            <h2 class="category-title cat-toggle" data-target="sec-hazards">
+                <span><i class="fa-solid fa-triangle-exclamation"></i> HAZARDS</span>
+                <i class="fa-solid fa-chevron-down cat-arrow"></i>
+            </h2>
+            <div class="cat-body">
+                <div class="toggle-grid">
+                    <div class="control-item">
+                        <span>Volcanoes</span>
+                        <label class="toggle-switch"><input type="checkbox" id="toggle-volcanoes"><span class="slider"></span></label>
+                    </div>
+                    <div class="control-item">
+                        <span>Radiation Sites</span>
+                        <label class="toggle-switch"><input type="checkbox" id="toggle-radiation"><span class="slider"></span></label>
+                    </div>
+                </div>
+                <div class="control-item" style="margin-top:6px;">
+                    <span>Webcam Streams</span>
+                    <label class="toggle-switch"><input type="checkbox" id="toggle-webcams"><span class="slider"></span></label>
+                </div>
             </div>
         </section>
 
@@ -227,6 +241,6 @@
         <div id="launch-feed" style="opacity:.5;font-size:.65rem;">CONNECTING TO LAUNCH LIBRARY...</div>
     </div>
 
-    <script src="./main.js?v=6.0"></script>
+    <script src="./main.js?v=6.1"></script>
 </body>
 </html>
