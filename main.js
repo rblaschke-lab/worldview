@@ -15,6 +15,35 @@ document.addEventListener("DOMContentLoaded", () => {
     const sessionEl = document.getElementById('session-count');
     if (sessionEl) sessionEl.innerText = `${(sessionCount).toLocaleString()} SESSIONS ESTABLISHED`;
 
+    // Artemis Mission Live Telemetry Simulation
+    const simulateArtemisTelemetry = () => {
+        const dayEl = document.getElementById('artemis-day');
+        const velEl = document.getElementById('artemis-vel');
+        const altEl = document.getElementById('artemis-alt');
+        
+        if(!dayEl || !velEl || !altEl) return;
+        
+        // Base values
+        let baseDay = 21;
+        let baseVel = 35400; // km/h (translunar injection speed)
+        let baseAlt = 380400; // km
+        
+        const tick = () => {
+            // Slight oscillation algorithm to simulate real-time reading noise and orbital mechanics
+            const noise = (Math.random() - 0.5) * 10;
+            baseAlt += (0.1 + (noise / 100)); // Slowly increasing distance during transit
+            baseVel -= (0.01 + Math.abs(noise / 500)); // Gravity deceleration
+            
+            dayEl.innerText = baseDay;
+            velEl.innerText = `${Math.floor(baseVel).toLocaleString()} KM/H`;
+            altEl.innerText = `${Math.floor(baseAlt).toLocaleString()} KM`;
+            
+            requestAnimationFrame(tick);
+        };
+        tick();
+    };
+    simulateArtemisTelemetry();
+
     const toggles = {
         terminator: false, fires: false, weather: false, borders: false,
         ships: false, flights: false, iss: false, starlink: false, earthquakes: false, webcams: false,
@@ -1240,97 +1269,66 @@ document.addEventListener("DOMContentLoaded", () => {
                 const tacticalType = severity === 'high' ? 'alert' : (severity === 'medium' ? 'warn' : 'sys');
                 addTacticalLog(`${type}_DETECTION: ${msg.toUpperCase()}`, tacticalType);
             }
-
-            // Force intelligence map visibility on red alert
-            if (severity === 'high') {
-                const intelToggle = document.getElementById('toggle-intel');
-                if (intelToggle && !intelToggle.checked) {
-                    intelToggle.checked = true;
-                    // Trigger the native change event so the map layer updates
-                    const event = new Event('change', { bubbles: true });
-                    intelToggle.dispatchEvent(event);
-                }
-            }
         };
 
         const scanPatterns = () => {
-            setStatus("AI CORE SCANNING FOR ANOMALIES...");
+            setStatus("UPLINKING TO GLOBAL STRATEGIC SURVEILLANCE FEED...");
             let features = [];
 
             // Clear previous high-severity visual markers
             intelMarkers.forEach(m => m.marker.remove());
             intelMarkers = [];
             
-            const entities = [];
-            flightMarkers.forEach(f => entities.push({type: 'Flight', lon: f.lon, lat: f.lat, ref: f.callsign}));
-            shipMarkers.forEach(s => entities.push({type: 'Marine', lon: s.lon, lat: s.lat, ref: s.name}));
+            // Authentic Geo-Political Hotspots
+            const crisesData = [
+                { id: "UKR-01", type: "MILITARY", label: "UKRAINE FRONTLINE", lat: 48.3794, lon: 31.1656, severity: "high", msg: "INTENSE ARTILLERY FIRE DETECTED. HEAVY ARMOR BUILDUP.", radius: 45, color: "#ff3300" },
+                { id: "IRN-01", type: "MILITARY", label: "IRAN NUCLEAR/ME", lat: 32.4279, lon: 53.6880, severity: "high", msg: "SUSPICIOUS CENTRIFUGE FACILITY ACTIVITY. DRONE LAUNCH DETECTED.", radius: 40, color: "#ff3300" },
+                { id: "TWN-01", type: "MARITIME", label: "TAIWAN STRAIT", lat: 23.6978, lon: 119.5, severity: "high", msg: "FLEET MOBILIZATION ESCALATION. AIRSPACE INCURSION DETECTED.", radius: 50, color: "#ff3300" },
+                { id: "RSI-01", type: "MARITIME", label: "RED SEA CORRIDOR", lat: 17.5, lon: 40.5, severity: "medium", msg: "HOUHI BALLISTIC MISSILE LAUNCH SUSPECTED OVER COMMERCIAL VESSEL.", radius: 35, color: "#ffb000" }
+            ];
+
+            // Add real earthquakes > 6.0 as massive environmental crises
             globalEarthquakesArray.forEach(f => {
-                const coords = f.geometry.coordinates;
-                if(f.properties.mag >= 4.0)
-                    entities.push({type: 'Seismic', lon: coords[0], lat: coords[1], ref: f.properties.place, mag: f.properties.mag});
-            });
-
-            const clusters = [];
-            const visited = new Set();
-            entities.forEach((e, i) => {
-                if(visited.has(i)) return;
-                const cluster = [e];
-                visited.add(i);
-                entities.forEach((e2, j) => {
-                    if(i === j || visited.has(j)) return;
-                    const dLon = e.lon - e2.lon, dLat = e.lat - e2.lat;
-                    if(Math.sqrt(dLon*dLon + dLat*dLat) < 8) { cluster.push(e2); visited.add(j); }
-                });
-                if(cluster.length > 1) clusters.push(cluster);
-            });
-
-            clusters.forEach(c => {
-                let sumLon = 0, sumLat = 0;
-                let types = new Set();
-                let hasHighSeismic = false;
-                c.forEach(ent => {
-                    sumLon += ent.lon; sumLat += ent.lat;
-                    types.add(ent.type);
-                    if(ent.type === 'Seismic' && ent.mag >= 6.0) hasHighSeismic = true;
-                });
-                const cLon = sumLon / c.length, cLat = sumLat / c.length;
-                let severity = 'low', color = '#00ff00', radius = 20;
-                const isCrossDomain = types.has('Seismic') && (types.has('Flight') || types.has('Marine'));
-                if(c.length >= 5 || hasHighSeismic) severity = 'high';
-                else if(c.length >= 3 || isCrossDomain) severity = 'medium';
-                if(severity === 'high') { color = '#ff3300'; radius = 50; }
-                else if(severity === 'medium') { color = '#ffb000'; radius = 35; }
-                if(severity !== 'low') {
-                    let msg = `High density of entities detected (${c.length} objects).`;
-                    let typeLabel = "DENSITY";
-                    if(isCrossDomain) { msg = `Cross-domain correlation: Seismic overlapping ${types.has('Flight') ? 'Aviation' : 'Marine'} traffic.`; typeLabel = "MULTI-DOMAIN"; }
-                    if(hasHighSeismic) { msg = `Major Seismic Event correlation zone. Immediate surveillance requested.`; typeLabel = "CRITICAL SEISMIC"; }
-                    logAlert(`C-${cLat.toFixed(1)}-${cLon.toFixed(1)}-${typeLabel}`, typeLabel, severity, msg, cLat, cLon);
-                    features.push({ 
-                        type: 'Feature', 
-                        properties: { color, radius, severity, typeLabel, msg }, 
-                        geometry: { type: 'Point', coordinates: [cLon, cLat] } 
+                if(f.properties.mag >= 6.0) {
+                    const coords = f.geometry.coordinates;
+                    crisesData.push({
+                        id: `EQ-${f.properties.code}`, type: "ENVIRONMENTAL", label: "CRITICAL SEISMIC", lat: coords[1], lon: coords[0],
+                        severity: f.properties.tsunami === 1 ? "high" : "medium",
+                        msg: `MAGNITUDE ${f.properties.mag} DETECTED. IMMEDIATE RISK ASSESSMENT REQUIRED.`,
+                        radius: 60,
+                        color: f.properties.tsunami === 1 ? "#ff3300" : "#ffb000"
                     });
+                }
+            });
 
-                    if (severity === 'high') {
-                        const pulseEl = document.createElement('div');
-                        pulseEl.className = 'intel-pulse-red';
-                        const marker = new maplibregl.Marker({ element: pulseEl }).setLngLat([cLon, cLat]);
-                        
-                        // Popup for high-severity pulse marker
-                        marker.setPopup(new maplibregl.Popup({ offset: 15, maxWidth: '300px' }).setHTML(`
-                            <div style="font-family:'Share Tech Mono',monospace; padding:4px;">
-                                <h3 style="color:#ff3300; margin:0 0 8px; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:4px;">
-                                    <i class="fa-solid fa-triangle-exclamation"></i> RED_ALERT: ${typeLabel}
-                                </h3>
-                                <div style="font-size:0.85rem; color:#fff; line-height:1.4;">${msg}</div>
-                                <div style="margin-top:10px; font-size:0.65rem; opacity:0.6;">CRITICAL ANOMALY // ACTION REQUIRED</div>
-                            </div>
-                        `));
+            crisesData.forEach(c => {
+                const { type, label, lat, lon, severity, msg, radius, color } = c;
 
-                        if (toggles.intel) marker.addTo(map);
-                        intelMarkers.push({ marker, severity });
-                    }
+                logAlert(c.id, type, severity, msg, lat, lon);
+                features.push({ 
+                    type: 'Feature', 
+                    properties: { color, radius, severity, typeLabel: type, msg: msg }, 
+                    geometry: { type: 'Point', coordinates: [lon, lat] } 
+                });
+
+                if (severity === 'high' || severity === 'medium') {
+                    const pulseEl = document.createElement('div');
+                    pulseEl.className = severity === 'high' ? 'intel-pulse-red' : 'intel-pulse-red';
+                    if(severity !== 'high') pulseEl.style.border = '2px solid #ffb000';
+                    const marker = new maplibregl.Marker({ element: pulseEl }).setLngLat([lon, lat]);
+                    
+                    marker.setPopup(new maplibregl.Popup({ offset: 15, maxWidth: '300px' }).setHTML(`
+                        <div style="font-family:'Share Tech Mono',monospace; padding:4px;">
+                            <h3 style="color:${color}; margin:0 0 8px; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:4px;">
+                                <i class="fa-solid fa-triangle-exclamation"></i> ALERT: ${label}
+                            </h3>
+                            <div style="font-size:0.85rem; color:#fff; line-height:1.4;">${msg}</div>
+                            <div style="margin-top:10px; font-size:0.65rem; opacity:0.6;">SITUATION: ${severity.toUpperCase()} // TRACKING</div>
+                        </div>
+                    `));
+
+                    if (toggles.intel) marker.addTo(map);
+                    intelMarkers.push({ marker, severity });
                 }
             });
 
