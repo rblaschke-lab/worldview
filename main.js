@@ -13,7 +13,7 @@ document.addEventListener("DOMContentLoaded", () => {
     };
     const sessionCount = getSessionCount();
     const sessionEl = document.getElementById('session-count');
-    if (sessionEl) sessionEl.innerText = `${(sessionCount).toLocaleString()} SESSIONS ESTABLISHED`;
+    if (sessionEl) sessionEl.innerText = `${(sessionCount).toLocaleString()}`;
 
     // Artemis Mission Live Telemetry Simulation
     const simulateArtemisTelemetry = () => {
