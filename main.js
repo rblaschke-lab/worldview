@@ -667,7 +667,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 features: data.features.map(f => {
                     const mag = f.properties.mag;
                     let tsunamiTag = '';
-                    if (mag >= 6.0) {
+                    if (f.properties.tsunami === 1) {
                         tsunamiTag = `<div style="margin-top:8px; padding:4px; font-weight:bold; font-size:0.65rem; color:#fff; background:var(--neon-red); border:1px solid #fff;">
                                         <i class="fa-solid fa-water"></i> ATS-WARNING: REGIONAL TSUNAMI THREAT OR MAJOR SEISMIC DISTURBANCE DETECTED
                                       </div>`;
