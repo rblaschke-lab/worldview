@@ -285,7 +285,7 @@ input:checked + .slider:before {
 }
 
 @media (max-width: 600px) and (orientation: portrait) {
-    #orientation-hint { display: flex; animation: fadeIn 0.5s; }
+    #orientation-hint { display: none; }
 }
 
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
@@ -628,4 +628,23 @@ body.surveillance-active .maplibregl-ctrl {
     0% { opacity: 1; }
     50% { opacity: 0.5; }
     100% { opacity: 1; }
+}
+
+@media (max-width: 768px) {
+    #artemis-bar {
+        width: calc(100% - 20px);
+        left: 10px;
+        bottom: calc(var(--mobile-nav-h) + 15px); /* Stack directly above mobile nav */
+        min-height: 50px;
+        padding: 8px 10px;
+    }
+    .artemis-stats {
+        gap: 4px;
+    }
+    .stat-item {
+        font-size: 0.55rem;
+    }
+    #map-branding {
+        display: none !important; /* Hide branding on mobile to declutter */
+    }
 }
