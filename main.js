@@ -17,26 +17,40 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Artemis Mission Live Telemetry Simulation
     const simulateArtemisTelemetry = () => {
-        const dayEl = document.getElementById('artemis-day');
+        const timeEl = document.getElementById('artemis-time');
         const velEl = document.getElementById('artemis-vel');
-        const altEl = document.getElementById('artemis-alt');
+        const distEarthEl = document.getElementById('artemis-dist-earth');
+        const distMoonEl = document.getElementById('artemis-dist-moon');
         
-        if(!dayEl || !velEl || !altEl) return;
+        if(!timeEl || !velEl || !distEarthEl || !distMoonEl) return;
         
-        // Base values
-        let baseDay = 21;
-        let baseVel = 35400; // km/h (translunar injection speed)
-        let baseAlt = 380400; // km
+        // Base values simulating a deep space approach
+        let missionStart = Date.now() - (21 * 86400000 + 4 * 3600000 + 12 * 60000); // 21 days 4 hours 12 mins ago
+        let baseDistEarth = 380400.00;
+        let baseDistMoon = 4000.00;
+        let baseVel = 35400.00;
+        
+        const formatNum = (num) => num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         
         const tick = () => {
-            // Slight oscillation algorithm to simulate real-time reading noise and orbital mechanics
-            const noise = (Math.random() - 0.5) * 10;
-            baseAlt += (0.1 + (noise / 100)); // Slowly increasing distance during transit
-            baseVel -= (0.01 + Math.abs(noise / 500)); // Gravity deceleration
+            const now = Date.now();
+            let elapsed = now - missionStart;
             
-            dayEl.innerText = baseDay;
-            velEl.innerText = `${Math.floor(baseVel).toLocaleString()} KM/H`;
-            altEl.innerText = `${Math.floor(baseAlt).toLocaleString()} KM`;
+            const days = Math.floor(elapsed / 86400000);
+            const hours = Math.floor((elapsed % 86400000) / 3600000);
+            const mins = Math.floor((elapsed % 3600000) / 60000);
+            const secs = Math.floor((elapsed % 60000) / 1000);
+            timeEl.innerText = `${days}D ${hours.toString().padStart(2, '0')}H ${mins.toString().padStart(2, '0')}M ${secs.toString().padStart(2, '0')}S`;
+
+            // Rapid oscillation algorithm for deep space telemetry variance
+            const noise = (Math.random() - 0.5) * 10;
+            baseDistEarth += (0.01 + (noise / 200)); 
+            baseDistMoon -= (0.01 + Math.abs(noise / 200));
+            baseVel += (noise / 100); // slight speed oscillations
+            
+            velEl.innerText = `${formatNum(baseVel)} KM/H`;
+            distEarthEl.innerText = `${formatNum(baseDistEarth)} KM`;
+            distMoonEl.innerText = `${formatNum(baseDistMoon)} KM`;
             
             requestAnimationFrame(tick);
         };
