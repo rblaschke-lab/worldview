@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Worldview V8.7 | Global Command Center</title>
+    <title id="page-title">Worldview | Global Command Center</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -16,10 +16,21 @@
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <link rel="stylesheet" href="./style.css?v=8.5">
+    <script src="./fetchWrapper.js"></script>
+    <script src="./config.js"></script>
+    <link rel="stylesheet" href="./style.css?v=8.8">
 </head>
 <body class="theme-clean">
     <div id="map"></div>
+    
+    <div id="observe-dim"></div>
+
+    <!-- 3-MODE SYSTEM: Floating Switch -->
+    <div id="mode-switch-container" class="floating-mode-switch">
+        <button class="mode-btn" data-mode="OBSERVE"><i class="fa-solid fa-eye"></i> OBSERVE</button>
+        <button class="mode-btn" data-mode="MONITOR"><i class="fa-solid fa-bolt"></i> MONITOR</button>
+        <button class="mode-btn active" data-mode="ANALYZE"><i class="fa-solid fa-microscope"></i> ANALYZE</button>
+    </div>
     
     <!-- TOP NEWS TICKER (Mobile Focus) -->
     <div id="ticker-top" class="global-ticker">
@@ -31,7 +42,7 @@
     <div id="sidebar" class="terminal-panel">
         <header>
             <div class="header-top-row header-main">
-                <h1>WORLDVIEW <span class="version">V8.7</span></h1>
+                <h1>WORLDVIEW <span class="version dyn-version"></span></h1>
                 <div class="sidebar-expand-hint">▼ EXPAND</div>
             </div>
             <div class="header-top-row header-meta">
@@ -63,6 +74,25 @@
                     <input type="checkbox" id="toggle-intel">
                     <span class="slider"></span>
                 </label>
+            </div>
+        </section>
+
+        <!-- SCENARIOS -->
+        <section class="menu-group collapsible-section" id="sec-scenarios">
+            <h2 class="category-title cat-toggle" data-target="sec-scenarios">
+                <span style="color:var(--urgent-red, #ff3333);"><i class="fa-solid fa-crosshairs"></i> GLOBAL SCENARIOS</span>
+                <i class="fa-solid fa-chevron-down cat-arrow"></i>
+            </h2>
+            <div class="cat-body">
+                <div class="scenario-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 5px 0;">
+                    <button class="preset-btn" data-scenario="europe">Europe Energy</button>
+                    <button class="preset-btn" data-scenario="taiwan">Taiwan Esc.</button>
+                    <button class="preset-btn" data-scenario="redsea">Red Sea</button>
+                    <button class="preset-btn" data-scenario="nuclear">Nuclear Risk</button>
+                </div>
+                <div class="control-item override-clear" style="margin-top:4px;">
+                    <button id="clear-scenarios" class="tactical-btn exit-btn" style="width:100%; border-color:#555; color:#aaa;">[ RESET LAYERS ]</button>
+                </div>
             </div>
         </section>
 
@@ -109,6 +139,7 @@
             </h2>
             <div class="cat-body">
                 <div class="toggle-grid">
+                    <div class="control-item"><span style="color:#00d4ff; font-weight:bold;">AI INFRA ATLAS</span><label class="toggle-switch"><input type="checkbox" id="toggle-ai-atlas"><span class="slider"></span></label></div>
                     <div class="control-item"><span>Undersea Cables</span><label class="toggle-switch"><input type="checkbox" id="toggle-cables"><span class="slider"></span></label></div>
                     <div class="control-item"><span>Data Centers</span><label class="toggle-switch"><input type="checkbox" id="toggle-datacenters"><span class="slider"></span></label></div>
                     <div class="control-item"><span>Nuclear Plants</span><label class="toggle-switch"><input type="checkbox" id="toggle-nuclear"><span class="slider"></span></label></div>
@@ -211,7 +242,7 @@
 
     <!-- BOTTOM NEWS TICKER (Desktop Focus) -->
     <div id="ticker-bottom" class="global-ticker">
-        <div class="ticker-content" id="ticker-content-bottom">LOADED GLOBAL COMMAND INTERFACE V8.7 // STANDBY FOR SATELLITE RELAY...</div>
+        <div class="ticker-content" id="ticker-content-bottom">LOADED GLOBAL COMMAND INTERFACE <span class="dyn-version"></span> // STANDBY FOR SATELLITE RELAY...</div>
     </div>
 
     <!-- Launch Tracker HUD -->
@@ -234,7 +265,7 @@
             </div>
             <div class="th-right">
                 <div class="th-stat">USER: <span>COMMANDER_RB</span></div>
-                <div class="th-stat">CORE: <span>V8.71_STABLE</span></div>
+                <div class="th-stat">CORE: <span class="dyn-version-stable"></span></div>
                 <div id="tactical-clock" class="th-stat">00:00:00</div>
             </div>
         </header>
@@ -298,6 +329,10 @@
         </div>
     </div>
 
+    <div id="briefing-panel" class="glass-panel right-sidebar hidden">
+        <!-- Content gets injected dynamically by JS -->
+    </div>
+
     <!-- Orientation Hint -->
     <div id="orientation-hint">
         <i class="fa-solid fa-rotate"></i>
@@ -314,6 +349,12 @@
         </div>
     </div>
 
-    <script src="./main.js?v=8.5"></script>
+    <script>
+        // Hydrate version text from config
+        document.getElementById('page-title').innerText = `Worldview V${window.WorldviewConfig.VERSION} | Global Command Center`;
+        document.querySelectorAll('.dyn-version').forEach(el => el.innerText = `V${window.WorldviewConfig.VERSION}`);
+        document.querySelectorAll('.dyn-version-stable').forEach(el => el.innerText = `V${window.WorldviewConfig.VERSION}_STABLE`);
+    </script>
+    <script src="./main.js?v=8.8"></script>
 </body>
 </html>

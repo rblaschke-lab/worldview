@@ -1,0 +1,67 @@
+﻿
+    const fetchGlobalNews = async () => {
+            const { data, status } = await windo
+w.reliableFetch(`https://api.rss2json.com/v1/api
+.json?rss_url=${rssUrl}`, 'globalnews', { 
+timeout: 8000, retries: 1 });
+        fetchGlobalNews();
+        setInterval(fetchGlobalNews, 300000); 
+// 5min
+        fetchNASA_Fires();
+        fetchWeather();
+        fetchOceanSST();
+        fetchPopulationDensity();
+        fetchTemperatureLayer();
+        fetchSolarStorm();
+        setInterval(fetchSolarStorm, 120000); 
+        fetchInternetOutages();
+        setInterval(fetchInternetOutages, 
+300000); 
+        fetchLaunches();
+        setInterval(fetchLaunches, 600000); 
+        fetchISS();
+        setInterval(fetchISS, 15000);       
+        fetchEarthquakes();
+        setInterval(fetchEarthquakes, 600000); 
+        fetchFlights();
+        setInterval(fetchFlights, 300000);     
+        fetchPowerOutages(); // New V7.0
+    const fetchNASA_Fires = () => {
+    const fetchWeather = async () => {
+            const res = await fetch('https://api
+.rainviewer.com/public/weather-maps.json');
+    const fetchISS = async () => {
+            const response = await fetch('https:
+//api.wheretheiss.at/v1/satellites/25544');
+    const fetchPowerOutages = () => {
+    const fetchEarthquakes = async () => {
+        setStatus("FETCHING SEISMIC DATA...");
+            const response = await fetch('https:
+//earthquake.usgs.gov/earthquakes/feed/v1.0/summ
+ary/2.5_day.geojson');
+    const fetchFlights = async () => {
+            const res = await fetch('https://ope
+nsky-network.org/api/states/all', { signal: 
+controller.signal });
+            console.warn("Aviation fetch error 
+- switching to simulation relay.");
+    const fetchOceanSST = () => {
+    const fetchPopulationDensity = () => {
+    const fetchTemperatureLayer = () => {
+    const fetchSolarStorm = async () => {
+            const kpRes = await fetch('https://s
+ervices.swpc.noaa.gov/products/noaa-planetary-k-
+index.json');
+                const windRes = await fetch('htt
+ps://services.swpc.noaa.gov/json/rtsw/rtsw_wind_
+1m.json');
+    const fetchInternetOutages = async () => {
+            const res = await fetch('https://api
+.ioda.inetintel.cc.gatech.edu/v2/alerts?from=-86
+400&format=json');
+    const fetchLaunches = async () => {
+            const res = await fetch('https://ll.
+thespacedevs.com/2.3.0/launches/upcoming/?limit=
+5&format=json', { signal: ctrl.signal });
+
+

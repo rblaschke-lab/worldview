@@ -11,6 +11,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="./config.js"></script>
     <style>
         :root {
             --bg: #010408;
@@ -682,7 +683,7 @@
         <div class="hero-content">
             <div class="hero-badge">
                 <span class="live-dot"></span>
-                LIVE — 40+ DATA FEEDS ACTIVE
+                LIVE — <span class="dyn-feeds-plus"></span> DATA FEEDS ACTIVE
             </div>
             <h1 class="hero-title">
                 <span class="gradient-text">The World.<br>In Real Time.</span>
@@ -719,15 +720,15 @@
     <section id="stats">
         <div class="stats-grid fade-up">
             <div class="stat-card">
-                <span class="stat-number" data-target="40">0</span>
+                <span class="stat-number dyn-feeds-target" data-target="0">0</span>
                 <span class="stat-label">Live Data Feeds</span>
             </div>
             <div class="stat-card">
-                <span class="stat-number" data-target="195">0</span>
+                <span class="stat-number dyn-countries-target" data-target="0">0</span>
                 <span class="stat-label">Countries Mapped</span>
             </div>
             <div class="stat-card">
-                <span class="stat-number" data-target="22">0</span>
+                <span class="stat-number dyn-layers-target" data-target="0">0</span>
                 <span class="stat-label">Map Layers</span>
             </div>
             <div class="stat-card">
@@ -813,6 +814,27 @@
                     <span class="tag">5min refresh</span>
                 </div>
             </div>
+            <div class="feature-card fade-up" style="--delay:.4s;">
+                <div class="feature-icon" style="background:rgba(0,255,204,0.12);">⚙️</div>
+                <h3>AI Infrastructure Atlas</h3>
+                <p>Track the global race for AGI. Maps hyperscale datacenters, power grids, and sovereign AI clusters against cooling capacity and geopolitical risk.</p>
+                <div class="tag-list">
+                    <span class="tag">DC Density</span>
+                    <span class="tag">Energy Intel</span>
+                    <span class="tag">Compute Security</span>
+                </div>
+            </div>
+
+            <div class="feature-card fade-up" style="--delay:.45s;">
+                <div class="feature-icon" style="background:rgba(255,51,85,0.12); color:#ff3355;">🎯</div>
+                <h3>Global Defense Scenarios</h3>
+                <p>One-click strategic presets. Instantly isolate critical layers to analyze specific flashpoints like Taiwan Escalation, Red Sea Crisis, or Europe Energy Stress.</p>
+                <div class="tag-list">
+                    <span class="tag">Automated Briefings</span>
+                    <span class="tag">Data Isolation</span>
+                    <span class="tag">Tactical UI</span>
+                </div>
+            </div>
         </div>
     </section>
 
@@ -826,7 +848,7 @@
             <div class="layer-list fade-up">
                 <div class="section-header" style="text-align:left; margin-bottom: 32px;">
                     <div class="section-tag">// DATA LAYERS</div>
-                    <h2 class="section-title" style="font-size:2rem;">40+ sources.<br>One view.</h2>
+                    <h2 class="section-title" style="font-size:2rem;"><span class="dyn-feeds-plus"></span> sources.<br>One view.</h2>
                 </div>
 
                 <div class="layer-item">
@@ -945,6 +967,63 @@
                 </div>
             </div>
         </div>
+    <!-- GLOBAL SCENARIOS -->
+    <section id="scenarios" style="padding: 100px 48px; background: linear-gradient(180deg, var(--bg) 0%, rgba(20,5,10,0.5) 100%);">
+        <div class="intel-showcase" style="direction: rtl;">
+            <div class="fade-up" style="direction: ltr;">
+                <div class="section-tag" style="color:#ff3355;">// STRATEGIC PRESCRIPTIONS</div>
+                <h2 style="font-size:2.2rem;font-weight:800;margin-bottom:16px;letter-spacing:-1px;">
+                    Predefined<br>Threat Scenarios.
+                </h2>
+                <p style="color:var(--text-muted);line-height:1.7;font-size:.95rem;margin-bottom:24px;">
+                    Transform the Command Center instantly. Our AI-driven scenario modeling engine filters out noise by automatically toggling critical infrastructure, geopolitical, and military feeds relevant to specific global crises.
+                </p>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px;">
+                    <div style="background:var(--surface); border:1px solid var(--border); padding:20px; border-radius:12px; transition:all 0.3s;" onmouseover="this.style.borderColor='rgba(255,176,0,0.4)'; this.style.transform='translateY(-2px)';" onmouseout="this.style.borderColor='var(--border)'; this.style.transform='none';">
+                        <h4 style="color:#ffb000; font-family:'Share Tech Mono', monospace; margin-bottom:8px; font-size:.85rem; display:flex; align-items:center; gap:6px;"><i class="fa-solid fa-bolt"></i> EUROPE ENERGY</h4>
+                        <p style="font-size:.78rem; color:var(--text-muted); line-height:1.5;">Simulates grid strains, data center power loads, and extreme weather.</p>
+                    </div>
+                    <div style="background:var(--surface); border:1px solid var(--border); padding:20px; border-radius:12px; transition:all 0.3s;" onmouseover="this.style.borderColor='rgba(255,51,85,0.4)'; this.style.transform='translateY(-2px)';" onmouseout="this.style.borderColor='var(--border)'; this.style.transform='none';">
+                        <h4 style="color:#ff3355; font-family:'Share Tech Mono', monospace; margin-bottom:8px; font-size:.85rem; display:flex; align-items:center; gap:6px;"><i class="fa-solid fa-anchor"></i> TAIWAN ESCALATION</h4>
+                        <p style="font-size:.78rem; color:var(--text-muted); line-height:1.5;">Tracks maritime chokepoints, internet cables, and DEFCON alerts.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Highly aesthetic visual mock -->
+            <div class="fade-up" style="direction: ltr; position: relative;">
+                <div style="padding: 40px; background: rgba(0,0,0,0.6); border: 1px solid rgba(255,51,85,0.2); border-radius: 16px; box-shadow: 0 20px 60px rgba(255,51,85,0.1); min-height: 380px; display: flex; flex-direction: column; justify-content: center; position:relative; overflow:hidden;">
+                     <div style="position:absolute; inset:0; background:radial-gradient(circle at center, rgba(255,51,85,0.06) 0%, transparent 70%); pointer-events:none;"></div>
+                     
+                     <!-- CRT Line -->
+                     <div style="position:absolute; bottom:0; left:0; width:100%; height:2px; background:linear-gradient(90deg, transparent, #ff3355, transparent); opacity:0.5; animation:scan 4s linear infinite;"></div>
+                     
+                     <div style="font-family:'Share Tech Mono', monospace; color:#ff3355; font-size:.85rem; margin-bottom:16px; z-index:2; display:flex; align-items:center; justify-content:space-between;">
+                         <span><i class="fa-solid fa-crosshairs"></i> GLOBAL SCENARIOS</span>
+                         <span style="opacity:0.5; font-size:0.7rem;">STRAT-LAYER V8.8</span>
+                     </div>
+                     <div style="display:flex; flex-direction:column; gap:8px; z-index:2; font-family:'Share Tech Mono', monospace;">
+                         
+                         <!-- Active Preset -->
+                         <div style="background:rgba(255,51,85,0.1); border:1px solid rgba(255,51,85,0.4); padding:16px; color:#fff; display:flex; justify-content:space-between; align-items:center; border-radius:6px; box-shadow:0 0 20px rgba(255,51,85,0.2);">
+                             <span style="font-size:.85rem; font-weight:bold; letter-spacing:1px; color:#ff3355;">TAIWAN ESCALATION</span> 
+                             <span style="background:rgba(255,51,85,0.2); color:#ff3355; padding:4px 10px; font-size:.65rem; border-radius:3px; animation:blink 2s infinite;">LOADED</span>
+                         </div>
+                         
+                         <!-- Inactive Presets -->
+                         <div style="background:var(--surface); border:1px solid var(--border); padding:14px 16px; color:var(--text-muted); display:flex; justify-content:space-between; align-items:center; border-radius:6px;">
+                             <span style="font-size:.8rem; letter-spacing:1px;">EUROPE ENERGY STRESS</span> <span style="font-size:.65rem;">[ AWAITING ]</span>
+                         </div>
+                         <div style="background:var(--surface); border:1px solid var(--border); padding:14px 16px; color:var(--text-muted); display:flex; justify-content:space-between; align-items:center; border-radius:6px;">
+                             <span style="font-size:.8rem; letter-spacing:1px;">RED SEA CRISIS</span> <span style="font-size:.65rem;">[ AWAITING ]</span>
+                         </div>
+                         <div style="background:var(--surface); border:1px solid var(--border); padding:14px 16px; color:var(--text-muted); display:flex; justify-content:space-between; align-items:center; border-radius:6px;">
+                             <span style="font-size:.8rem; letter-spacing:1px;">GLOBAL NUCLEAR RISK</span> <span style="font-size:.65rem;">[ AWAITING ]</span>
+                         </div>
+                     </div>
+                </div>
+            </div>
+        </div>
     </section>
 
     <!-- HOW IT WORKS -->
@@ -963,7 +1042,7 @@
             <div class="step-card fade-up">
                 <div class="step-number">02</div>
                 <h3>Select Your Layers</h3>
-                <p>Toggle any combination of 22+ data layers from the sidebar — from seismic activity to undersea cables and nuclear sites.</p>
+                <p>Toggle any combination of <span class="dyn-layers-plus"></span> data layers from the sidebar — from seismic activity to undersea cables and nuclear sites.</p>
             </div>
             <div class="step-card fade-up">
                 <div class="step-number">03</div>
@@ -1033,13 +1112,24 @@
 
     <!-- FOOTER -->
     <footer>
-        <div class="footer-logo">WORLDVIEW V8.7</div>
+        <div class="footer-logo">WORLDVIEW <span class="dyn-version"></span></div>
         <div class="footer-copy">
             Open Source Platform · All data from public APIs · Research Suite 2026
         </div>
     </footer>
 
+    </footer>
+
     <script>
+        // Hydrate config numbers
+        document.querySelectorAll('.dyn-feeds-plus').forEach(el => el.innerText = `${window.WorldviewConfig.METRICS.FEEDS}+`);
+        document.querySelectorAll('.dyn-layers-plus').forEach(el => el.innerText = `${window.WorldviewConfig.METRICS.LAYERS}+`);
+        document.querySelectorAll('.dyn-version').forEach(el => el.innerText = `V${window.WorldviewConfig.VERSION}`);
+        
+        document.querySelectorAll('.dyn-feeds-target').forEach(el => el.dataset.target = window.WorldviewConfig.METRICS.FEEDS);
+        document.querySelectorAll('.dyn-countries-target').forEach(el => el.dataset.target = window.WorldviewConfig.METRICS.COUNTRIES);
+        document.querySelectorAll('.dyn-layers-target').forEach(el => el.dataset.target = window.WorldviewConfig.METRICS.LAYERS);
+
         // Scroll animation observer
         const observer = new IntersectionObserver((entries) => {
             entries.forEach((entry, i) => {

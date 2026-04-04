@@ -1,8 +1,8 @@
 document.addEventListener("DOMContentLoaded", () => {
     // ----------------------------------------------------
-    // CONSTANTS & STATE (V8.5)
+    // CONSTANTS & STATE
     // ----------------------------------------------------
-    const VERSION = "8.5";
+    const VERSION = window.WorldviewConfig.VERSION;
     
     // Increment and get session count
     const getSessionCount = () => {
@@ -75,9 +75,8 @@ document.addEventListener("DOMContentLoaded", () => {
         terminator: false, fires: false, weather: false, borders: false,
         ships: false, flights: false, iss: false, starlink: false, earthquakes: false, webcams: false,
         nightlights: false, population: false, satellites: false, temperature: false,
-        volcanoes: false, radiation: false, internet: false, conflicts: false,
-        regimes: false, blocs: false, cables: false, datacenters: false, nuclear: false, nukes: false,
-        ticker: true, power: false, surveillance: false, intel: false
+        volcanoes: false, radiation: false, internet: false, power: false, intel: false,
+        cables: false, datacenters: false, nuclear: false, conflicts: false, regimes: false, blocs: false, surveillance: true, aiAtlas: false
     };
 
     let issMarker = null;
@@ -89,6 +88,331 @@ document.addEventListener("DOMContentLoaded", () => {
     let terminatorInterval = null;
     let tacticalQueue = [];
     let tacticalProcessing = false;
+
+    // ----------------------------------------------------
+    // 3-MODE SYSTEM: OBSERVE, MONITOR, ANALYZE
+    // ----------------------------------------------------
+    const modeConfig = {
+        OBSERVE: {
+            autoActiveLayers: ['terminator', 'weather', 'sst'],
+            uiState: { sidebarCollapsed: true, intelPanelOpen: false },
+            disablePolling: ['flights', 'iss', 'earthquakes', 'ships']
+        },
+        MONITOR: {
+            autoActiveLayers: ['fires', 'earthquakes', 'conflicts'],
+            uiState: { sidebarCollapsed: false, intelPanelOpen: true },
+            disablePolling: []
+        },
+        ANALYZE: {
+            autoActiveLayers: ['cables', 'blocs', 'datacenters'],
+            uiState: { sidebarCollapsed: false, intelPanelOpen: false },
+            disablePolling: []
+        }
+    };
+
+    // ----------------------------------------------------
+    // PREDEFINED THREAT SCENARIOS
+    // ----------------------------------------------------
+    const SCENARIOS = {
+        europe: {
+            layers: ['power', 'datacenters', 'temperature', 'weather', 'nuclear', 'blocs'],
+            title: "Europe Energy Stress",
+            what: "Extreme weather events combined with geopolitical tensions lead to severe strain on the European power grid.",
+            why: "Data centers face brownouts, and nuclear output is being heavily monitored to prevent cascading grid failures across the continent.",
+            center: [10.0, 50.0],
+            zoom: 3.5,
+            severity: "HIGH"
+        },
+        taiwan: {
+            layers: ['ships', 'flights', 'cables', 'conflicts', 'regimes', 'nukes'],
+            title: "Taiwan Escalation",
+            what: "A sudden military mobilization in the Taiwan Strait disrupts global commercial shipping and reroutes international flights.",
+            why: "Strategic undersea internet cables are flagged at high risk, and regional tension escalates to DEFCON alert levels.",
+            center: [120.9, 23.7],
+            zoom: 5.0,
+            severity: "CRITICAL"
+        },
+        redsea: {
+            layers: ['ships', 'conflicts', 'power', 'internet', 'regimes'],
+            title: "Red Sea Crisis",
+            what: "Asymmetric attacks and naval posturing in the Red Sea cause a massive rerouting of global shipping around the Cape of Good Hope.",
+            why: "Critical energy transit is delayed, and regional IT infrastructure experiences anomalous outages.",
+            center: [38.5, 19.5],
+            zoom: 4.5,
+            severity: "HIGH"
+        },
+        nuclear: {
+            layers: ['nukes', 'radiation', 'conflicts', 'blocs', 'flights', 'satellites'],
+            title: "Global Nuclear Risk",
+            what: "Following a breakdown in strategic arms control, early warning satellite networks detect heightened readiness at silo locations.",
+            why: "Airborne command posts are active, and terrestrial radiation sensors are put on high alert. Defcon level raised.",
+            center: [0.0, 40.0],
+            zoom: 2.0,
+            severity: "CRITICAL"
+        }
+    };
+
+    setTimeout(() => {
+        document.querySelectorAll('.preset-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const scenarioId = btn.dataset.scenario;
+                const scenario = SCENARIOS[scenarioId];
+                if(!scenario) return;
+
+                // Turn off all layers first
+                Object.keys(toggles).forEach(key => {
+                    if (['ticker', 'surveillance', 'intel', 'all'].includes(key)) return;
+                    const cb = document.getElementById(`toggle-${key}`);
+                    if(cb && cb.checked) {
+                        cb.checked = false;
+                        cb.dispatchEvent(new Event('change'));
+                    }
+                });
+
+                // Turn on specific scenario layers
+                setTimeout(() => {
+                    scenario.layers.forEach(layer => {
+                        const cb = document.getElementById(`toggle-${layer}`);
+                        if(cb && !cb.checked) {
+                            cb.checked = true;
+                            cb.dispatchEvent(new Event('change'));
+                        }
+                    });
+                }, 100);
+
+                // Map FlyTo
+                map.flyTo({ center: scenario.center, zoom: scenario.zoom, pitch: 45, duration: 4000 });
+
+                // Briefing
+                if (window.openBriefing) {
+                    window.openBriefing({
+                        id: scenarioId,
+                        title: scenario.title,
+                        what: scenario.what,
+                        why: scenario.why,
+                        time: new Date().toLocaleTimeString('en-GB', {timeZone: 'UTC'}) + " ZULU",
+                        source: "AI STRAT-LAYER",
+                        severity: scenario.severity
+                    });
+                }
+                
+                if(window.setStatus) setStatus(`SCENARIO LOADED: ${scenario.title.toUpperCase()}`);
+                
+                // Fall back to ANALYZE mode automatically for full dashboard visibility
+                if (switchMode && currentMode !== 'ANALYZE') switchMode('ANALYZE');
+            });
+        });
+
+        document.getElementById('clear-scenarios')?.addEventListener('click', () => {
+            Object.keys(toggles).forEach(key => {
+                if (['ticker', 'surveillance', 'intel', 'all'].includes(key)) return;
+                const cb = document.getElementById(`toggle-${key}`);
+                if(cb && cb.checked) {
+                    cb.checked = false;
+                    cb.dispatchEvent(new Event('change'));
+                }
+            });
+            if(window.closeBriefing) window.closeBriefing();
+            map.flyTo({ center: [15.0, 48.0], zoom: 2.2, pitch: 0, duration: 3000 });
+            if(window.setStatus) setStatus(`ALL LAYERS RESET`);
+        });
+    }, 500);
+
+    let currentMode = 'ANALYZE';
+    document.body.classList.add(`mode-${currentMode.toLowerCase()}`);
+
+    const switchMode = (modeId) => {
+        if(currentMode === modeId) return;
+        currentMode = modeId;
+        
+        // Update body class for CSS
+        document.body.classList.remove('mode-observe', 'mode-monitor', 'mode-analyze');
+        document.body.classList.add(`mode-${modeId.toLowerCase()}`);
+
+        // UI Buttons
+        document.querySelectorAll('.mode-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.mode === modeId);
+        });
+
+        const config = modeConfig[modeId];
+
+        // Reset all layers (excluding toggles that aren't data layers like ticker, intel, surveillance)
+        Object.keys(toggles).forEach(key => {
+            if (['ticker', 'surveillance', 'intel', 'all'].includes(key)) return;
+            const cb = document.getElementById(`toggle-${key}`);
+            if(cb && cb.checked) {
+                cb.checked = false;
+                cb.dispatchEvent(new Event('change'));
+            }
+        });
+
+        // Activate specific layers
+        config.autoActiveLayers.forEach(layer => {
+            const cb = document.getElementById(`toggle-${layer}`);
+            if(cb && !cb.checked) {
+                cb.checked = true;
+                cb.dispatchEvent(new Event('change'));
+            }
+        });
+
+        // UI States
+        const sidebar = document.getElementById('sidebar');
+        const intel = document.getElementById('intelligence-panel');
+        if (sidebar) sidebar.style.opacity = config.uiState.sidebarCollapsed ? '0' : '1';
+        if (sidebar) sidebar.style.pointerEvents = config.uiState.sidebarCollapsed ? 'none' : 'auto';
+        if (intel) {
+            if(config.uiState.intelPanelOpen) {
+                intel.style.display = 'block';
+            } else {
+                intel.style.display = 'none';
+            }
+        }
+
+        if(window.setStatus) setStatus(`SWITCHED TO ${modeId} MODE`);
+    };
+
+    document.querySelectorAll('.mode-btn').forEach(btn => {
+        btn.addEventListener('click', () => switchMode(btn.dataset.mode));
+    });
+
+    const handleManualLayerToggle = () => {
+        if (currentMode !== 'ANALYZE') {
+            currentMode = 'ANALYZE';
+            document.body.classList.remove('mode-observe', 'mode-monitor', 'mode-analyze');
+            document.body.classList.add('mode-analyze');
+            document.querySelectorAll('.mode-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.mode === 'ANALYZE');
+            });
+            const sidebar = document.getElementById('sidebar');
+            if (sidebar) {
+                 sidebar.style.opacity = '1';
+                 sidebar.style.pointerEvents = 'auto';
+            }
+            if(window.setStatus) setStatus(`FELL BACK TO ANALYZE MODE (MANUAL OVERRIDE)`);
+        }
+    };
+
+    // Attach click listener to checkboxes to detect manual override
+    document.querySelectorAll('.control-item input[type="checkbox"]').forEach(cb => {
+        cb.addEventListener('click', () => {
+            if (['toggle-ticker', 'toggle-intel', 'toggle-all'].includes(cb.id)) return;
+            handleManualLayerToggle();
+        });
+    });
+
+
+    // ----------------------------------------------------
+    // INTELLIGENCE BRIEFING PANEL
+    // ----------------------------------------------------
+    let currentBriefing = null;
+    window.closeBriefing = () => {
+        currentBriefing = null;
+        const panel = document.getElementById('briefing-panel');
+        if(panel) panel.classList.add('hidden');
+    };
+
+    window.openBriefing = (eventData) => {
+        currentBriefing = eventData.id;
+        const panel = document.getElementById('briefing-panel');
+        if(!panel) return;
+        panel.classList.remove('hidden');
+
+        if (eventData.location) {
+            map.flyTo({ center: eventData.location, zoom: 5, essential: true });
+        }
+
+        const relatedHtml = eventData.relatedLayers ? eventData.relatedLayers.map(layer => {
+            return `<button class="related-chip" onclick="document.getElementById('toggle-${layer.layerId}').click()">+ ${layer.label}</button>`;
+        }).join('') : '';
+
+        panel.innerHTML = `
+            <div class="briefing-header severity-${(eventData.severity || 'low').toLowerCase()}">
+                <h2>${eventData.title}</h2>
+                <button class="btn-close-briefing" onclick="closeBriefing()">✖</button>
+            </div>
+            <div class="briefing-body">
+                <h3>SITUATION</h3>
+                <p>${eventData.what}</p>
+                <h3>ASSESSMENT</h3>
+                <p>${eventData.why}</p>
+                
+                <div class="briefing-meta-grid">
+                    <div><span>TIME DETECTED</span>${eventData.time}</div>
+                    <div><span>SOURCE / FEED</span>${eventData.source}</div>
+                </div>
+                
+                ${relatedHtml ? `<h3>RELATED SIGNALS</h3><div class="related-chips">${relatedHtml}</div>` : ''}
+            </div>
+        `;
+    };
+
+
+    // ----------------------------------------------------
+    // LAYER STATUS MANAGEMENT (V8.7)
+    // ----------------------------------------------------
+    const initLayerBadges = () => {
+        const metadata = window.WorldviewConfig.LAYER_METADATA;
+        if (!metadata) {
+            console.error("LAYER_METADATA not found in config!");
+            return;
+        }
+
+        let badgeCount = 0;
+        document.querySelectorAll('.control-item').forEach(item => {
+            const labelEle = item.querySelector('span'); // Find the first span which is the label
+            const toggle = item.querySelector('input[type="checkbox"]');
+            if (labelEle && toggle && toggle.id.startsWith('toggle-')) {
+                const id = toggle.id.replace('toggle-', '');
+                const meta = metadata[id];
+                if (meta) {
+                    item.dataset.layerId = id;
+                    labelEle.outerHTML = `
+                        <div class="layer-name-container" style="display:flex; flex-direction:column; gap:2px; padding-bottom:4px; flex:1;">
+                            <span style="font-size:0.72rem;">${meta.name}</span>
+                            <span class="layer-status-badge status-${meta.status.toLowerCase()}" id="badge-${id}" title="Source: ${meta.source} | Rel: ${meta.reliabilityScore}%">${meta.status}</span>
+                        </div>
+                    `;
+                    badgeCount++;
+                }
+            }
+        });
+        console.log(`Initialized ${badgeCount} layer badges.`);
+    };
+
+    const updateLayerStatus = (id, status, infoMsg = "") => {
+        const meta = window.WorldviewConfig.LAYER_METADATA?.[id];
+        if (!meta) return;
+
+        meta.status = status;
+        meta.lastUpdate = Date.now();
+
+        const badgeEl = document.getElementById(`badge-${id}`);
+        if (badgeEl) {
+            badgeEl.className = `layer-status-badge status-${status.toLowerCase()}`;
+            badgeEl.innerHTML = status;
+            
+            let tooltipText = `Source: ${meta.source} | Rel: ${meta.reliabilityScore}%`;
+            if (infoMsg) {
+                tooltipText += ` | Info: ${infoMsg}`;
+                // Log to terminal if it's an error
+                if (status === 'ERROR') {
+                    if (typeof addTacticalLog === 'function') {
+                        addTacticalLog(`DATASTREAM_LOSS [${id.toUpperCase()}]: ${infoMsg}`, 'alert');
+                    } else {
+                        console.error(`[LAYER STATUS] ${id} failed: ${infoMsg}`);
+                    }
+                } else if (status === 'DEGRADED') {
+                    if (typeof addTacticalLog === 'function') {
+                        addTacticalLog(`DATASTREAM_DEGRADED [${id.toUpperCase()}]: ${infoMsg}`, 'warn');
+                    }
+                }
+            }
+            badgeEl.title = tooltipText;
+        }
+    };
+    
+    // Initialize UI badges immediately
+    initLayerBadges();
 
     // ----------------------------------------------------
     // INITIALIZE V4 MAPLIBRE GL JS
@@ -169,17 +493,19 @@ document.addEventListener("DOMContentLoaded", () => {
     const fetchGlobalNews = async () => {
         try {
             const rssUrl = encodeURIComponent('http://feeds.bbci.co.uk/news/world/rss.xml');
-            const res = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${rssUrl}`);
-            const data = await res.json();
+            const { data, status } = await window.reliableFetch(`https://api.rss2json.com/v1/api.json?rss_url=${rssUrl}`, 'globalnews', { timeout: 8000, retries: 1 });
             if (data.status === 'ok') {
                 const headlines = data.items.map(item => item.title.toUpperCase());
-                const tickerText = " // " + headlines.join(" // ") + " // " + headlines.slice(0, 3).join(" // ");
+                let prefix = status === 'DEGRADED' ? `[DEGRADED DATA] ` : ``;
+                const tickerText = " // " + prefix + headlines.join(" // ") + " // " + headlines.slice(0, 3).join(" // ");
                 const topCont = document.getElementById('ticker-content-top');
                 const botCont = document.getElementById('ticker-content-bottom');
                 if(topCont) topCont.innerText = `SITREP V${VERSION}: ${tickerText}`;
                 if(botCont) botCont.innerText = `GLOBAL COMMAND V${VERSION}: ${tickerText}`;
             }
-        } catch (e) {}
+        } catch (e) {
+            console.warn("[RELIABILITY] Global News Feed completely failed.");
+        }
     };
 
     // ── V8.0 SURVEILLANCE COMMAND CENTER LOGIC ─────────────
@@ -529,8 +855,11 @@ document.addEventListener("DOMContentLoaded", () => {
             if(!toggles.fires) {
                 map.setLayoutProperty('nasa-fires', 'visibility', 'none');
             }
+            updateLayerStatus('fires', 'DELAYED'); // Tile data is historic/delayed
             setStatus("NASA ACTIVE FIRES SYNCHRONIZED.");
-        } catch(err) {}
+        } catch(err) {
+            updateLayerStatus('fires', 'ERROR', err.message);
+        }
     };
 
     // ----------------------------------------------------
@@ -538,8 +867,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // ----------------------------------------------------
     const fetchWeather = async () => {
         try {
-            const res = await fetch('https://api.rainviewer.com/public/weather-maps.json');
-            const data = await res.json();
+            const { data, status, minutesAgo } = await window.reliableFetch('https://api.rainviewer.com/public/weather-maps.json', 'weather', { timeout: 10000, retries: 1 });
             const latestTime = data.radar.past[data.radar.past.length - 1].path;
             
             map.addLayer({
@@ -558,7 +886,14 @@ document.addEventListener("DOMContentLoaded", () => {
             if(!toggles.weather) {
                 map.setLayoutProperty('weather-radar', 'visibility', 'none');
             }
-        } catch(err) {}
+            if (status === 'DEGRADED') {
+                updateLayerStatus('weather', 'DEGRADED', `Stale by ${minutesAgo}m`);
+            } else {
+                updateLayerStatus('weather', 'LIVE');
+            }
+        } catch(err) {
+            updateLayerStatus('weather', 'ERROR', err.message);
+        }
     };
 
     // ----------------------------------------------------
@@ -594,9 +929,9 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     const fetchISS = async () => {
+        if (modeConfig[currentMode] && modeConfig[currentMode].disablePolling.includes('iss')) return;
         try {
-            const response = await fetch('https://api.wheretheiss.at/v1/satellites/25544');
-            const data = await response.json();
+            const { data, status, minutesAgo } = await window.reliableFetch('https://api.wheretheiss.at/v1/satellites/25544', 'iss', { timeout: 5000, retries: 1 });
             const { latitude, longitude, velocity, altitude } = data;
 
             if (!issMarker) {
@@ -616,7 +951,14 @@ document.addEventListener("DOMContentLoaded", () => {
                     issMarker.getPopup().setHTML(getIssPopupHtml(altitude, velocity, latitude, longitude));
                 }
             }
-        } catch (error) {}
+            if (status === 'DEGRADED') {
+                updateLayerStatus('iss', 'DEGRADED', `Stale by ${minutesAgo}m`);
+            } else {
+                updateLayerStatus('iss', 'LIVE');
+            }
+        } catch (error) {
+            updateLayerStatus('iss', 'ERROR', error.message);
+        }
     };
 
     // ----------------------------------------------------
@@ -652,6 +994,7 @@ document.addEventListener("DOMContentLoaded", () => {
             if (toggles.power) marker.addTo(map);
             powerMarkers.push(marker);
         });
+        updateLayerStatus('power', 'STATIC');
     };
 
 
@@ -713,10 +1056,10 @@ document.addEventListener("DOMContentLoaded", () => {
     // ----------------------------------------------------
     let globalEarthquakesArray = []; // Safer data access
     const fetchEarthquakes = async () => {
+        if (modeConfig[currentMode] && modeConfig[currentMode].disablePolling.includes('earthquakes')) return;
         setStatus("FETCHING SEISMIC DATA...");
         try {
-            const response = await fetch('https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/2.5_day.geojson');
-            const data = await response.json();
+            const { data, status, minutesAgo } = await window.reliableFetch('https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/2.5_day.geojson', 'earthquakes', { timeout: 10000, retries: 1 });
             globalEarthquakesArray = data.features;
             const geojson = {
                 type: 'FeatureCollection',
@@ -762,7 +1105,14 @@ document.addEventListener("DOMContentLoaded", () => {
             map.on('mouseenter', 'earthquakes-core', () => map.getCanvas().style.cursor = 'pointer');
             map.on('mouseleave', 'earthquakes-core', () => map.getCanvas().style.cursor = '');
             setStatus("SEISMIC DATA LOADED.");
-        } catch (error) {}
+            if (status === 'DEGRADED') {
+                updateLayerStatus('earthquakes', 'DEGRADED', `Stale by ${minutesAgo}m`);
+            } else {
+                updateLayerStatus('earthquakes', 'LIVE');
+            }
+        } catch (error) {
+            updateLayerStatus('earthquakes', 'ERROR', error.message);
+        }
     };
 
     // ----------------------------------------------------
@@ -841,13 +1191,10 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     const fetchFlights = async () => {
+        if (modeConfig[currentMode] && modeConfig[currentMode].disablePolling.includes('flights')) return;
         setStatus("SCANNING GLOBAL AIRSPACE (OPENSKY RELAY)...");
         try {
-            const controller = new AbortController();
-            const id = setTimeout(() => controller.abort(), 5000);
-            const res = await fetch('https://opensky-network.org/api/states/all', { signal: controller.signal });
-            clearTimeout(id);
-            const data = await res.json();
+            const { data, status, minutesAgo } = await window.reliableFetch('https://opensky-network.org/api/states/all', 'flights', { timeout: 8000, retries: 1 });
             
             if (!data.states || data.states.length === 0) throw new Error("No data");
 
@@ -859,14 +1206,21 @@ document.addEventListener("DOMContentLoaded", () => {
             if (fleetStates.length > 0) {
                 renderFlightMarkers(fleetStates, false);
                 setStatus(`GLOBAL AIRSPACE SCANNED: ${fleetStates.length} TARGETS IDENTIFIED.`);
+                if (status === 'DEGRADED') {
+                    updateLayerStatus('flights', 'DEGRADED', `Stale by ${minutesAgo}m`);
+                } else {
+                    updateLayerStatus('flights', 'LIVE');
+                }
             } else {
                 renderFlightMarkers(AviationSimulationRelay, true);
                 setStatus(`LIMITED DATA // INITIATING AVIATION SIMULATION RELAY.`);
+                updateLayerStatus('flights', 'LIMITED', 'Falling back to Simulation Relay');
             }
         } catch (error) {
             console.warn("Aviation fetch error - switching to simulation relay.");
             renderFlightMarkers(AviationSimulationRelay, true);
             setStatus("AIRSPACE SCAN FAILED: RELAY TIMEOUT // SIMULATION ACTIVE.");
+            updateLayerStatus('flights', 'ERROR', error.message || 'API Timeout');
         }
     };
 
@@ -1028,7 +1382,7 @@ document.addEventListener("DOMContentLoaded", () => {
     
     document.getElementById('toggle-all')?.addEventListener('change', (e) => {
         const isChecked = e.target.checked;
-        const allToggles = ['toggle-borders','toggle-terminator','toggle-fires','toggle-weather','toggle-ships','toggle-flights','toggle-iss','toggle-starlink','toggle-earthquakes','toggle-webcams','toggle-sst','toggle-population','toggle-satellites','toggle-temperature','toggle-volcanoes','toggle-radiation','toggle-internet', 'toggle-power', 'toggle-intel'];
+        const allToggles = ['toggle-borders','toggle-terminator','toggle-fires','toggle-weather','toggle-ships','toggle-flights','toggle-iss','toggle-starlink','toggle-earthquakes','toggle-webcams','toggle-sst','toggle-population','toggle-satellites','toggle-temperature','toggle-volcanoes','toggle-radiation','toggle-internet', 'toggle-power', 'toggle-intel', 'toggle-ai-atlas'];
         allToggles.forEach(id => {
             const cb = document.getElementById(id);
             if(cb && cb.checked !== isChecked) {
@@ -1198,8 +1552,11 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
 
-        // Click handler for Intelligence Clusters
-        map.on('click', 'intel-clusters-halo', (e) => {
+        let hoverPopup = null;
+
+        // Hover handler for Intelligence Clusters
+        map.on('mouseenter', 'intel-clusters-halo', (e) => {
+            map.getCanvas().style.cursor = 'pointer';
             const props = e.features[0].properties;
             
             // Assign a random indicator based on type
@@ -1213,7 +1570,9 @@ document.addEventListener("DOMContentLoaded", () => {
             const possibleInd = indicators[props.typeLabel] || ["UNKNOWN CORRELATION ANOMALY"];
             const selectedIndicator = possibleInd[Math.floor(Math.random() * possibleInd.length)];
             
-            new maplibregl.Popup({ offset: 10, maxWidth: '300px' })
+            if(hoverPopup) hoverPopup.remove();
+            
+            hoverPopup = new maplibregl.Popup({ offset: 10, maxWidth: '300px', closeButton: false })
                 .setLngLat(e.lngLat)
                 .setHTML(`
                     <div style="font-family:'Share Tech Mono',monospace; padding:4px;">
@@ -1236,8 +1595,32 @@ document.addEventListener("DOMContentLoaded", () => {
                 .addTo(map);
         });
 
-        map.on('mouseenter', 'intel-clusters-halo', () => map.getCanvas().style.cursor = 'pointer');
-        map.on('mouseleave', 'intel-clusters-halo', () => map.getCanvas().style.cursor = '');
+        map.on('mouseleave', 'intel-clusters-halo', () => {
+            map.getCanvas().style.cursor = '';
+            if(hoverPopup) hoverPopup.remove();
+        });
+
+        // Click handler opens the Briefing Panel
+        map.on('click', 'intel-clusters-halo', (e) => {
+            const props = e.features[0].properties;
+            
+            window.openBriefing({
+                id: `INTEL-${props.typeLabel}-${Math.floor(Math.random()*1000)}`,
+                title: `${props.typeLabel} ANOMALY`,
+                severity: props.severity,
+                what: Object.values(props).includes("MILITARY") 
+                        ? "Unregistered armor movement and communications spike detected within sector." 
+                        : "AI_CORE detected high-probability abnormal activities correlating to systemic risks.",
+                why: `<strong>AI ASSESSMENT:</strong> ${props.msg}<br><br>Significant risk of escalation in the operational theater.`,
+                time: "Detected in the last 15 minutes",
+                source: "AI_CORE / GLOBAL SURVEILLANCE FEED",
+                location: e.lngLat.toArray(),
+                relatedLayers: [
+                    { label: 'View Logistics', layerId: 'ships' },
+                    { label: 'View Aerospace', layerId: 'flights' }
+                ]
+            });
+        });
 
         const alertList = document.getElementById('alert-list');
         const intelPanel = document.getElementById('intelligence-panel');
@@ -1344,15 +1727,23 @@ document.addEventListener("DOMContentLoaded", () => {
                     if(severity !== 'high') pulseEl.style.border = '2px solid #ffb000';
                     const marker = new maplibregl.Marker({ element: pulseEl }).setLngLat([lon, lat]);
                     
-                    marker.setPopup(new maplibregl.Popup({ offset: 15, maxWidth: '300px' }).setHTML(`
-                        <div style="font-family:'Share Tech Mono',monospace; padding:4px;">
-                            <h3 style="color:${color}; margin:0 0 8px; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:4px;">
-                                <i class="fa-solid fa-triangle-exclamation"></i> ALERT: ${label}
-                            </h3>
-                            <div style="font-size:0.85rem; color:#fff; line-height:1.4;">${msg}</div>
-                            <div style="margin-top:10px; font-size:0.65rem; opacity:0.6;">SITUATION: ${severity.toUpperCase()} // TRACKING</div>
-                        </div>
-                    `));
+                    pulseEl.addEventListener('click', () => {
+                        window.openBriefing({
+                            id: c.id,
+                            title: `ALERT: ${label}`,
+                            severity: severity,
+                            what: msg,
+                            why: "AI_CORE identified this as a high-priority structural threat to global stability metrics.",
+                            time: "Detected during latest scan",
+                            source: "GLOBAL SURVEILLANCE FEED",
+                            location: [lon, lat],
+                            relatedLayers: [
+                                { label: 'View Logistics', layerId: 'ships' },
+                                { label: 'View Military Facilities', layerId: 'nuclear' },
+                                { label: 'Infrastructure', layerId: 'cables' }
+                            ]
+                        });
+                    });
 
                     if (toggles.intel) marker.addTo(map);
                     intelMarkers.push({ marker, severity });
@@ -1812,8 +2203,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const fetchSolarStorm = async () => {
         try {
             // Primary: NOAA planetary Kp 3h dataset (robust, always returns data)
-            const kpRes = await fetch('https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json');
-            const kpRaw = await kpRes.json();
+            const { data: kpRaw, status: kpStatus } = await window.reliableFetch('https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json', 'solar_kp', { timeout: 6000, retries: 1 });
             // Format: [ ["time_tag","Kp","a","station_count"], [time, kp, a, n], ... ]
             const lastRow = kpRaw[kpRaw.length - 1];
             const kp = parseFloat(Array.isArray(lastRow) ? lastRow[1] : 0) || 0;
@@ -1821,8 +2211,7 @@ document.addEventListener("DOMContentLoaded", () => {
             // Solar wind (optional, may return nulls when ACE satellite has data gaps)
             let windSpeed = '--', bz = '--';
             try {
-                const windRes = await fetch('https://services.swpc.noaa.gov/json/rtsw/rtsw_wind_1m.json');
-                const windData = await windRes.json();
+                const { data: windData } = await window.reliableFetch('https://services.swpc.noaa.gov/json/rtsw/rtsw_wind_1m.json', 'solar_wind', { timeout: 6000, retries: 1 });
                 // Find most recent row with valid data
                 const validWind = [...windData].reverse().find(w => w.speed != null && w.speed > 0);
                 if (validWind) {
@@ -1888,8 +2277,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const fetchInternetOutages = async () => {
         try {
-            const res = await fetch('https://api.ioda.inetintel.cc.gatech.edu/v2/alerts?from=-86400&format=json');
-            const data = await res.json();
+            const { data, status, minutesAgo } = await window.reliableFetch('https://api.ioda.inetintel.cc.gatech.edu/v2/alerts?from=-86400&format=json', 'internet', { timeout: 8000, retries: 1 });
             internetMarkers.forEach(m => m.remove());
             internetMarkers.length = 0;
             const alerts = Array.isArray(data?.data?.alerts) ? data.data.alerts : [];
@@ -1919,8 +2307,14 @@ document.addEventListener("DOMContentLoaded", () => {
             } else {
                 setStatus(`INTERNET: ${seen.size} ROUTING ANOMALIES DETECTED.`);
             }
+            if (status === 'DEGRADED') {
+                updateLayerStatus('internet', 'DEGRADED', `Stale by ${minutesAgo}m`);
+            } else {
+                updateLayerStatus('internet', 'LIVE');
+            }
         } catch(e) {
-            setStatus('INTERNET FEED: SIGNAL LOST.');
+            setStatus('INTERNET FEED: SIGNAL LOST. FALLBACK FAILED.');
+            updateLayerStatus('internet', 'ERROR', 'Signal lost');
         }
     };
 
@@ -1954,11 +2348,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const fetchLaunches = async () => {
         if (!launchFeed) return;
         try {
-            const ctrl = new AbortController();
-            setTimeout(() => ctrl.abort(), 8000);
-            const res = await fetch('https://ll.thespacedevs.com/2.3.0/launches/upcoming/?limit=5&format=json', { signal: ctrl.signal });
-            if (!res.ok) throw new Error('HTTP ' + res.status);
-            const data = await res.json();
+            const { data } = await window.reliableFetch('https://ll.thespacedevs.com/2.3.0/launches/upcoming/?limit=5&format=json', 'launches', { timeout: 8000, retries: 1 });
             const launches = data?.results || [];
             if (!launches.length) {
                 launchFeed.innerHTML = '<span style="opacity:.5;">No upcoming data</span>';
@@ -2849,33 +3239,25 @@ document.addEventListener("DOMContentLoaded", () => {
                 </div>`
             ).join('');
 
-            const popup = new maplibregl.Popup({ offset: 14, maxWidth: '320px' }).setHTML(`
-                <div style="font-family:'Share Tech Mono',monospace;font-size:.72rem;">
-                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;border-bottom:1px solid ${col}44;padding-bottom:5px;">
-                    <h3 style="color:${col};margin:0;font-size:.85rem;">&#9881; ${c.name}</h3>
-                    <span style="background:${col}22;border:1px solid ${col}55;color:${col};padding:1px 5px;font-size:.6rem;border-radius:2px;">${c.severity}</span>
-                </div>
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:3px;margin-bottom:7px;">
-                    <div style="background:rgba(255,255,255,.04);padding:3px 6px;">TYPE<br><strong style="font-size:.75rem;">${c.type}</strong></div>
-                    <div style="background:rgba(255,255,255,.04);padding:3px 6px;">SINCE<br><strong style="font-size:.75rem;">${c.since} (${duration} yr${duration !== 1 ? 's' : ''})</strong></div>
-                </div>
-                <div style="font-size:.62rem;opacity:.5;margin-bottom:3px;letter-spacing:1px;">&#9876; PARTIES IN CONFLICT</div>
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:3px;margin-bottom:7px;">${partiesHtml}</div>
-                <div style="font-size:.62rem;opacity:.5;margin-bottom:2px;letter-spacing:1px;">&#9679; EXTERNAL SUPPORT</div>
-                <div style="background:rgba(255,255,255,.03);padding:4px 6px;margin-bottom:6px;font-size:.68rem;opacity:.85;">${c.support}</div>
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:3px;margin-bottom:6px;">
-                    <div><div style="font-size:.58rem;opacity:.5;letter-spacing:1px;">EST. CASUALTIES</div><div style="color:#ff6655;font-size:.68rem;margin-top:1px;">${c.casualties}</div></div>
-                    <div><div style="font-size:.58rem;opacity:.5;letter-spacing:1px;">DISPLACED</div><div style="color:#ffb000;font-size:.68rem;margin-top:1px;">${c.displaced}</div></div>
-                </div>
-                <div style="font-size:.62rem;opacity:.5;margin-bottom:2px;letter-spacing:1px;">&#9679; CURRENT STATUS</div>
-                <div style="background:${col}11;border:1px solid ${col}33;padding:4px 7px;font-size:.7rem;color:${col};margin-bottom:5px;">${c.status}</div>
-                <div style="font-size:.65rem;opacity:.65;border-top:1px solid rgba(255,255,255,.08);padding-top:5px;line-height:1.4;">${c.note}</div>
-                <div style="font-size:.55rem;opacity:.3;margin-top:5px;">Source: ACLED / SIPRI / UN OCHA / SOHR 2025</div>
-                </div>`);
-
             const m = new maplibregl.Marker({ element: el, anchor: 'center' })
-                .setLngLat([c.lon, c.lat])
-                .setPopup(popup);
+                .setLngLat([c.lon, c.lat]);
+                
+            el.addEventListener('click', () => {
+                window.openBriefing({
+                    id: `CONF-${c.name.replace(/\s+/g,'-').toUpperCase()}`,
+                    title: c.name,
+                    severity: c.severity,
+                    what: `<strong>${c.type}</strong><br>${c.status}<br><br><strong>Combatants:</strong><br>${c.parties.map(p=>`• ${p[0]} (${p[1]})`).join('<br>')}`,
+                    why: `<strong>Casualties:</strong> ${c.casualties}<br><strong>Displaced:</strong> ${c.displaced}<br><br>${c.note}`,
+                    time: `Ongoing since ${c.since} (${duration} yrs)`,
+                    source: 'ACLED / SIPRI / UN OCHA',
+                    location: [c.lon, c.lat],
+                    relatedLayers: [
+                        { label: 'View Power Infrastructure', layerId: 'power' },
+                        { label: 'View Internet Cables', layerId: 'cables' }
+                    ]
+                });
+            });
             conflictMarkers.push(m);
             if (toggles.conflicts) m.addTo(map);
         });
@@ -2928,3 +3310,156 @@ document.addEventListener("DOMContentLoaded", () => {
     window.__wv = { regimeMarkers, blocMarkers, dcMarkers, nuclearMarkers, nukeArsenalMarkers, toggles, map };
 
 });
+
+    // ============================================================
+    // AI INFRASTRUCTURE ATLAS
+    // ============================================================
+    let aiAtlasSourceAdded = false;
+    let aiAtlasMarkers = [];
+
+    const AI_ATLAS_CLUSTERS = [
+        {
+            id: 'US-EAST',
+            name: 'US-East Hub (N. Virginia)',
+            lat: 38.99, lon: -77.49,
+            score: 91,
+            color: '#00ffcc',
+            energy: 8, cooling: 6, connectivity: 10, geopolitics: 9, regulation: 8,
+            desc: 'Highest global density, massive energy consumption. Backed by US grid and nuclear PPA deals (Amazon/Microsoft). Not heavily regulated compared to EU.',
+            related: ['cables', 'datacenters', 'nuclear']
+        },
+        {
+            id: 'NORDIC',
+            name: 'Nordic Sovereign Hub',
+            lat: 60.17, lon: 20.00,
+            score: 84,
+            color: '#00d4ff',
+            energy: 9, cooling: 10, connectivity: 7, geopolitics: 8, regulation: 4,
+            desc: 'Excellent natural cooling and 100% renewable capability. Hindered by EU AI Act regulatory friction and slightly lower bandwidth redundancy.',
+            related: ['cables', 'datacenters', 'power']
+        },
+        {
+            id: 'MENA',
+            name: 'MENA Emerging Hub',
+            lat: 24.5, lon: 51.5,
+            score: 68,
+            color: '#ffb000',
+            energy: 7, cooling: 2, connectivity: 8, geopolitics: 5, regulation: 9,
+            desc: 'Massive capital expenditure and hyperscale growth. However, limited freshwater for cooling, intense thermal load, and medium geopolitical instability.',
+            related: ['cables', 'datacenters']
+        },
+        {
+            id: 'APAC-TAIWAN',
+            name: 'Taiwan/Singapore Corridor',
+            lat: 23.69, lon: 119.5,
+            score: 64,
+            color: '#ff3300',
+            energy: 7, cooling: 5, connectivity: 9, geopolitics: 2, regulation: 7,
+            desc: 'World-class semiconductor manufacturing and hyperscale capability. Severely threatened by invasion risk and blockade scenarios.',
+            related: ['cables', 'datacenters', 'conflicts']
+        },
+        {
+            id: 'CHINA-EAST',
+            name: 'China East Coast',
+            lat: 31.23, lon: 121.47,
+            score: 75,
+            color: '#ff6600',
+            energy: 9, cooling: 5, connectivity: 6, geopolitics: 7, regulation: 3,
+            desc: 'Massive state-backed infrastructure. Restricted by US semiconductor export controls (A100/H100 bans) forcing internal silicon development.',
+            related: ['power', 'datacenters', 'regimes']
+        }
+    ];
+
+    const initAiAtlas = () => {
+        if (!map.getSource('ai-atlas-connections')) {
+            map.addSource('ai-atlas-connections', {
+                type: 'geojson',
+                data: { type: 'FeatureCollection', features: [] }
+            });
+
+            map.addLayer({
+                id: 'ai-atlas-lines',
+                type: 'line',
+                source: 'ai-atlas-connections',
+                layout: { 'line-join': 'round', 'line-cap': 'round', 'visibility': 'none' },
+                paint: {
+                    'line-color': '#00d4ff',
+                    'line-width': 2,
+                    'line-opacity': 0.6,
+                    'line-dasharray': [2, 4]
+                }
+            });
+            aiAtlasSourceAdded = true;
+        }
+
+        AI_ATLAS_CLUSTERS.forEach(cluster => {
+            const el = document.createElement('div');
+            el.className = 'ai-atlas-marker';
+            el.innerHTML = `<div class="ai-score-ring" style="border-color: ${cluster.color}"></div>
+                            <div class="ai-cluster-label" style="color: ${cluster.color}">${cluster.id}</div>`;
+            
+            el.addEventListener('click', () => {
+                window.openBriefing({
+                    id: `AIA-${cluster.id}`,
+                    title: `AI CAPABILITY: ${cluster.name}`,
+                    severity: cluster.score < 70 ? 'high' : (cluster.score < 80 ? 'medium' : 'low'),
+                    what: `Aggregated Capability Score: ${cluster.score}/100<br><br>${cluster.desc}`,
+                    why: `<strong>Energy & Thermal:</strong> ${cluster.energy}/10 (Power), ${cluster.cooling}/10 (Cooling)<br><strong>Connectivity:</strong> ${cluster.connectivity}/10<br><strong>Geopolitics:</strong> ${cluster.geopolitics}/10<br><strong>Regulation/Friction:</strong> ${cluster.regulation}/10`,
+                    time: "Assessed Q2 2026",
+                    source: "Worldview Strategy Core",
+                    location: [cluster.lon, cluster.lat],
+                    relatedLayers: cluster.related.map(r => ({ label: `Toggle ${r}`, layerId: r }))
+                });
+            });
+
+            const m = new maplibregl.Marker({ element: el, anchor: 'center' }).setLngLat([cluster.lon, cluster.lat]);
+            aiAtlasMarkers.push(m);
+        });
+        
+        // Build lines
+        const lines = { type: 'FeatureCollection', features: [] };
+        for(let i=0; i<AI_ATLAS_CLUSTERS.length; i++) {
+            for(let j=i+1; j<AI_ATLAS_CLUSTERS.length; j++) {
+                if(AI_ATLAS_CLUSTERS[i].score >= 70 && AI_ATLAS_CLUSTERS[j].score >= 70) {
+                    lines.features.push({
+                        type: 'Feature',
+                        geometry: { type: 'LineString', coordinates: [
+                            [AI_ATLAS_CLUSTERS[i].lon, AI_ATLAS_CLUSTERS[i].lat],
+                            [AI_ATLAS_CLUSTERS[j].lon, AI_ATLAS_CLUSTERS[j].lat]
+                        ]}
+                    });
+                }
+            }
+        }
+        map.getSource('ai-atlas-connections').setData(lines);
+    };
+
+    document.getElementById('toggle-ai-atlas')?.addEventListener('change', (e) => {
+        toggles.aiAtlas = e.target.checked;
+        
+        if (toggles.aiAtlas && aiAtlasMarkers.length === 0) {
+            initAiAtlas();
+        }
+
+        aiAtlasMarkers.forEach(m => toggles.aiAtlas ? m.addTo(map) : m.remove());
+        if(map.getLayer('ai-atlas-lines')) {
+            map.setLayoutProperty('ai-atlas-lines', 'visibility', toggles.aiAtlas ? 'visible' : 'none');
+        }
+
+        if (toggles.aiAtlas) {
+            // Auto-enable supporting layers
+            const deps = ['toggle-datacenters', 'toggle-cables', 'toggle-nuclear'];
+            deps.forEach(dep => {
+                const cb = document.getElementById(dep);
+                if (cb && !cb.checked) {
+                    cb.checked = true;
+                    cb.dispatchEvent(new Event('change'));
+                }
+            });
+            // Dim background (simulate Analytics mode)
+            document.body.classList.add('mode-analyze');
+        } else {
+            document.body.classList.remove('mode-analyze');
+        }
+    });
+
