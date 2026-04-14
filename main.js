@@ -1410,14 +1410,340 @@ document.addEventListener("DOMContentLoaded", () => {
         },
         {
             name: 'Syria — Post-War Transition', lat: 35.5, lon: 38.5, severity: 'HIGH',
+            type: 'Civil War → Transition', since: 2011,
+            parties: [['HTS (Hayat Tahrir al-Sham)', 'Controls most of Syria since Dec 2024'], ['SDF (Kurds)', 'NE Syria'], ['SNA + Turkey', 'NW border zone']],
+            support: 'HTS: Turkey (ambivalent). SDF: US. IS: self-financed.',
+            casualties: '>580,000 dead since 2011 (SOHR)',
+            displaced: '~7M refugees abroad, 7M+ IDPs — largest refugee crisis before Ukraine',
+            status: 'TRANSITION — Assad fell Dec 8, 2024; HTS forming new govt',
+            note: 'Assad regime collapsed Dec 8, 2024 after rebel offensive. HTS (ex-al-Nusra) now governing.'
+        },
+        {
+            name: 'Lebanon — Post-War Fragility', lat: 33.6, lon: 35.5, severity: 'HIGH',
+            type: 'Post-Conflict / Political Crisis', since: 2023,
+            parties: [['🇮🇱 Israel', 'Military operation in S. Lebanon'], ['Hezbollah (Iran-backed)', 'Dominant armed group']],
+            support: 'Hezbollah: Iran (weapons, money). Israel: US military aid.',
+            casualties: '>4,000 dead in Lebanon-Israel fighting, 2024; ~1,200 Hezbollah fighters',
+            displaced: '~1.2M displaced in Lebanon during conflict',
+            status: 'CEASEFIRE (Nov 2024) — Fragile; Hezbollah rebuilt; IDF partial withdrawal',
+            note: 'Full escalation Jun-Nov 2024. Ceasefire Nov 27, 2024. Hezbollah severely weakened (Nasrallah killed).'
+        },
+        {
             name: 'Pakistan — TTP Insurgency', lat: 33.0, lon: 70.5, severity: 'MODERATE',
+            type: 'Islamist Insurgency', since: 2007,
+            parties: [['🇵🇰 Pakistan Army', 'Federal security forces'], ['TTP (Tehrik-i-Taliban)', 'Taliban-linked insurgency']],
+            support: 'Pakistan: Chinese military cooperation. TTP: Afghan Taliban support.',
+            casualties: '>80,000 dead (2007-present, all causes)',
+            displaced: '>500,000 IDPs in KPK/FATA regions',
+            status: 'ESCALATING — TTP attacks surged 70% since Afghan Taliban takeover 2021',
+            note: 'TTP attacks dramatically increased after Afghan Taliban return to power in 2021. Safe haven in Afghanistan.'
+        },
+        {
+            name: 'Nagorno-Karabakh Aftermath', lat: 40.2, lon: 46.8, severity: 'MODERATE',
+            type: 'Post-Conflict Ethnic Cleansing / Tensions', since: 1988,
+            parties: [['🇦🇿 Azerbaijan', 'Retook NKR Sept 2023'], ['🇦🇲 Armenia', 'Ceded NKR; border demarcation ongoing']],
+            support: 'Azerbaijan: Turkey, Israel (weapons). Armenia: Russia (failed to protect).',
+            casualties: '~7,000 dead in 2020 war; ~200 in Sept 2023 operation',
+            displaced: '~100,000 ethnic Armenians fled NKR in Sept 2023 (full depopulation)',
+            status: 'NO ACTIVE FIGHTING — Peace treaty negotiations ongoing 2025',
+            note: 'Azerbaijan\'s 24h "anti-terror" op (Sept 19-20, 2023) ended NKR existence. All Armenians fled.'
+        },
+        {
+            name: 'Libya — Rival Governments', lat: 29.0, lon: 18.0, severity: 'MODERATE',
+            type: 'Political-Military Standoff', since: 2011,
+            parties: [['GNU (Tripoli, West)', 'UN-recognised govt of Dbeibah'], ['LNA/GECOL (Benghazi, East)', 'Haftar\'s rival military command']],
+            support: 'GNU: Turkey troops. LNA: UAE, Russia/Wagner, Egypt.',
+            casualties: '>25,000 dead since 2011 civil war',
+            displaced: '>200,000 Libyans displaced; major migrant transit country',
+            status: 'FROZEN CONFLICT — Ceasefire Oct 2020; sporadic clashes; oil disputes',
+            note: 'Split since Gaddafi fall 2011. Two rival govts. Occasional fighting despite 2020 ceasefire.'
+        },
+        {
+            name: 'Iran — Israel Shadow War', lat: 32.5, lon: 43.5, severity: 'CRITICAL',
+            type: 'Regional Proxy / Direct Military Clash', since: 2019,
+            parties: [['🇮🇱 Israel (IDF/Mossad)', 'Strikes, assassinations, sabotage'], ['🇮🇷 Iran (IRGC)', 'Proxies + direct strikes']],
+            support: 'Israel: US backing, F-35s, Iron Dome. Iran: Hezbollah, Hamas, Houthis, PMF Iraq.',
+            casualties: 'Hundreds killed in strikes/assassinations; April 2024: first direct Iran-Israel exchange',
+            displaced: 'N/A — shadow war, no mass displacement',
+            status: 'ACTIVE — Ongoing covert war; direct missile/drone exchanges Apr+Oct 2024',
+            note: 'Iran fired 300+ drones/missiles at Israel Apr 13-14, 2024. Israel retaliated Oct 26, 2024. Proxy network: Hezbollah, Hamas, Houthis, Iraqi PMF.'
+        },
+        {
+            name: 'Iran — USA Tensions', lat: 26.0, lon: 56.0, severity: 'HIGH',
+            type: 'Geopolitical / Military Confrontation', since: 2019,
+            parties: [['🇺🇸 USA (CENTCOM)', 'Carrier groups, airbases, sanctions'], ['🇮🇷 Iran (IRGC)', 'Proxy attacks, nuclear program, tanker seizures']],
+            support: 'USA: Israel, Gulf states (KSA, UAE, Bahrain). Iran: Russia, China (limited).',
+            casualties: 'Jan 2024: Jordan base attack killed 3 US soldiers. 160+ US strikes on Iran proxies in Iraq/Syria.',
+            displaced: 'N/A',
+            status: 'HIGH TENSION — Naval confrontations, proxy strikes, nuclear standoff',
+            note: 'Maximum pressure campaign (Trump 2018/2025). IRGC-backed PMF targeting US forces 160+ times since Oct 2023. Strait of Hormuz flashpoint: 20% of global oil.'
+        }
+    ];
+
+    const CONFLICT_COLORS = { CRITICAL: '#ff0000', HIGH: '#ff6600', MODERATE: '#ffb000' };
+
+    const initConflictZones = () => {
+        const currentYear = new Date().getFullYear();
+        CONFLICTS.forEach(c => {
+            const col = CONFLICT_COLORS[c.severity] || '#ff6600';
+            const duration = currentYear - c.since;
+            const el = document.createElement('div');
+            el.style.cssText = 'width:22px;height:22px;cursor:pointer;';
+            el.innerHTML = `<svg width="22" height="22" viewBox="0 0 22 22" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="11" cy="11" r="9" fill="none" stroke="${col}" stroke-width="1.5" opacity="0.9"/>
+                <line x1="0" y1="11" x2="22" y2="11" stroke="${col}" stroke-width="1"/>
+                <line x1="11" y1="0" x2="11" y2="22" stroke="${col}" stroke-width="1"/>
+                <circle cx="11" cy="11" r="2.5" fill="${col}" opacity="0.8"/>
+            </svg>`;
+            el.style.filter = \`drop-shadow(0 0 4px \${col})\`;
+
+            const partiesHtml = c.parties.map(([name, role]) =>
+                \`<div style="background:rgba(255,0,0,.05);padding:3px 7px;border-left:2px solid \${col}55;">
+                    <div style="color:\${col};font-size:.72rem;">\${name}</div>
+                    <div style="opacity:.55;font-size:.62rem;">\${role}</div>
+                </div>\`
+            ).join('');
+
+            const m = new maplibregl.Marker({ element: el, anchor: 'center' })
+                .setLngLat([c.lon, c.lat]);
+                
+            el.addEventListener('click', () => {
+                window.openBriefing({
+                    id: \`CONF-\${c.name.replace(/\\s+/g,'-').toUpperCase()}\`,
+                    title: c.name,
+                    severity: c.severity,
+                    what: \`<strong>\${c.type}</strong><br>\${c.status}<br><br><strong>Combatants:</strong><br>\${c.parties.map(p=>\`• \${p[0]} (\${p[1]})\`).join('<br>')}\`,
+                    why: \`<strong>Casualties:</strong> \${c.casualties}<br><strong>Displaced:</strong> \${c.displaced}<br><br>\${c.note}\`,
+                    time: \`Ongoing since \${c.since} (\${duration} yrs)\`,
+                    source: 'ACLED / SIPRI / UN OCHA',
+                    location: [c.lon, c.lat],
+                    relatedLayers: [
+                        { label: 'View Power Infrastructure', layerId: 'power' },
+                        { label: 'View Internet Cables', layerId: 'cables' }
+                    ]
+                });
+            });
+            conflictMarkers.push(m);
+            if (toggles.conflicts) m.addTo(map);
+        });
+        setStatus('CONFLICT ZONE DATABASE LOADED.');
+    };
+
+    document.getElementById('toggle-conflicts')?.addEventListener('change', (e) => {
+        toggles.conflicts = e.target.checked;
+        if (toggles.conflicts && conflictMarkers.length === 0) initConflictZones();
         conflictMarkers.forEach(m => toggles.conflicts ? m.addTo(map) : m.remove());
     });
 
     document.getElementById('toggle-regimes')?.addEventListener('change', (e) => {
-    document.getElementById('toggle-nukes')?.addEventListener('change', (e) => {
-        toggles.nukes = e.target.checked;
-        console.log('[NUKES] toggled', toggles.nukes, '| markers:', nukeArsenalMarkers.length);
+        toggles.regimes = e.target.checked;
+        if (toggles.regimes && regimeMarkers.length === 0) initRegimeMap();
+        regimeMarkers.forEach(m => toggles.regimes ? m.addTo(map) : m.remove());
+    });
+
+    document.getElementById('toggle-blocs')?.addEventListener('change', (e) => {
+        toggles.blocs = e.target.checked;
+        if (toggles.blocs && blocMarkers.length === 0) initGeoBlocs();
+        blocMarkers.forEach(m => toggles.blocs ? m.addTo(map) : m.remove());
+    });
+
+    document.getElementById('toggle-cables')?.addEventListener('change', (e) => {
+        toggles.cables = e.target.checked;
+        if (toggles.cables && !map.getSource('cables-src')) initUnderseaCables();
+        if (map.getLayer('cables-layer'))
+            map.setLayoutProperty('cables-layer', 'visibility', toggles.cables ? 'visible' : 'none');
+    });
+
+    document.getElementById('toggle-datacenters')?.addEventListener('change', (e) => {
+        toggles.datacenters = e.target.checked;
+        if (toggles.datacenters && dcMarkers.length === 0) initDataCenters();
+        dcMarkers.forEach(m => toggles.datacenters ? m.addTo(map) : m.remove());
+    });
+
+    document.getElementById('toggle-nuclear')?.addEventListener('change', (e) => {
+        toggles.nuclear = e.target.checked;
+        if (toggles.nuclear && nuclearMarkers.length === 0) initNuclearLayer();
+        nuclearMarkers.forEach(m => toggles.nuclear ? m.addTo(map) : m.remove());
+    });
+
+    // MISSING TOGGLES & REAL-TIME TRACKING REPAIRS
+    const getYesterdaysDateForGIBS = () => {
+        const d = new Date();
+        d.setDate(d.getDate() - 2); 
+        return d.toISOString().split('T')[0];
+    };
+
+    document.getElementById('toggle-ships')?.addEventListener('change', (e) => {
+        toggles.ships = e.target.checked;
+        if (map.getLayer('ships-layer')) map.setLayoutProperty('ships-layer', 'visibility', toggles.ships ? 'visible' : 'none');
+    });
+
+    document.getElementById('toggle-flights')?.addEventListener('change', (e) => {
+        toggles.flights = e.target.checked;
+        if (map.getLayer('flights-layer')) map.setLayoutProperty('flights-layer', 'visibility', toggles.flights ? 'visible' : 'none');
+    });
+    
+    document.getElementById('toggle-starlink')?.addEventListener('change', (e) => {
+        toggles.starlink = e.target.checked;
+        if (map.getLayer('starlink-layer')) map.setLayoutProperty('starlink-layer', 'visibility', toggles.starlink ? 'visible' : 'none');
+    });
+
+    document.getElementById('toggle-earthquakes')?.addEventListener('change', (e) => {
+        toggles.earthquakes = e.target.checked;
+        if (map.getLayer('earthquakes-core')) {
+            map.setLayoutProperty('earthquakes-core', 'visibility', toggles.earthquakes ? 'visible' : 'none');
+            map.setLayoutProperty('earthquakes-ring', 'visibility', toggles.earthquakes ? 'visible' : 'none');
+            if (map.getLayer('earthquakes-tsunami-ring')) map.setLayoutProperty('earthquakes-tsunami-ring', 'visibility', toggles.earthquakes ? 'visible' : 'none');
+        }
+    });
+
+    document.getElementById('toggle-fires')?.addEventListener('change', (e) => {
+        toggles.fires = e.target.checked;
+        if (map.getLayer('fires-layer')) map.setLayoutProperty('fires-layer', 'visibility', toggles.fires ? 'visible' : 'none');
+    });
+
+    document.getElementById('toggle-terminator')?.addEventListener('change', (e) => {
+        toggles.terminator = e.target.checked;
+        if (map.getLayer('terminator-layer')) map.setLayoutProperty('terminator-layer', 'visibility', toggles.terminator ? 'visible' : 'none');
+    });
+
+    const initWebcams = () => {
+        const cams = [
+            [-74.006, 40.712, 'New York City', 'USA', 'public'],
+            [139.75, 35.68, 'Tokyo Shibuya', 'JPN', 'public'],
+            [2.35, 48.85, 'Paris Eiffel', 'FRA', 'public'],
+            [-0.12, 51.50, 'London Thames', 'GBR', 'public'],
+            [37.61, 55.75, 'Moscow Kremlin', 'RUS', 'public'],
+            [-118.24, 34.05, 'Los Angeles', 'USA', 'public'],
+            [31.23, 30.04, 'Cairo Tahrir', 'EGY', 'public'],
+            [-43.17, -22.90, 'Rio de Janeiro', 'BRA', 'public'],
+            [151.2, -33.86, 'Sydney Opera', 'AUS', 'public'],
+            [21.02, 52.23, 'Warsaw City', 'POL', 'public']
+        ];
+        
+        cams.forEach(([lon, lat, name, code, type]) => {
+            const el = document.createElement('div');
+            el.className = 'marker-cctv';
+            el.style.cssText = 'width:18px;height:18px;cursor:pointer;background:rgba(0,212,255,0.7);border-radius:50%;border:2px solid #fff;display:flex;align-items:center;justify-content:center;color:#fff;font-size:10px;box-shadow:0 0 8px rgba(0,212,255,0.8);';
+            el.innerHTML = '<i class="fa-solid fa-video"></i>';
+            
+            const popupHtml = \`
+                <div style="font-family:'Share Tech Mono',monospace; width:260px; background:rgba(0,10,20,0.95); border:1px solid #00d4ff; padding:8px;">
+                    <h3 style="color:#00d4ff; font-size:0.85rem; margin:0 0 6px; border-bottom:1px solid rgba(0,212,255,0.3); padding-bottom:4px;">
+                        <i class="fa-solid fa-video"></i> CCTV_\${code}_\${name.toUpperCase().replace(/\\s+/g,'_')}
+                    </h3>
+                    <div style="background:#000; width:100%; height:140px; display:flex; align-items:center; justify-content:center; border:1px solid #333; position:relative; overflow:hidden;">
+                        <img src="https://picsum.photos/seed/\${name.replace(/\\s+/g,'')}/260/140?grayscale" style="width:100%; height:100%; object-fit:cover; opacity:0.8; filter:contrast(1.2) brightness(0.9) sepia(0.3) hue-rotate(180deg);"/>
+                        <div style="position:absolute; top:5px; left:5px; font-size:0.6rem; color:#fff; background:rgba(0,0,0,0.5); padding:2px 4px;">LIVE_FEED</div>
+                        <div style="position:absolute; bottom:5px; right:5px; font-size:0.5rem; color:#f00; font-weight:bold;">REC &#9679;</div>
+                    </div>
+                </div>
+            \`;
+            
+            const m = new maplibregl.Marker({ element: el, anchor: 'center' })
+                .setLngLat([lon, lat])
+                .setPopup(new maplibregl.Popup({ offset: 12, maxWidth: '280px' }).setHTML(popupHtml));
+                
+            webcamMarkers.push(m);
+            if (toggles.webcams) m.addTo(map);
+        });
+        if(window.updateLayerStatus) window.updateLayerStatus('webcams', 'LIVE', 'Static CCTV Arrays Connected');
+    };
+
+    document.getElementById('toggle-webcams')?.addEventListener('change', (e) => {
+        toggles.webcams = e.target.checked;
+        if (toggles.webcams && webcamMarkers.length === 0) initWebcams();
+        webcamMarkers.forEach(m => toggles.webcams ? m.addTo(map) : m.remove());
+    });
+
+    const initISS = () => {
+        const el = document.createElement('div');
+        el.className = 'marker-iss';
+        el.style.cssText = 'width:24px;height:24px;cursor:pointer;background:url("data:image/svg+xml;utf8,<svg xmlns=\\\'http://www.w3.org/2000/svg\\\' viewBox=\\\'0 0 24 24\\\' fill=\\\'%2300ffcc\\\'><path d=\\\'M21,11V13H19V11H21M17,11V13H15V11H17M13,11V13H11V11H13M9,11V13H7V11H9M5,11V13H3V11H5Z\\\'/></svg>") center/contain no-repeat; filter:drop-shadow(0 0 5px #00ffcc); transition:all 1s linear;';
+        
+        issMarker = new maplibregl.Marker({ element: el })
+            .setLngLat([0,0])
+            ;
+
+        const trackISS = async () => {
+            try {
+                const res = await window.reliableFetch('https://api.wheretheiss.at/v1/satellites/25544', 'iss_telemetry');
+                const data = await res.json();
+                issMarker.setLngLat([data.longitude, data.latitude]);
+                if (toggles.iss && !issMarker._map) issMarker.addTo(map);
+            } catch(e) {}
+        };
+        trackISS();
+        setInterval(trackISS, 4000);
+    };
+
+    document.getElementById('toggle-iss')?.addEventListener('change', (e) => {
+        toggles.iss = e.target.checked;
+        if (toggles.iss) {
+            if (!issMarker) initISS();
+            else issMarker.addTo(map);
+        } else {
+            if (issMarker) issMarker.remove();
+        }
+    });
+
+    document.getElementById('toggle-sst')?.addEventListener('change', (e) => {
+        toggles.sst = e.target.checked;
+        if (toggles.sst && !map.getSource('sst-src')) {
+            const dateStr = getYesterdaysDateForGIBS();
+            map.addSource('sst-src', {
+                type: 'raster',
+                tiles: [
+                    'https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/GHRSST_L4_MUR_Sea_Surface_Temperature/default/' + dateStr + '/GoogleMapsCompatible_Level7/{z}/{y}/{x}.png'
+                ],
+                tileSize: 256
+            });
+            map.addLayer({
+                id: 'sst-layer',
+                type: 'raster',
+                source: 'sst-src',
+                paint: { 'raster-opacity': 0.6 }
+            }, map.getLayer('cables-layer') ? 'cables-layer' : undefined);
+            if(window.updateLayerStatus) window.updateLayerStatus('sst', 'LIVE', 'NASA GIBS Online');
+        }
+        if (map.getLayer('sst-layer')) {
+            map.setLayoutProperty('sst-layer', 'visibility', toggles.sst ? 'visible' : 'none');
+        }
+    });
+
+    document.getElementById('toggle-temperature')?.addEventListener('change', (e) => {
+        toggles.temperature = e.target.checked;
+        if (toggles.temperature && !map.getSource('temp-src')) {
+            const dateStr = getYesterdaysDateForGIBS();
+            map.addSource('temp-src', {
+                type: 'raster',
+                tiles: [
+                    'https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_Land_Surface_Temp_Day/default/' + dateStr + '/GoogleMapsCompatible_Level7/{z}/{y}/{x}.png'
+                ],
+                tileSize: 256
+            });
+            map.addLayer({
+                id: 'temp-layer',
+                type: 'raster',
+                source: 'temp-src',
+                paint: { 'raster-opacity': 0.55 }
+            }, map.getLayer('cables-layer') ? 'cables-layer' : undefined);
+            if(window.updateLayerStatus) window.updateLayerStatus('temperature', 'LIVE', 'NASA GIBS Online');
+        }
+        if (map.getLayer('temp-layer')) {
+            map.setLayoutProperty('temp-layer', 'visibility', toggles.temperature ? 'visible' : 'none');
+        }
+    });
+
+    // ============================================================
+    // AI GEOPOLITICAL COMPUTE CAPABILITY
+    // Tracks global semiconductor, power, and AI infrastructure
+    // ============================================================
+    const aiAtlasMarkers = [];
+    let aiAtlasSourceAdded = false;
+
+    const AI_ATLAS_CLUSTERS = [
+        {
             id: 'US-EAST',
             name: 'US-East Hub (N. Virginia)',
             lat: 38.99, lon: -77.49,
