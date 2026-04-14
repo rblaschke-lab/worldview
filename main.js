@@ -521,7 +521,8 @@ document.addEventListener("DOMContentLoaded", () => {
             const scopeBtn = document.querySelector('.nav-btn[data-target="map"]');
             if (scopeBtn) scopeBtn.classList.add('active');
         }
-    };
+    });
+
 
     // ============================================================
     // ROCKET LAUNCH TRACKER (Launch Library 2 — free, CORS-enabled)
