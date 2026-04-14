@@ -1,10 +1,13 @@
 // Global Worldview Configuration
 window.WorldviewConfig = {
-    VERSION: "8.8",
+    VERSION: "9.0",
+    API_KEYS: {
+        AISSTREAM: "44b523190ef5f82f602075fd071ffe5f25ce966e" // USER_INSERT_API_KEY_HERE
+    },
     METRICS: {
-        FEEDS: 24,
+        FEEDS: 18,
         COUNTRIES: 102,
-        LAYERS: 24
+        LAYERS: 18
     },
     LAYER_METADATA: {
         "weather": { id: "weather", name: "Weather Radar", status: "STATIC", source: "RainViewer API", reliabilityScore: 99 },

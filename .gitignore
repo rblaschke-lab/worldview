@@ -14,3 +14,17 @@ desktop.ini
 
 # Logs
 *.log
+
+# Dev diagnostic files (never commit)
+git_diff*.txt
+git_log*.txt
+git_status*.txt
+fetch_search.txt
+fix_end.ps1
+start_server.bat
+
+# Internal plans
+implementation_plan.md
+
+# Gemini agent workspace
+.agent/

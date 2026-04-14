@@ -1,9 +1,14 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" id="app-root">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title id="page-title">Worldview | Global Command Center</title>
+    
+    <!-- Security Headers -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://unpkg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com https://unpkg.com; font-src https://fonts.gstatic.com https://cdnjs.cloudflare.com https://fonts.openmaptiles.org; img-src 'self' https://*.arcgisonline.com https://tile.openstreetmap.org https://tilecache.rainviewer.com https://firms.modaps.eosdis.nasa.gov data: blob:; connect-src 'self' https://api.rss2json.com https://earthquake.usgs.gov https://api.wheretheiss.at https://opensky-network.org https://services.swpc.noaa.gov https://api.rainviewer.com https://ll.thespacedevs.com https://api.ioda.inetintel.cc.gatech.edu wss://stream.aisstream.io https://firms.modaps.eosdis.nasa.gov https://*.arcgisonline.com https://fonts.googleapis.com https://fonts.gstatic.com https://fonts.openmaptiles.org https://unpkg.com https://cdnjs.cloudflare.com; worker-src blob:; child-src blob:;">
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta name="referrer" content="no-referrer">
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -16,21 +21,15 @@
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
+
     <script src="./fetchWrapper.js"></script>
     <script src="./config.js"></script>
-    <link rel="stylesheet" href="./style.css?v=8.8">
+    <link rel="stylesheet" href="./style.css?v=9.0">
 </head>
 <body class="theme-clean">
     <div id="map"></div>
     
-    <div id="observe-dim"></div>
 
-    <!-- 3-MODE SYSTEM: Floating Switch -->
-    <div id="mode-switch-container" class="floating-mode-switch">
-        <button class="mode-btn" data-mode="OBSERVE"><i class="fa-solid fa-eye"></i> OBSERVE</button>
-        <button class="mode-btn" data-mode="MONITOR"><i class="fa-solid fa-bolt"></i> MONITOR</button>
-        <button class="mode-btn active" data-mode="ANALYZE"><i class="fa-solid fa-microscope"></i> ANALYZE</button>
-    </div>
     
     <!-- TOP NEWS TICKER (Mobile Focus) -->
     <div id="ticker-top" class="global-ticker">
@@ -43,11 +42,18 @@
         <header>
             <div class="header-top-row header-main">
                 <h1>WORLDVIEW <span class="version dyn-version"></span></h1>
-                <div class="sidebar-expand-hint">▼ EXPAND</div>
+                <div class="header-controls">
+                    <!-- Language Selector -->
+                    <div id="lang-selector" class="lang-switch">
+                        <button class="lang-btn active" data-lang="en" title="English">EN</button>
+                        <button class="lang-btn" data-lang="de" title="Deutsch">DE</button>
+                    </div>
+                    <div class="sidebar-expand-hint">▼ EXPAND</div>
+                </div>
             </div>
             <div class="header-top-row header-meta">
                 <span class="byline">RB_DESIGN 2026</span>
-                <div class="sub-header"><span class="blinking-cursor">_</span> GLOBAL COMMAND ACTIVE</div>
+                <div class="sub-header"><span class="blinking-cursor">_</span> <span data-i18n="status_active">GLOBAL COMMAND ACTIVE</span></div>
             </div>
         </header>
         <div class="sidebar-body">
@@ -55,23 +61,16 @@
         <!-- SYSTEM CONTROLS -->
         <section class="menu-group override-group">
             <div class="control-item">
-                <strong style="color:#0ff;font-size:.7rem;letter-spacing:1px;">⚡ SYSTEM OVERRIDE</strong>
+                <strong style="color:#0ff;font-size:.7rem;letter-spacing:1px;">⚡ <span data-i18n="system_override">SYSTEM OVERRIDE</span></strong>
                 <label class="toggle-switch">
                     <input type="checkbox" id="toggle-all">
                     <span class="slider"></span>
                 </label>
             </div>
             <div class="control-item" style="margin-top:5px;">
-                <span style="font-size:0.65rem;opacity:0.7;">GLOBAL NEWS BAND</span>
+                <span style="font-size:0.65rem;opacity:0.7;" data-i18n="news_band">GLOBAL NEWS BAND</span>
                 <label class="toggle-switch">
                     <input type="checkbox" id="toggle-ticker" checked>
-                    <span class="slider"></span>
-                </label>
-            </div>
-            <div class="control-item" style="margin-top:5px;">
-                <span style="font-size:0.65rem;opacity:0.7;color:var(--neon-green);"><i class="fa-solid fa-satellite-dish"></i> INTELLIGENCE MAP</span>
-                <label class="toggle-switch">
-                    <input type="checkbox" id="toggle-intel">
                     <span class="slider"></span>
                 </label>
             </div>
@@ -80,7 +79,7 @@
         <!-- SCENARIOS -->
         <section class="menu-group collapsible-section" id="sec-scenarios">
             <h2 class="category-title cat-toggle" data-target="sec-scenarios">
-                <span style="color:var(--urgent-red, #ff3333);"><i class="fa-solid fa-crosshairs"></i> GLOBAL SCENARIOS</span>
+                <span style="color:var(--urgent-red, #ff3333);"><i class="fa-solid fa-crosshairs"></i> <span data-i18n="cat_scenarios">GLOBAL SCENARIOS</span></span>
                 <i class="fa-solid fa-chevron-down cat-arrow"></i>
             </h2>
             <div class="cat-body">
@@ -91,120 +90,134 @@
                     <button class="preset-btn" data-scenario="nuclear">Nuclear Risk</button>
                 </div>
                 <div class="control-item override-clear" style="margin-top:4px;">
-                    <button id="clear-scenarios" class="tactical-btn exit-btn" style="width:100%; border-color:#555; color:#aaa;">[ RESET LAYERS ]</button>
+                    <button id="clear-scenarios" class="tactical-btn exit-btn" style="width:100%; border-color:#555; color:#aaa; margin-bottom: 5px;">[ <span data-i18n="reset_layers">RESET LAYERS</span> ]</button>
+                    <button onclick="window.open('./manual.html', '_blank')" class="tactical-btn" style="width:100%; border-color:rgba(0,212,255,0.4); color:var(--cyan);">[ <span data-i18n="command_manual">COMMAND MANUAL</span> ]</button>
                 </div>
             </div>
         </section>
 
-        <!-- LIVE FEEDS -->
-        <section class="menu-group collapsible-section" id="sec-live">
-            <h2 class="category-title cat-toggle" data-target="sec-live">
-                <span><i class="fa-solid fa-signal"></i> LIVE FEEDS</span>
+        <!-- ═══ TIER 1: REAL-TIME TRACKING ═══ -->
+        <section class="menu-group collapsible-section" id="sec-realtime">
+            <h2 class="category-title cat-toggle" data-target="sec-realtime">
+                <span><i class="fa-solid fa-satellite-dish"></i> <span data-i18n="cat_realtime">REAL-TIME TRACKING</span></span>
                 <i class="fa-solid fa-chevron-down cat-arrow"></i>
             </h2>
             <div class="cat-body">
-                <div class="toggle-grid">
-                    <div class="control-item"><span>Weather Radar</span><label class="toggle-switch"><input type="checkbox" id="toggle-weather"><span class="slider"></span></label></div>
-                    <div class="control-item"><span>AIS Shipping</span><label class="toggle-switch"><input type="checkbox" id="toggle-ships"><span class="slider"></span></label></div>
-                    <div class="control-item"><span>Lufthansa</span><label class="toggle-switch"><input type="checkbox" id="toggle-flights"><span class="slider"></span></label></div>
-                    <div class="control-item"><span>ISS Track</span><label class="toggle-switch"><input type="checkbox" id="toggle-iss"><span class="slider"></span></label></div>
-                    <div class="control-item"><span>NASA Wildfires</span><label class="toggle-switch"><input type="checkbox" id="toggle-fires"><span class="slider"></span></label></div>
-                    <div class="control-item"><span>Seismic Activity</span><label class="toggle-switch"><input type="checkbox" id="toggle-earthquakes"><span class="slider"></span></label></div>
-                    <div class="control-item"><span>Internet Outages</span><label class="toggle-switch"><input type="checkbox" id="toggle-internet"><span class="slider"></span></label></div>
-                    <div class="control-item"><span>Solar Terminator</span><label class="toggle-switch"><input type="checkbox" id="toggle-terminator"><span class="slider"></span></label></div>
+                <div class="toggle-list">
+                    <div class="control-item">
+                        <div class="layer-info"><span>🚢 <span data-i18n="layer_ships">AIS Shipping</span></span><p class="layer-desc" data-i18n="desc_ships">Live vessel positions via AIS transponders. Includes cargo and military ships.</p></div>
+                        <label class="toggle-switch"><input type="checkbox" id="toggle-ships"><span class="slider"></span></label>
+                    </div>
+                    <div class="control-item">
+                        <div class="layer-info"><span>✈️ <span data-i18n="layer_flights">Lufthansa Flights</span></span><p class="layer-desc" data-i18n="desc_flights">Real-time aircraft positions via OpenSky Network radar.</p></div>
+                        <label class="toggle-switch"><input type="checkbox" id="toggle-flights"><span class="slider"></span></label>
+                    </div>
+                    <div class="control-item">
+                        <div class="layer-info"><span>🛰️ <span data-i18n="layer_iss">ISS Tracker</span></span><p class="layer-desc" data-i18n="desc_iss">International Space Station — orbits Earth every 90 minutes at 28,000 km/h.</p></div>
+                        <label class="toggle-switch"><input type="checkbox" id="toggle-iss"><span class="slider"></span></label>
+                    </div>
+                    <div class="control-item">
+                        <div class="layer-info"><span>📹 <span data-i18n="layer_webcams">Live Webcams</span></span><p class="layer-desc" data-i18n="desc_webcams">Static EarthCam feeds from major global cities.</p></div>
+                        <label class="toggle-switch"><input type="checkbox" id="toggle-webcams"><span class="slider"></span></label>
+                    </div>
+                    <div class="control-item">
+                        <div class="layer-info"><span>🌍 <span data-i18n="layer_earthquakes">Earthquakes</span></span><p class="layer-desc" data-i18n="desc_earthquakes">Live seismic events from USGS. Circle size = magnitude. Updated every 5 min.</p></div>
+                        <label class="toggle-switch"><input type="checkbox" id="toggle-earthquakes"><span class="slider"></span></label>
+                    </div>
+                    <div class="control-item">
+                        <div class="layer-info"><span>🔥 <span data-i18n="layer_fires">NASA Wildfires</span></span><p class="layer-desc" data-i18n="desc_fires">Active fire detection by NASA FIRMS satellites. Near real-time hotspots.</p></div>
+                        <label class="toggle-switch"><input type="checkbox" id="toggle-fires"><span class="slider"></span></label>
+                    </div>
+                    <div class="control-item">
+                        <div class="layer-info"><span>🌗 <span data-i18n="layer_terminator">Day/Night Line</span></span><p class="layer-desc" data-i18n="desc_terminator">Solar terminator — the real-time boundary between day and night on Earth.</p></div>
+                        <label class="toggle-switch"><input type="checkbox" id="toggle-terminator"><span class="slider"></span></label>
+                    </div>
                 </div>
             </div>
         </section>
 
-        <!-- POLITICAL -->
-        <section class="menu-group collapsible-section" id="sec-political">
-            <h2 class="category-title cat-toggle" data-target="sec-political">
-                <span><i class="fa-solid fa-landmark"></i> POLITICAL</span>
+        <!-- ═══ TIER 2: GEOPOLITICS & INFRASTRUCTURE ═══ -->
+        <section class="menu-group collapsible-section" id="sec-geopolitics">
+            <h2 class="category-title cat-toggle" data-target="sec-geopolitics">
+                <span><i class="fa-solid fa-landmark"></i> <span data-i18n="cat_geopolitics">GEOPOLITICS</span></span>
                 <i class="fa-solid fa-chevron-down cat-arrow"></i>
             </h2>
             <div class="cat-body">
-                <div class="toggle-grid">
-                    <div class="control-item"><span>Regime Map</span><label class="toggle-switch"><input type="checkbox" id="toggle-regimes"><span class="slider"></span></label></div>
-                    <div class="control-item"><span>Geopolitical Blocs</span><label class="toggle-switch"><input type="checkbox" id="toggle-blocs"><span class="slider"></span></label></div>
-                    <div class="control-item"><span>Active War Zones</span><label class="toggle-switch"><input type="checkbox" id="toggle-conflicts"><span class="slider"></span></label></div>
+                <div class="toggle-list">
+                    <div class="control-item">
+                        <div class="layer-info"><span>🗺️ <span data-i18n="layer_regimes">Regime Types</span></span><p class="layer-desc" data-i18n="desc_regimes">Government systems by country — democracy, autocracy, or hybrid regime.</p></div>
+                        <label class="toggle-switch"><input type="checkbox" id="toggle-regimes"><span class="slider"></span></label>
+                    </div>
+                    <div class="control-item">
+                        <div class="layer-info"><span>🤝 <span data-i18n="layer_blocs">Alliances &amp; Blocs</span></span><p class="layer-desc" data-i18n="desc_blocs">NATO, BRICS, EU, ASEAN — major geopolitical alliance networks.</p></div>
+                        <label class="toggle-switch"><input type="checkbox" id="toggle-blocs"><span class="slider"></span></label>
+                    </div>
+                    <div class="control-item">
+                        <div class="layer-info"><span>⚔️ <span data-i18n="layer_conflicts">Active Conflicts</span></span><p class="layer-desc" data-i18n="desc_conflicts">Currently active war zones and armed conflicts worldwide.</p></div>
+                        <label class="toggle-switch"><input type="checkbox" id="toggle-conflicts"><span class="slider"></span></label>
+                    </div>
+                    <div class="control-item">
+                        <div class="layer-info"><span>🌐 <span data-i18n="layer_cables">Undersea Cables</span></span><p class="layer-desc" data-i18n="desc_cables">Submarine fiber optic cables — 95% of global internet traffic travels here.</p></div>
+                        <label class="toggle-switch"><input type="checkbox" id="toggle-cables"><span class="slider"></span></label>
+                    </div>
+                    <div class="control-item">
+                        <div class="layer-info"><span>⚛️ <span data-i18n="layer_nuclear">Nuclear Plants</span></span><p class="layer-desc" data-i18n="desc_nuclear">Operational nuclear power stations and their energy output worldwide.</p></div>
+                        <label class="toggle-switch"><input type="checkbox" id="toggle-nuclear"><span class="slider"></span></label>
+                    </div>
                 </div>
             </div>
         </section>
 
-        <!-- INFRASTRUCTURE -->
-        <section class="menu-group collapsible-section" id="sec-infra">
-            <h2 class="category-title cat-toggle" data-target="sec-infra">
-                <span><i class="fa-solid fa-network-wired"></i> INFRASTRUCTURE</span>
+        <!-- ═══ TIER 3: ENVIRONMENT & SPACE ═══ -->
+        <section class="menu-group collapsible-section" id="sec-environment">
+            <h2 class="category-title cat-toggle" data-target="sec-environment">
+                <span><i class="fa-solid fa-globe"></i> <span data-i18n="cat_environment">ENVIRONMENT &amp; SPACE</span></span>
                 <i class="fa-solid fa-chevron-down cat-arrow"></i>
             </h2>
             <div class="cat-body">
-                <div class="toggle-grid">
-                    <div class="control-item"><span style="color:#00d4ff; font-weight:bold;">AI INFRA ATLAS</span><label class="toggle-switch"><input type="checkbox" id="toggle-ai-atlas"><span class="slider"></span></label></div>
-                    <div class="control-item"><span>Undersea Cables</span><label class="toggle-switch"><input type="checkbox" id="toggle-cables"><span class="slider"></span></label></div>
-                    <div class="control-item"><span>Data Centers</span><label class="toggle-switch"><input type="checkbox" id="toggle-datacenters"><span class="slider"></span></label></div>
-                    <div class="control-item"><span>Nuclear Plants</span><label class="toggle-switch"><input type="checkbox" id="toggle-nuclear"><span class="slider"></span></label></div>
-                    <div class="control-item"><span>Power Outages</span><label class="toggle-switch"><input type="checkbox" id="toggle-power"><span class="slider"></span></label></div>
-                    <div class="control-item"><span>Nuclear Arsenal</span><label class="toggle-switch"><input type="checkbox" id="toggle-nukes"><span class="slider"></span></label></div>
-                </div>
-            </div>
-        </section>
-
-        <!-- ENVIRONMENT -->
-        <section class="menu-group collapsible-section" id="sec-env">
-            <h2 class="category-title cat-toggle" data-target="sec-env">
-                <span><i class="fa-solid fa-globe"></i> ENVIRONMENT</span>
-                <i class="fa-solid fa-chevron-down cat-arrow"></i>
-            </h2>
-            <div class="cat-body">
-                <div class="toggle-grid">
-                    <div class="control-item"><span>Ocean Temp</span><label class="toggle-switch"><input type="checkbox" id="toggle-sst"><span class="slider"></span></label></div>
-                    <div class="control-item"><span>Population</span><label class="toggle-switch"><input type="checkbox" id="toggle-population"><span class="slider"></span></label></div>
-                    <div class="control-item"><span>Surface Temp</span><label class="toggle-switch"><input type="checkbox" id="toggle-temperature"><span class="slider"></span></label></div>
-                    <div class="control-item"><span>Webcam Streams</span><label class="toggle-switch"><input type="checkbox" id="toggle-webcams"><span class="slider"></span></label></div>
-                </div>
-            </div>
-        </section>
-
-        <!-- ORBITAL -->
-        <section class="menu-group collapsible-section" id="sec-orbital">
-            <h2 class="category-title cat-toggle" data-target="sec-orbital">
-                <span><i class="fa-solid fa-satellite"></i> ORBITAL</span>
-                <i class="fa-solid fa-chevron-down cat-arrow"></i>
-            </h2>
-            <div class="cat-body">
-                <div class="toggle-grid">
-                    <div class="control-item"><span>Starlink Net</span><label class="toggle-switch"><input type="checkbox" id="toggle-starlink"><span class="slider"></span></label></div>
-                    <div class="control-item"><span>Sat &amp; Debris</span><label class="toggle-switch"><input type="checkbox" id="toggle-satellites"><span class="slider"></span></label></div>
+                <div class="toggle-list">
+                    <div class="control-item">
+                        <div class="layer-info"><span>🌡️ <span data-i18n="layer_sst">Ocean Temperature</span></span><p class="layer-desc" data-i18n="desc_sst">Sea surface temperature from NOAA. Red = warmer, blue = cooler than average.</p></div>
+                        <label class="toggle-switch"><input type="checkbox" id="toggle-sst"><span class="slider"></span></label>
+                    </div>
+                    <div class="control-item">
+                        <div class="layer-info"><span>🌡️ <span data-i18n="layer_temperature">Surface Temperature</span></span><p class="layer-desc" data-i18n="desc_temperature">Land surface temperature data showing global heat distribution.</p></div>
+                        <label class="toggle-switch"><input type="checkbox" id="toggle-temperature"><span class="slider"></span></label>
+                    </div>
+                    <div class="control-item">
+                        <div class="layer-info"><span>👥 <span data-i18n="layer_population">Population Density</span></span><p class="layer-desc" data-i18n="desc_population">Global population heatmap — bright areas = high population concentration.</p></div>
+                        <label class="toggle-switch"><input type="checkbox" id="toggle-population"><span class="slider"></span></label>
+                    </div>
+                    <div class="control-item">
+                        <div class="layer-info"><span>🌋 <span data-i18n="layer_volcanoes">Volcanoes</span></span><p class="layer-desc" data-i18n="desc_volcanoes">Historically active volcanoes from Smithsonian Global Volcanism Program.</p></div>
+                        <label class="toggle-switch"><input type="checkbox" id="toggle-volcanoes"><span class="slider"></span></label>
+                    </div>
+                    <div class="control-item">
+                        <div class="layer-info"><span>☢️ <span data-i18n="layer_radiation">Radiation Sites</span></span><p class="layer-desc" data-i18n="desc_radiation">Notable nuclear accident sites — Chernobyl, Fukushima, and others.</p></div>
+                        <label class="toggle-switch"><input type="checkbox" id="toggle-radiation"><span class="slider"></span></label>
+                    </div>
+                    <div class="control-item">
+                        <div class="layer-info"><span>🛰️ <span data-i18n="layer_starlink">Starlink Net</span></span><p class="layer-desc" data-i18n="desc_starlink">SpaceX Starlink satellite constellation — 5,000+ internet satellites in orbit.</p></div>
+                        <label class="toggle-switch"><input type="checkbox" id="toggle-starlink"><span class="slider"></span></label>
+                    </div>
                 </div>
                 <div class="control-item launch-trigger-item" id="launch-tracker-trigger" style="margin-top:6px;cursor:pointer;border-top:1px solid rgba(255,100,0,0.2);padding-top:6px;">
-                    <span style="color:#ff8844;">🚀 Launch Tracker</span>
+                    <span style="color:#ff8844;">🚀 <span data-i18n="upcoming_launches">Upcoming Launches</span></span>
                     <i class="fa-solid fa-chevron-right" style="color:#ff6600;font-size:.75rem;"></i>
-                </div>
-                <!-- V8.0 Tactical Toggle -->
-                <div class="control-item surveillance-trigger-item" id="surveillance-trigger" style="margin-top:6px;cursor:pointer;border-top:1px solid rgba(0,212,255,0.2);padding-top:6px;">
-                    <span style="color:#00d4ff;letter-spacing:1px;font-weight:bold;">🛰️ Surveillance Command</span>
-                    <i class="fa-solid fa-chevron-right" style="color:#00d4ff;font-size:.75rem;"></i>
-                </div>
-            </div>
-        </section>
-
-        <!-- HAZARDS -->
-        <section class="menu-group collapsible-section" id="sec-hazards">
-            <h2 class="category-title cat-toggle" data-target="sec-hazards">
-                <span><i class="fa-solid fa-triangle-exclamation"></i> HAZARDS</span>
-                <i class="fa-solid fa-chevron-down cat-arrow"></i>
-            </h2>
-            <div class="cat-body">
-                <div class="toggle-grid">
-                    <div class="control-item"><span>Volcanoes</span><label class="toggle-switch"><input type="checkbox" id="toggle-volcanoes"><span class="slider"></span></label></div>
-                    <div class="control-item"><span>Radiation Sites</span><label class="toggle-switch"><input type="checkbox" id="toggle-radiation"><span class="slider"></span></label></div>
                 </div>
 
                 <div id="solar-hud" class="solar-widget">
-                    <div class="solar-title">&#9728; SOLAR STORM INDEX</div>
-                    <div class="solar-loading">CONNECTING TO NOAA SWPC...</div>
+                    <div class="solar-title">&#9728; <span data-i18n="solar_index">SOLAR STORM INDEX</span></div>
+                    <div class="solar-loading" data-i18n="solar_connecting">CONNECTING TO NOAA SWPC...</div>
                 </div>
             </div>
+        </section>
+
+        <!-- DATA SOURCES -->
+        <section class="menu-group data-sources-section" style="padding:8px 10px; border-top: 1px solid rgba(0,212,255,0.15);">
+            <p style="font-size:0.55rem; opacity:0.5; line-height:1.4; margin:0;">
+                <strong style="color:#0ff;" data-i18n="data_sources_label">DATA SOURCES:</strong> USGS Earthquake Hazards · NASA FIRMS · NOAA SWPC · OpenSky Network · AIS Marine Traffic · Smithsonian GVP · TLE/N2YO · BBC World News RSS
+            </p>
         </section>
 
         <footer class="status-panel">
@@ -217,25 +230,113 @@
 
     <!-- MOBILE NAVIGATION (Bottom Bar) -->
     <nav id="mobile-nav">
-        <button class="nav-btn active" data-target="map"><i class="fa-solid fa-earth-americas"></i><span>SCOPE</span></button>
-        <button class="nav-btn" data-target="intel"><i class="fa-solid fa-bolt"></i><span>INTEL</span></button>
-        <button class="nav-btn" id="mobile-layers-btn"><i class="fa-solid fa-layer-group"></i><span>LAYERS</span></button>
-        <button class="nav-btn" data-target="about"><i class="fa-solid fa-info-circle"></i><span>INFO</span></button>
+        <button class="nav-btn active" data-target="map"><i class="fa-solid fa-earth-americas"></i><span data-i18n="nav_scope">SCOPE</span></button>
+        <button class="nav-btn" data-target="intel"><i class="fa-solid fa-bolt"></i><span data-i18n="nav_intel">INTEL</span></button>
+        <button class="nav-btn" id="mobile-layers-btn" data-target="layers"><i class="fa-solid fa-layer-group"></i><span data-i18n="nav_layers">LAYERS</span></button>
+        <button class="nav-btn" data-target="info"><i class="fa-solid fa-info-circle"></i><span data-i18n="nav_info">INFO</span></button>
     </nav>
 
-    <!-- INTEL PANEL (Relocated logic for desktop/mobile) -->
+    <!-- INTEL PANEL -->
     <div id="intelligence-panel" class="terminal-panel">
         <header>
             <div class="header-top-row">
-                <h2>INTELLIGENCE <span class="pulse"></span></h2>
+                <h2><span data-i18n="intel_title">INTELLIGENCE</span> <span class="pulse"></span></h2>
             </div>
-            <div class="sub-header"><span class="blinking-cursor">_</span> CORE_ANOMALY_SCANNER</div>
+            <div class="sub-header"><span class="blinking-cursor">_</span> <span data-i18n="intel_subtitle">CORE_ANOMALY_SCANNER</span></div>
         </header>
         <div id="alert-list">
             <div class="alert-item" style="opacity: 0.5;">
-                <h4><i class="fa-solid fa-satellite-dish"></i> INITIALIZING AI CORE...</h4>
-                <p>Establishing spatial aggregation patterns.</p>
-                <span class="timestamp">AWAITING TELEMETRY</span>
+                <h4><i class="fa-solid fa-satellite-dish"></i> <span data-i18n="intel_init">INITIALIZING AI CORE...</span></h4>
+                <p data-i18n="intel_init_desc">Establishing spatial aggregation patterns.</p>
+                <span class="timestamp" data-i18n="intel_awaiting">AWAITING TELEMETRY</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- INFO PANEL (In-App — replaces external about.html link) -->
+    <div id="info-panel" class="terminal-panel">
+        <header>
+            <div class="header-top-row">
+                <h2 style="color: var(--neon-blue);"><i class="fa-solid fa-circle-info"></i> <span data-i18n="info_title">ABOUT THIS MAP</span></h2>
+            </div>
+            <div class="sub-header"><span class="blinking-cursor">_</span> <span data-i18n="info_subtitle">DATA_SOURCES & METHODOLOGY</span></div>
+        </header>
+        <div class="info-panel-body">
+            <div class="info-section">
+                <h3 data-i18n="info_how_title">📖 How to Read This Map</h3>
+                <p data-i18n="info_how_desc">Toggle data layers from the LAYERS panel to overlay real-time feeds and reference data onto the satellite map. Click any marker for detailed briefings.</p>
+            </div>
+
+            <!-- DATA SOURCES -->
+            <div class="info-section">
+                <h3 data-i18n="info_sources_title">📡 Live Data Sources</h3>
+                <div class="info-source-list">
+                    <div class="info-source-item">
+                        <span class="source-dot live"></span>
+                        <div>
+                            <strong>USGS Earthquake Hazards</strong>
+                            <p data-i18n="info_src_usgs">Seismic events updated every 5 minutes. earthquake.usgs.gov</p>
+                        </div>
+                    </div>
+                    <div class="info-source-item">
+                        <span class="source-dot live"></span>
+                        <div>
+                            <strong>NASA FIRMS</strong>
+                            <p data-i18n="info_src_firms">Active wildfire hotspots via VIIRS/MODIS satellites. firms.modaps.eosdis.nasa.gov</p>
+                        </div>
+                    </div>
+                    <div class="info-source-item">
+                        <span class="source-dot live"></span>
+                        <div>
+                            <strong>WhereTheISS</strong>
+                            <p data-i18n="info_src_iss">ISS orbital position in real time. wheretheiss.at</p>
+                        </div>
+                    </div>
+                    <div class="info-source-item">
+                        <span class="source-dot live"></span>
+                        <div>
+                            <strong>NOAA SWPC</strong>
+                            <p data-i18n="info_src_noaa">Sea surface temperature & solar weather data. noaa.gov</p>
+                        </div>
+                    </div>
+                    <div class="info-source-item">
+                        <span class="source-dot static"></span>
+                        <div>
+                            <strong>Freedom House / SIPRI</strong>
+                            <p data-i18n="info_src_freedom">Regime types, alliances, and geopolitical blocs. Static reference data.</p>
+                        </div>
+                    </div>
+                    <div class="info-source-item">
+                        <span class="source-dot static"></span>
+                        <div>
+                            <strong>TeleGeography / IAEA PRIS</strong>
+                            <p data-i18n="info_src_infra">Submarine cables and nuclear power plant databases.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- EXPLORE FURTHER -->
+            <div class="info-section">
+                <h3 data-i18n="info_explore_title">🔬 Explore Further</h3>
+                <div class="info-link-grid">
+                    <a href="https://earthquake.usgs.gov" target="_blank" class="info-link">USGS ↗</a>
+                    <a href="https://firms.modaps.eosdis.nasa.gov" target="_blank" class="info-link">NASA FIRMS ↗</a>
+                    <a href="https://freedomhouse.org" target="_blank" class="info-link">Freedom House ↗</a>
+                    <a href="https://www.submarinecablemap.com" target="_blank" class="info-link">Cable Map ↗</a>
+                    <a href="https://www.noaa.gov" target="_blank" class="info-link">NOAA ↗</a>
+                    <a href="https://pris.iaea.org" target="_blank" class="info-link">IAEA PRIS ↗</a>
+                </div>
+            </div>
+
+            <!-- ABOUT APP -->
+            <div class="info-section" style="border-bottom:none;">
+                <h3 data-i18n="info_about_title">ℹ️ About Worldview</h3>
+                <p data-i18n="info_about_desc">Worldview is an open-source global intelligence dashboard built with MapLibre GL JS and vanilla JavaScript. No API keys, no accounts — just real-time data from public sources.</p>
+                <div style="margin-top:10px; display:flex; gap:6px; flex-wrap:wrap;">
+                    <a href="./about.html" target="_blank" class="info-link" style="flex:1; text-align:center;" data-i18n="info_full_about">Full About Page ↗</a>
+                    <a href="./manual.html" target="_blank" class="info-link" style="flex:1; text-align:center;" data-i18n="info_manual_link">Command Manual ↗</a>
+                </div>
             </div>
         </div>
     </div>
@@ -247,102 +348,19 @@
 
     <!-- Launch Tracker HUD -->
     <div id="launch-hud">
-        <div style="color:#ff6600;font-size:.6rem;letter-spacing:2px;margin-bottom:6px;">🚀 UPCOMING LAUNCHES</div>
-        <div id="launch-feed" style="opacity:.5;font-size:.65rem;">CONNECTING TO LAUNCH LIBRARY...</div>
+        <div style="color:#ff6600;font-size:.6rem;letter-spacing:2px;margin-bottom:6px;">🚀 <span data-i18n="upcoming_launches">UPCOMING LAUNCHES</span></div>
+        <div id="launch-feed" style="opacity:.5;font-size:.65rem;" data-i18n="launch_connecting">CONNECTING TO LAUNCH LIBRARY...</div>
     </div>
 
-    <!-- V8.0 Aerospace Surveillance Overlay -->
-    <div id="surveillance-overlay">
-        <!-- CRT Global FX -->
-        <div class="surveillance-scanlines"></div>
-        <div class="surveillance-grid"></div>
+    <div id="briefing-panel" class="glass-panel right-sidebar hidden"></div>
 
-        <!-- Tactical Top Bar -->
-        <header class="tactical-header">
-            <div class="th-left">
-                <div class="th-signal"><span class="th-dot"></span> SECURE_LINK_ACTIVE</div>
-                <h1 class="th-title">SYSTEM MONITOR: GLOBAL THREAT ANALYSIS</h1>
-            </div>
-            <div class="th-right">
-                <div class="th-stat">USER: <span>COMMANDER_RB</span></div>
-                <div class="th-stat">CORE: <span class="dyn-version-stable"></span></div>
-                <div id="tactical-clock" class="th-stat">00:00:00</div>
-            </div>
-        </header>
-
-        <!-- Left Column: Terminal & Risks -->
-        <div class="tactical-left">
-            <div class="t-panel">
-                <div class="t-panel-header"><i class="fa-solid fa-terminal"></i> LIVE_TELEMETRY</div>
-                <div id="tactical-terminal-body" class="t-panel-body terminal-text">
-                    <div class="t-row t-sys">SYSTEM INITIALIZED // WAITING FOR DATA...</div>
-                </div>
-            </div>
-            <div class="t-panel">
-                <div class="t-panel-header"><i class="fa-solid fa-chart-line"></i> GLOBAL_RISK_INDICATORS</div>
-                <div class="t-panel-body">
-                    <div class="risk-bar-wrap"><span>TARGET_SCAN_INTENSITY</span><div class="risk-bar-bg"><div id="risk-bar-1" class="risk-bar-fill" style="width: 45%;"></div></div></div>
-                    <div class="risk-bar-wrap"><span>GEO_POLITICAL_TENSION</span><div class="risk-bar-bg"><div id="risk-bar-2" class="risk-bar-fill" style="width: 62%; background: #ffb000;"></div></div></div>
-                    <div class="risk-bar-wrap"><span>ATMOSPHERIC_ANOMALIES</span><div class="risk-bar-bg"><div id="risk-bar-3" class="risk-bar-fill" style="width: 28%; background: #00ff88;"></div></div></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Right Column: Assets & Logs -->
-        <div class="tactical-right">
-            <div class="t-panel">
-                <div class="t-panel-header"><i class="fa-solid fa-shield-halved"></i> ASSET_STATUS</div>
-                <div id="asset-status-list" class="t-panel-body">
-                    <div class="asset-item"><span>NASA_ISS_LINK</span> <span class="asset-ok">STABLE</span></div>
-                    <div class="asset-item"><span>OPENSKY_RELAY</span> <span class="asset-warn">LIMITED</span></div>
-                    <div class="asset-item"><span>USGS_SEISMIC</span> <span class="asset-ok">ACTIVE</span></div>
-                    <div class="asset-item"><span>FIRMS_WILDFIRE</span> <span class="asset-ok">SYNCED</span></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Footer / Tactical Controls -->
-        <footer class="tactical-footer">
-            <div class="tf-left">
-                <button id="exit-surveillance" class="tactical-btn exit-btn">[ EXIT_COMMAND ]</button>
-            </div>
-            <div id="aero-controls" class="tf-right">
-                <button id="aero-zoom-in" class="aero-btn"><i class="fa-solid fa-plus"></i></button>
-                <button id="aero-zoom-out" class="aero-btn"><i class="fa-solid fa-minus"></i></button>
-                <button id="aero-tilt" class="aero-btn">3D</button>
-                <button id="aero-reset" class="aero-btn">RST</button>
-            </div>
-        </footer>
-    </div>
-
-    <!-- ARTEMIS MISSION INTELLIGENCE BAR (PERMANENT HUD) -->
-    <div id="artemis-bar">
-        <div class="artemis-label">
-            <i class="fa-solid fa-moon"></i> ARTEMIS_II_MISSION_INTEL
-        </div>
-        <div class="artemis-stats">
-            <div class="stat-item"><span class="label">MISSION TIME:</span> <span id="artemis-time">00:00:00</span></div>
-            <div class="stat-item"><span class="label">VELOCITY:</span> <span id="artemis-vel">35,400.00 KM/H</span></div>
-            <div class="stat-item"><span class="label">DIST EARTH:</span> <span id="artemis-dist-earth">380,000.00 KM</span></div>
-            <div class="stat-item"><span class="label">DIST MOON:</span> <span id="artemis-dist-moon">4,000.00 KM</span></div>
-            <div id="artemis-status" class="status-active">TRANS-LUNAR_INJECTION</div>
-        </div>
-    </div>
-
-    <div id="briefing-panel" class="glass-panel right-sidebar hidden">
-        <!-- Content gets injected dynamically by JS -->
-    </div>
-
-    <!-- Orientation Hint -->
     <div id="orientation-hint">
         <i class="fa-solid fa-rotate"></i>
-        <p>BEST EXPERIENCED IN LANDSCAPE</p>
+        <p data-i18n="orientation_hint">BEST EXPERIENCED IN LANDSCAPE</p>
     </div>
 
-    <!-- Layer Legend (shown dynamically for SST / Temp layers) -->
     <div id="layer-legend" style="display:none;"></div>
 
-    <!-- TACTICAL UPLINK HUD -->
     <div id="map-branding">
         <div class="branding-line tactical-footer-hud">
             [ UPLINK_ACTIVE ] // RB_DESIGN_2026 // <a href="./about.html" target="_blank">ABOUT_APP</a> // WORLDVIEW_USE: <span id="session-count" class="neon-number"></span>
@@ -350,11 +368,10 @@
     </div>
 
     <script>
-        // Hydrate version text from config
         document.getElementById('page-title').innerText = `Worldview V${window.WorldviewConfig.VERSION} | Global Command Center`;
         document.querySelectorAll('.dyn-version').forEach(el => el.innerText = `V${window.WorldviewConfig.VERSION}`);
         document.querySelectorAll('.dyn-version-stable').forEach(el => el.innerText = `V${window.WorldviewConfig.VERSION}_STABLE`);
     </script>
-    <script src="./main.js?v=8.8"></script>
+    <script src="./main.js?v=9.0"></script>
 </body>
 </html>

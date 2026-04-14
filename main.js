@@ -2,6 +2,8 @@ document.addEventListener("DOMContentLoaded", () => {
     // ----------------------------------------------------
     // CONSTANTS & STATE
     // ----------------------------------------------------
+    // Security: HTML escape helper to prevent XSS from external API data
+    const escHtml = (s) => { const d = document.createElement('div'); d.textContent = String(s || ''); return d.innerHTML; };
     const VERSION = window.WorldviewConfig.VERSION;
     
     // Increment and get session count
@@ -15,68 +17,131 @@ document.addEventListener("DOMContentLoaded", () => {
     const sessionEl = document.getElementById('session-count');
     if (sessionEl) sessionEl.innerText = `${(sessionCount).toLocaleString()}`;
 
-    // Artemis Mission Live Telemetry Simulation [Dead-Reckoning Orbital Engine]
-    const simulateArtemisTelemetry = () => {
-        const timeEl = document.getElementById('artemis-time');
-        const velEl = document.getElementById('artemis-vel');
-        const distEarthEl = document.getElementById('artemis-dist-earth');
-        const distMoonEl = document.getElementById('artemis-dist-moon');
-        const statusEl = document.getElementById('artemis-status');
-        
-        if(!timeEl || !velEl || !distEarthEl || !distMoonEl) return;
-        
-        // Exact Launch Vector (April 1, 2026)
-        const missionStart = new Date("2026-04-01T14:00:00Z").getTime();
-        const transitDurationMs = 96 * 3600000; // ~96 Hours Trans-Lunar Coast
-        
-        const formatNum = (num) => num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-        
-        const tick = () => {
-            const now = Date.now();
-            let elapsed = now - missionStart;
-            
-            const days = Math.floor(elapsed / 86400000);
-            const hours = Math.floor((elapsed % 86400000) / 3600000);
-            const mins = Math.floor((elapsed % 3600000) / 60000);
-            const secs = Math.floor((elapsed % 60000) / 1000);
-            timeEl.innerText = `${days}D ${hours.toString().padStart(2, '0')}H ${mins.toString().padStart(2, '0')}M ${secs.toString().padStart(2, '0')}S`;
-
-            // Keplerian Mathematical Trajectory Approximation
-            // Progress goes from 0.0 to 1.0 throughout the 96 hour transit
-            let progress = Math.min(Math.max(elapsed / transitDurationMs, 0), 1);
-            
-            // Distance Calculation (Logarithmic-style curve leaving Earth gravity)
-            // Starts around 6,000 KM (LEO), Peaks at ~384,400 KM (Moon)
-            let currentDistEarth = 6000 + (378400 * Math.pow(progress, 0.85));
-            let currentDistMoon = 384400 - currentDistEarth;
-            
-            // Velocity Calculation (V drops heavily initially due to Earth's gravity well)
-            // TLI starts at ~39,000 km/h, slows to ~4000 km/h before lunar capture
-            let currentVel = 39000 - (35000 * Math.pow(progress, 0.4));
-            
-            // Update Phase Status based on transit time
-            if (statusEl) {
-                if (progress < 0.05) statusEl.innerText = "TRANS-LUNAR INJECTION";
-                else if (progress < 0.95) statusEl.innerText = "COASTING (OUTBOUND)";
-                else statusEl.innerText = "LUNAR ORBIT INSERTION";
-            }
-
-            velEl.innerText = `${formatNum(currentVel)} KM/H`;
-            distEarthEl.innerText = `${formatNum(currentDistEarth)} KM`;
-            distMoonEl.innerText = `${formatNum(Math.max(currentDistMoon, 0))} KM`;
-            
-            requestAnimationFrame(tick);
-        };
-        tick();
+    // ----------------------------------------------------
+    // i18n TRANSLATION SYSTEM (EN / DE)
+    // ----------------------------------------------------
+    const i18n = {
+        en: {
+            mode_explore: 'EXPLORE', mode_analyze: 'ANALYZE',
+            status_active: 'GLOBAL COMMAND ACTIVE', system_override: 'SYSTEM OVERRIDE',
+            news_band: 'GLOBAL NEWS BAND', cat_scenarios: 'GLOBAL SCENARIOS',
+            reset_layers: 'RESET LAYERS', command_manual: 'COMMAND MANUAL',
+            cat_realtime: 'REAL-TIME TRACKING', cat_geopolitics: 'GEOPOLITICS',
+            cat_environment: 'ENVIRONMENT & SPACE',
+            layer_ships: 'AIS Shipping', desc_ships: 'Live vessel positions via AIS transponders. Includes cargo and military ships.',
+            layer_flights: 'Lufthansa Flights', desc_flights: 'Real-time aircraft positions via OpenSky Network radar.',
+            layer_iss: 'ISS Tracker', desc_iss: 'International Space Station — orbits Earth every 90 minutes at 28,000 km/h.',
+            layer_earthquakes: 'Earthquakes', desc_earthquakes: 'Live seismic events from USGS. Circle size = magnitude. Updated every 5 min.',
+            layer_fires: 'NASA Wildfires', desc_fires: 'Active fire detection by NASA FIRMS satellites. Near real-time hotspots.',
+            layer_terminator: 'Day/Night Line', desc_terminator: 'Solar terminator — the real-time boundary between day and night on Earth.',
+            layer_regimes: 'Regime Types', desc_regimes: 'Government systems by country — democracy, autocracy, or hybrid regime.',
+            layer_blocs: 'Alliances & Blocs', desc_blocs: 'NATO, BRICS, EU, ASEAN — major geopolitical alliance networks.',
+            layer_conflicts: 'Active Conflicts', desc_conflicts: 'Currently active war zones and armed conflicts worldwide.',
+            layer_cables: 'Undersea Cables', desc_cables: 'Submarine fiber optic cables — 95% of global internet traffic travels here.',
+            layer_nuclear: 'Nuclear Plants', desc_nuclear: 'Operational nuclear power stations and their energy output worldwide.',
+            layer_sst: 'Ocean Temperature', desc_sst: 'Sea surface temperature from NOAA. Red = warmer, blue = cooler than average.',
+            layer_temperature: 'Surface Temperature', desc_temperature: 'Land surface temperature data showing global heat distribution.',
+            layer_population: 'Population Density', desc_population: 'Global population heatmap — bright areas = high population concentration.',
+            layer_volcanoes: 'Volcanoes', desc_volcanoes: 'Historically active volcanoes from Smithsonian Global Volcanism Program.',
+            layer_radiation: 'Radiation Sites', desc_radiation: 'Notable nuclear accident sites — Chernobyl, Fukushima, and others.',
+            layer_starlink: 'Starlink Net', desc_starlink: 'SpaceX Starlink satellite constellation — 5,000+ internet satellites in orbit.',
+            upcoming_launches: 'Upcoming Launches', solar_index: 'SOLAR STORM INDEX',
+            solar_connecting: 'CONNECTING TO NOAA SWPC...', data_sources_label: 'DATA SOURCES:',
+            nav_scope: 'SCOPE', nav_intel: 'INTEL', nav_layers: 'LAYERS', nav_info: 'INFO',
+            intel_title: 'INTELLIGENCE', intel_subtitle: 'CORE_ANOMALY_SCANNER',
+            intel_init: 'INITIALIZING AI CORE...', intel_init_desc: 'Establishing spatial aggregation patterns.',
+            intel_awaiting: 'AWAITING TELEMETRY',
+            info_title: 'ABOUT THIS MAP', info_subtitle: 'DATA_SOURCES & METHODOLOGY',
+            info_how_title: '📖 How to Read This Map',
+            info_how_desc: 'Toggle data layers from the LAYERS panel to overlay real-time feeds and reference data onto the satellite map. Click any marker for detailed briefings. Use the mode switcher (EXPLORE / ANALYZE) to adjust the visual focus.',
+            info_sources_title: '📡 Live Data Sources',
+            info_src_usgs: 'Seismic events updated every 5 minutes. earthquake.usgs.gov',
+            info_src_firms: 'Active wildfire hotspots via VIIRS/MODIS satellites. firms.modaps.eosdis.nasa.gov',
+            info_src_iss: 'ISS orbital position in real time. wheretheiss.at',
+            info_src_noaa: 'Sea surface temperature & solar weather data. noaa.gov',
+            info_src_freedom: 'Regime types, alliances, and geopolitical blocs. Static reference data.',
+            info_src_infra: 'Submarine cables and nuclear power plant databases.',
+            info_explore_title: '🔬 Explore Further',
+            info_about_title: 'ℹ️ About Worldview',
+            info_about_desc: 'Worldview is an open-source global intelligence dashboard built with MapLibre GL JS and vanilla JavaScript. No API keys, no accounts — just real-time data from public sources.',
+            info_full_about: 'Full About Page ↗', info_manual_link: 'Command Manual ↗',
+            orientation_hint: 'BEST EXPERIENCED IN LANDSCAPE', launch_connecting: 'CONNECTING TO LAUNCH LIBRARY...'
+        },
+        de: {
+            mode_explore: 'ERKUNDEN', mode_analyze: 'ANALYSIEREN',
+            status_active: 'GLOBALES KOMMANDO AKTIV', system_override: 'SYSTEM OVERRIDE',
+            news_band: 'GLOBALER NACHRICHTEN-TICKER', cat_scenarios: 'GLOBALE SZENARIEN',
+            reset_layers: 'EBENEN ZURÜCKSETZEN', command_manual: 'KOMMANDO-HANDBUCH',
+            cat_realtime: 'ECHTZEIT-TRACKING', cat_geopolitics: 'GEOPOLITIK',
+            cat_environment: 'UMWELT & WELTRAUM',
+            layer_ships: 'AIS Schiffsverkehr', desc_ships: 'Echtzeit-Schiffspositionen via AIS-Transponder. Fracht- und Militärschiffe.',
+            layer_flights: 'Lufthansa Flüge', desc_flights: 'Echtzeit-Flugzeugpositionen über OpenSky Network Radar.',
+            layer_iss: 'ISS Tracker', desc_iss: 'Internationale Raumstation — umkreist die Erde alle 90 Minuten mit 28.000 km/h.',
+            layer_earthquakes: 'Erdbeben', desc_earthquakes: 'Live-Seismik von USGS. Kreisgröße = Magnitude. Aktualisierung alle 5 Min.',
+            layer_fires: 'NASA Waldbrände', desc_fires: 'Aktive Branderkennung durch NASA FIRMS Satelliten. Nahezu Echtzeit.',
+            layer_terminator: 'Tag/Nacht-Linie', desc_terminator: 'Solarterminator — die Echtzeit-Grenze zwischen Tag und Nacht auf der Erde.',
+            layer_regimes: 'Regimetypen', desc_regimes: 'Regierungssysteme nach Land — Demokratie, Autokratie oder Hybridregime.',
+            layer_blocs: 'Allianzen & Blöcke', desc_blocs: 'NATO, BRICS, EU, ASEAN — große geopolitische Bündnisnetzwerke.',
+            layer_conflicts: 'Aktive Konflikte', desc_conflicts: 'Derzeit aktive Kriegsgebiete und bewaffnete Konflikte weltweit.',
+            layer_cables: 'Unterseekabel', desc_cables: 'Unterwasser-Glasfaserkabel — 95% des globalen Internetverkehrs fließen hier.',
+            layer_nuclear: 'Kernkraftwerke', desc_nuclear: 'Betriebsbereite Kernkraftwerke und ihre Energieleistung weltweit.',
+            layer_sst: 'Ozeantemperatur', desc_sst: 'Meeresoberflächentemperatur von NOAA. Rot = wärmer, blau = kühler als Durchschnitt.',
+            layer_temperature: 'Oberflächentemperatur', desc_temperature: 'Landoberflächentemperaturdaten zur globalen Wärmeverteilung.',
+            layer_population: 'Bevölkerungsdichte', desc_population: 'Globale Bevölkerungsheatmap — helle Bereiche = hohe Bevölkerungskonzentration.',
+            layer_volcanoes: 'Vulkane', desc_volcanoes: 'Historisch aktive Vulkane vom Smithsonian Global Volcanism Program.',
+            layer_radiation: 'Strahlungsorte', desc_radiation: 'Bemerkenswerte Nuklearunfälle — Tschernobyl, Fukushima und andere.',
+            layer_starlink: 'Starlink Netz', desc_starlink: 'SpaceX Starlink Satellitenkonstellation — 5.000+ Internet-Satelliten im Orbit.',
+            upcoming_launches: 'Bevorstehende Starts', solar_index: 'SONNENSTURM-INDEX',
+            solar_connecting: 'VERBINDUNG ZU NOAA SWPC...', data_sources_label: 'DATENQUELLEN:',
+            nav_scope: 'KARTE', nav_intel: 'INTEL', nav_layers: 'EBENEN', nav_info: 'INFO',
+            intel_title: 'AUFKLÄRUNG', intel_subtitle: 'KERN-ANOMALIE-SCANNER',
+            intel_init: 'AI-KERN INITIALISIEREN...', intel_init_desc: 'Räumliche Aggregationsmuster werden etabliert.',
+            intel_awaiting: 'WARTE AUF TELEMETRIE',
+            info_title: 'ÜBER DIESE KARTE', info_subtitle: 'DATENQUELLEN & METHODIK',
+            info_how_title: '📖 Karte lesen',
+            info_how_desc: 'Schalten Sie Datenebenen im EBENEN-Panel ein, um Echtzeit-Feeds und Referenzdaten auf die Satellitenkarte zu legen. Klicken Sie auf Marker für detaillierte Briefings. Nutzen Sie den Modus-Schalter (ERKUNDEN / ANALYSIEREN).',
+            info_sources_title: '📡 Live-Datenquellen',
+            info_src_usgs: 'Seismische Ereignisse alle 5 Minuten aktualisiert. earthquake.usgs.gov',
+            info_src_firms: 'Aktive Waldbrand-Hotspots via VIIRS/MODIS Satelliten. firms.modaps.eosdis.nasa.gov',
+            info_src_iss: 'ISS Orbitalposition in Echtzeit. wheretheiss.at',
+            info_src_noaa: 'Meeresoberflächentemperatur & Sonnenwetterdaten. noaa.gov',
+            info_src_freedom: 'Regimetypen, Allianzen und geopolitische Blöcke. Statische Referenzdaten.',
+            info_src_infra: 'Unterseekabel- und Kernkraftwerk-Datenbanken.',
+            info_explore_title: '🔬 Weiter erkunden',
+            info_about_title: 'ℹ️ Über Worldview',
+            info_about_desc: 'Worldview ist ein Open-Source Global Intelligence Dashboard, gebaut mit MapLibre GL JS und Vanilla JavaScript. Keine API-Schlüssel, keine Konten — nur Echtzeitdaten aus öffentlichen Quellen.',
+            info_full_about: 'Vollständige About-Seite ↗', info_manual_link: 'Kommando-Handbuch ↗',
+            orientation_hint: 'AM BESTEN IM QUERFORMAT', launch_connecting: 'VERBINDUNG ZUR LAUNCH LIBRARY...'
+        }
     };
-    simulateArtemisTelemetry();
+
+    let currentLang = localStorage.getItem('worldviewLang') || 'en';
+
+    const setLanguage = (lang) => {
+        currentLang = lang;
+        localStorage.setItem('worldviewLang', lang);
+        document.getElementById('app-root')?.setAttribute('lang', lang);
+        document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.dataset.lang === lang));
+        const dict = i18n[lang] || i18n.en;
+        document.querySelectorAll('[data-i18n]').forEach(el => {
+            const key = el.dataset.i18n;
+            if (dict[key]) el.textContent = dict[key];
+        });
+    };
+
+    document.querySelectorAll('.lang-btn').forEach(btn => {
+        btn.addEventListener('click', () => setLanguage(btn.dataset.lang));
+    });
+
+    // Apply saved language on load
+    setLanguage(currentLang);
 
     const toggles = {
         terminator: false, fires: false, weather: false, borders: false,
         ships: false, flights: false, iss: false, starlink: false, earthquakes: false, webcams: false,
         nightlights: false, population: false, satellites: false, temperature: false,
         volcanoes: false, radiation: false, internet: false, power: false, intel: false,
-        cables: false, datacenters: false, nuclear: false, conflicts: false, regimes: false, blocs: false, surveillance: true, aiAtlas: false
+        cables: false, datacenters: false, nuclear: false, conflicts: false, regimes: false, blocs: false, aiAtlas: false
     };
 
     let issMarker = null;
@@ -90,21 +155,16 @@ document.addEventListener("DOMContentLoaded", () => {
     let tacticalProcessing = false;
 
     // ----------------------------------------------------
-    // 3-MODE SYSTEM: OBSERVE, MONITOR, ANALYZE
+    // 2-MODE SYSTEM: EXPLORE, ANALYZE
     // ----------------------------------------------------
     const modeConfig = {
-        OBSERVE: {
-            autoActiveLayers: ['terminator', 'weather', 'sst'],
+        EXPLORE: {
+            autoActiveLayers: ['terminator'],
             uiState: { sidebarCollapsed: true, intelPanelOpen: false },
             disablePolling: ['flights', 'iss', 'earthquakes', 'ships']
         },
-        MONITOR: {
-            autoActiveLayers: ['fires', 'earthquakes', 'conflicts'],
-            uiState: { sidebarCollapsed: false, intelPanelOpen: true },
-            disablePolling: []
-        },
         ANALYZE: {
-            autoActiveLayers: ['cables', 'blocs', 'datacenters'],
+            autoActiveLayers: ['cables', 'blocs'],
             uiState: { sidebarCollapsed: false, intelPanelOpen: false },
             disablePolling: []
         }
@@ -161,7 +221,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 // Turn off all layers first
                 Object.keys(toggles).forEach(key => {
-                    if (['ticker', 'surveillance', 'intel', 'all'].includes(key)) return;
+                    if (['ticker', 'intel', 'all'].includes(key)) return;
                     const cb = document.getElementById(`toggle-${key}`);
                     if(cb && cb.checked) {
                         cb.checked = false;
@@ -205,7 +265,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         document.getElementById('clear-scenarios')?.addEventListener('click', () => {
             Object.keys(toggles).forEach(key => {
-                if (['ticker', 'surveillance', 'intel', 'all'].includes(key)) return;
+                if (['ticker', 'intel', 'all'].includes(key)) return;
                 const cb = document.getElementById(`toggle-${key}`);
                 if(cb && cb.checked) {
                     cb.checked = false;
@@ -218,78 +278,12 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }, 500);
 
-    let currentMode = 'ANALYZE';
-    document.body.classList.add(`mode-${currentMode.toLowerCase()}`);
-
     const switchMode = (modeId) => {
-        if(currentMode === modeId) return;
-        currentMode = modeId;
-        
-        // Update body class for CSS
-        document.body.classList.remove('mode-observe', 'mode-monitor', 'mode-analyze');
-        document.body.classList.add(`mode-${modeId.toLowerCase()}`);
-
-        // UI Buttons
-        document.querySelectorAll('.mode-btn').forEach(btn => {
-            btn.classList.toggle('active', btn.dataset.mode === modeId);
-        });
-
-        const config = modeConfig[modeId];
-
-        // Reset all layers (excluding toggles that aren't data layers like ticker, intel, surveillance)
-        Object.keys(toggles).forEach(key => {
-            if (['ticker', 'surveillance', 'intel', 'all'].includes(key)) return;
-            const cb = document.getElementById(`toggle-${key}`);
-            if(cb && cb.checked) {
-                cb.checked = false;
-                cb.dispatchEvent(new Event('change'));
-            }
-        });
-
-        // Activate specific layers
-        config.autoActiveLayers.forEach(layer => {
-            const cb = document.getElementById(`toggle-${layer}`);
-            if(cb && !cb.checked) {
-                cb.checked = true;
-                cb.dispatchEvent(new Event('change'));
-            }
-        });
-
-        // UI States
-        const sidebar = document.getElementById('sidebar');
-        const intel = document.getElementById('intelligence-panel');
-        if (sidebar) sidebar.style.opacity = config.uiState.sidebarCollapsed ? '0' : '1';
-        if (sidebar) sidebar.style.pointerEvents = config.uiState.sidebarCollapsed ? 'none' : 'auto';
-        if (intel) {
-            if(config.uiState.intelPanelOpen) {
-                intel.style.display = 'block';
-            } else {
-                intel.style.display = 'none';
-            }
-        }
-
-        if(window.setStatus) setStatus(`SWITCHED TO ${modeId} MODE`);
+        // Mode switching logic removed in V8.8
     };
 
-    document.querySelectorAll('.mode-btn').forEach(btn => {
-        btn.addEventListener('click', () => switchMode(btn.dataset.mode));
-    });
-
     const handleManualLayerToggle = () => {
-        if (currentMode !== 'ANALYZE') {
-            currentMode = 'ANALYZE';
-            document.body.classList.remove('mode-observe', 'mode-monitor', 'mode-analyze');
-            document.body.classList.add('mode-analyze');
-            document.querySelectorAll('.mode-btn').forEach(btn => {
-                btn.classList.toggle('active', btn.dataset.mode === 'ANALYZE');
-            });
-            const sidebar = document.getElementById('sidebar');
-            if (sidebar) {
-                 sidebar.style.opacity = '1';
-                 sidebar.style.pointerEvents = 'auto';
-            }
-            if(window.setStatus) setStatus(`FELL BACK TO ANALYZE MODE (MANUAL OVERRIDE)`);
-        }
+        // Manual override logic removed in V8.8
     };
 
     // Attach click listener to checkboxes to detect manual override
@@ -322,23 +316,23 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         const relatedHtml = eventData.relatedLayers ? eventData.relatedLayers.map(layer => {
-            return `<button class="related-chip" onclick="document.getElementById('toggle-${layer.layerId}').click()">+ ${layer.label}</button>`;
+            return `<button class="related-chip" onclick="document.getElementById('toggle-${escHtml(layer.layerId)}').click()">+ ${escHtml(layer.label)}</button>`;
         }).join('') : '';
 
         panel.innerHTML = `
-            <div class="briefing-header severity-${(eventData.severity || 'low').toLowerCase()}">
-                <h2>${eventData.title}</h2>
+            <div class="briefing-header severity-${escHtml((eventData.severity || 'low').toLowerCase())}">
+                <h2>${escHtml(eventData.title)}</h2>
                 <button class="btn-close-briefing" onclick="closeBriefing()">✖</button>
             </div>
             <div class="briefing-body">
                 <h3>SITUATION</h3>
-                <p>${eventData.what}</p>
+                <p>${escHtml(eventData.what)}</p>
                 <h3>ASSESSMENT</h3>
-                <p>${eventData.why}</p>
+                <p>${escHtml(eventData.why)}</p>
                 
                 <div class="briefing-meta-grid">
-                    <div><span>TIME DETECTED</span>${eventData.time}</div>
-                    <div><span>SOURCE / FEED</span>${eventData.source}</div>
+                    <div><span>TIME DETECTED</span>${escHtml(eventData.time)}</div>
+                    <div><span>SOURCE / FEED</span>${escHtml(eventData.source)}</div>
                 </div>
                 
                 ${relatedHtml ? `<h3>RELATED SIGNALS</h3><div class="related-chips">${relatedHtml}</div>` : ''}
@@ -415,6 +409,79 @@ document.addEventListener("DOMContentLoaded", () => {
     initLayerBadges();
 
     // ----------------------------------------------------
+    const statusText = document.getElementById("status-text");
+    const setStatus = (msg) => { if(statusText) statusText.innerText = msg; };
+    window.setStatus = setStatus;
+    const sidebar = document.getElementById('sidebar');
+    const intelPanel = document.getElementById('intelligence-panel');
+    const infoPanel = document.getElementById('info-panel');
+    let activeMobilePanel = null;
+    const switchSection = (target) => {
+        if(window.innerWidth > 768) return;
+        if (activeMobilePanel === target && target !== 'map') {
+            sidebar.classList.remove('active');
+            intelPanel.classList.remove('active');
+            if (infoPanel) infoPanel.classList.remove('active');
+            document.body.classList.remove('mobile-panel-open');
+            activeMobilePanel = null;
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            const scopeBtn = document.querySelector('.nav-btn[data-target="map"]');
+            if (scopeBtn) scopeBtn.classList.add('active');
+            return;
+        }
+        sidebar.classList.remove('active');
+        intelPanel.classList.remove('active');
+        if (infoPanel) infoPanel.classList.remove('active');
+        document.body.classList.remove('mobile-panel-open');
+        activeMobilePanel = null;
+        if(target === 'layers') {
+            sidebar.classList.add('active');
+            document.body.classList.add('mobile-panel-open');
+            activeMobilePanel = 'layers';
+            const fs = sidebar.querySelector('.collapsible-section:not(.open)');
+            if (fs && !sidebar.querySelector('.collapsible-section.open')) fs.classList.add('open');
+        }
+        if(target === 'intel') {
+            intelPanel.classList.add('active');
+            document.body.classList.add('mobile-panel-open');
+            activeMobilePanel = 'intel';
+        }
+        if(target === 'info') {
+            if (infoPanel) infoPanel.classList.add('active');
+            document.body.classList.add('mobile-panel-open');
+            activeMobilePanel = 'info';
+        }
+        document.querySelectorAll('.nav-btn').forEach(b => {
+            const t = b.dataset.target || (b.id === 'mobile-layers-btn' ? 'layers' : '');
+            b.classList.toggle('active', t === target);
+        });
+    };
+    document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.preventDefault(); e.stopPropagation();
+            switchSection(btn.dataset.target || (btn.id === 'mobile-layers-btn' ? 'layers' : ''));
+        });
+    });
+    const handleOrientation = () => {
+        if (window.innerWidth > window.innerHeight && window.innerWidth <= 1024) {
+            sidebar.classList.remove('active');
+            intelPanel.classList.remove('active');
+            if (infoPanel) infoPanel.classList.remove('active');
+            document.body.classList.remove('mobile-panel-open');
+            activeMobilePanel = null;
+        }
+    };
+    window.addEventListener('resize', handleOrientation);
+    window.addEventListener('orientationchange', handleOrientation);
+    document.querySelectorAll('.cat-toggle').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const section = btn.closest('.collapsible-section');
+            if (section) section.classList.toggle('open');
+        });
+    });
+    // ── END MOBILE NAVIGATION SETUP ──
+
     // INITIALIZE V4 MAPLIBRE GL JS
     // ----------------------------------------------------
     const map = new maplibregl.Map({
@@ -439,1882 +506,20 @@ document.addEventListener("DOMContentLoaded", () => {
 
     map.addControl(new maplibregl.NavigationControl(), 'bottom-right');
 
-    const statusText = document.getElementById("status-text");
-    const setStatus = (msg) => { if(statusText) statusText.innerText = msg; };
+    // [Mobile nav code (switchSection, nav-btn listeners, handleOrientation, cat-toggle) 
+    //  is registered BEFORE map init for resilience — see line ~424]
 
-    // ── V7.0 UI: ADAPTIVE NAVIGATION & ORIENTATION ──────────
-    const sidebar = document.getElementById('sidebar');
-    const intelPanel = document.getElementById('intelligence-panel');
-
-    const switchSection = (target) => {
-        if(window.innerWidth > 768) return;
-
-        sidebar.classList.remove('active');
-        intelPanel.classList.remove('active');
-        
-        if(target === 'layers') sidebar.classList.add('active');
-        if(target === 'intel') intelPanel.classList.add('active');
-        if(target === 'about') window.open('./about.html', '_blank');
-
-        document.querySelectorAll('.nav-btn').forEach(btn => {
-            btn.classList.toggle('active', btn.dataset.target === target);
-        });
-    };
-
-    document.querySelectorAll('.nav-btn').forEach(btn => {
-        btn.addEventListener('click', () => switchSection(btn.dataset.target || (btn.id === 'mobile-layers-btn' ? 'layers' : '')));
-    });
-
+    // Close panels on map tap — requires the map object so stays here
     map.on('click', () => {
-        if(window.innerWidth <= 768) {
+        if(window.innerWidth <= 768 && activeMobilePanel) {
             sidebar.classList.remove('active');
             intelPanel.classList.remove('active');
-        }
-    });
-
-    const handleOrientation = () => {
-        const isLandscape = window.innerWidth > window.innerHeight;
-        if (isLandscape && window.innerWidth <= 1024) {
-            sidebar.classList.remove('active');
-            intelPanel.classList.remove('active');
-        }
-    };
-    window.addEventListener('resize', handleOrientation);
-    window.addEventListener('orientationchange', handleOrientation);
-
-    document.querySelectorAll('.cat-toggle').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const section = btn.closest('.collapsible-section');
-            if (section) section.classList.toggle('open');
-        });
-    });
-
-    // ── MISSION INTELLIGENCE: REAL-TIME TICKER (V7.0) ──────
-    const fetchGlobalNews = async () => {
-        try {
-            const rssUrl = encodeURIComponent('http://feeds.bbci.co.uk/news/world/rss.xml');
-            const { data, status } = await window.reliableFetch(`https://api.rss2json.com/v1/api.json?rss_url=${rssUrl}`, 'globalnews', { timeout: 8000, retries: 1 });
-            if (data.status === 'ok') {
-                const headlines = data.items.map(item => item.title.toUpperCase());
-                let prefix = status === 'DEGRADED' ? `[DEGRADED DATA] ` : ``;
-                const tickerText = " // " + prefix + headlines.join(" // ") + " // " + headlines.slice(0, 3).join(" // ");
-                const topCont = document.getElementById('ticker-content-top');
-                const botCont = document.getElementById('ticker-content-bottom');
-                if(topCont) topCont.innerText = `SITREP V${VERSION}: ${tickerText}`;
-                if(botCont) botCont.innerText = `GLOBAL COMMAND V${VERSION}: ${tickerText}`;
-            }
-        } catch (e) {
-            console.warn("[RELIABILITY] Global News Feed completely failed.");
-        }
-    };
-
-    // ── V8.0 SURVEILLANCE COMMAND CENTER LOGIC ─────────────
-    const surveillanceTrigger = document.getElementById('surveillance-trigger');
-    const exitSurveillance = document.getElementById('exit-surveillance');
-    const tacticalTerminal = document.getElementById('tactical-terminal-body');
-
-    const toggleSurveillance = (active) => {
-        toggles.surveillance = active;
-        document.body.classList.toggle('surveillance-active', active);
-        
-        if (active) {
-            setStatus("ESTABLISHING TACTICAL SURVEILLANCE LINK...");
-            startTacticalClock();
-            startRiskSimulation();
-            // Initial boot sequence
-            addTacticalLog("SECURE_LINK_RE-ESTABLISHED // RSA_ENCRYPTED", "sys");
-            addTacticalLog(`V${VERSION}_COMMANDER_RB CONNECTED`, "sys");
-        } else {
-            setStatus("DISCONNECTING TACTICAL LINK... STANDBY.");
-        }
-    };
-
-    surveillanceTrigger?.addEventListener('click', () => toggleSurveillance(true));
-    exitSurveillance?.addEventListener('click', () => toggleSurveillance(false));
-
-    function startTacticalClock() {
-        const clockEl = document.getElementById('tactical-clock');
-        const update = () => {
-            const now = new Date();
-            if (clockEl) clockEl.innerText = now.toTimeString().split(' ')[0] + " GMT";
-        };
-        setInterval(update, 1000);
-        update();
-    }
-
-    function addTacticalLog(msg, type = 'sys') {
-        if (!tacticalTerminal) return;
-        const row = document.createElement('div');
-        row.className = `t-row t-${type}`;
-        const time = new Date().toLocaleTimeString('en-GB', { hour12: false });
-        row.innerHTML = `<span style="opacity:0.4;">[${time}]</span> ${msg}`;
-        tacticalTerminal.prepend(row);
-        
-        // Cleanup old logs
-        while (tacticalTerminal.children.length > 25) tacticalTerminal.lastChild.remove();
-    }
-
-    // Aero Controls
-    document.getElementById('aero-zoom-in')?.addEventListener('click', () => map.zoomIn());
-    document.getElementById('aero-zoom-out')?.addEventListener('click', () => map.zoomOut());
-    document.getElementById('aero-tilt')?.addEventListener('click', () => {
-        const pitch = map.getPitch() === 0 ? 60 : 0;
-        map.easeTo({ pitch, duration: 2000 });
-    });
-    document.getElementById('aero-reset')?.addEventListener('click', () => {
-        map.flyTo({ center: [0, 20], zoom: 2.2, pitch: 0, bearing: 0, duration: 3000 });
-    });
-
-    function startRiskSimulation() {
-        setInterval(() => {
-            if (!toggles.surveillance) return;
-            [1, 2, 3].forEach(id => {
-                const bar = document.getElementById(`risk-bar-${id}`);
-                if (bar) {
-                    const current = parseFloat(bar.style.width);
-                    const change = (Math.random() * 10) - 5;
-                    const next = Math.max(10, Math.min(95, current + change));
-                    bar.style.width = next + '%';
-                }
-            });
-            // Occasional background log for flavor
-            if (Math.random() > 0.8) {
-                const targets = ['SST_ANOMALY', 'ORBITAL_PATH_STABLE', 'SEA_LEVEL_MONITOR', 'FIRE_RECON_SYNC'];
-                addTacticalLog(`ROUTINE_SCAN: ${targets[Math.floor(Math.random()*targets.length)]} // NOMINAL`, 'sys');
-            }
-        }, 5000);
-    }
-    
-    document.getElementById('toggle-ticker')?.addEventListener('change', (e) => {
-        toggles.ticker = e.target.checked;
-        document.body.classList.toggle('no-ticker', !toggles.ticker);
-    });
-
-    // ----------------------------------------------------
-    // MAP DATA INITIALIZATION
-    // ----------------------------------------------------
-    map.on('load', () => {
-        setStatus(`SYSTEM INITIALIZED V${VERSION}. ESTABLISHING SECURE CONNECTION...`);
-
-        // Initialize News
-        fetchGlobalNews();
-        setInterval(fetchGlobalNews, 300000); // 5min
-
-        // Draw Solar Terminator Night Shadow
-        map.addSource('terminator', {
-            type: 'geojson',
-            data: getTerminatorGeoJSON()
-        });
-        map.addLayer({
-            id: 'terminator-layer',
-            type: 'fill',
-            source: 'terminator',
-            layout: { visibility: 'none' },
-            paint: { 'fill-color': '#000000', 'fill-opacity': 0.65 }
-        });
-
-        // Setup Cities Layer (Appears on zoom)
-        const cities = [
-            {name: "Tokyo", lat: 35.6762, lon: 139.6503},
-            {name: "Delhi", lat: 28.7041, lon: 77.1025},
-            {name: "Shanghai", lat: 31.2304, lon: 121.4737},
-            {name: "São Paulo", lat: -23.5505, lon: -46.6333},
-            {name: "Mexico City", lat: 19.4326, lon: -99.1332},
-            {name: "Cairo", lat: 30.0444, lon: 31.2357},
-            {name: "Mumbai", lat: 19.0760, lon: 72.8777},
-            {name: "Beijing", lat: 39.9042, lon: 116.4074},
-            {name: "Dhaka", lat: 23.8103, lon: 90.4125},
-            {name: "Osaka", lat: 34.6937, lon: 135.5023},
-            {name: "New York", lat: 40.7128, lon: -74.0060},
-            {name: "Karachi", lat: 24.8607, lon: 67.0011},
-            {name: "Buenos Aires", lat: -34.6037, lon: -58.3816},
-            {name: "Chongqing", lat: 29.5332, lon: 106.5029},
-            {name: "Istanbul", lat: 41.0082, lon: 28.9784},
-            {name: "Kolkata", lat: 22.5726, lon: 88.3639},
-            {name: "Manila", lat: 14.5995, lon: 120.9842},
-            {name: "Lagos", lat: 6.5244, lon: 3.3792},
-            {name: "Rio", lat: -22.9068, lon: -43.1729},
-            {name: "Kinshasa", lat: -4.4419, lon: 15.2663},
-            {name: "Los Angeles", lat: 34.0522, lon: -118.2437},
-            {name: "Moscow", lat: 55.7558, lon: 37.6173},
-            {name: "Paris", lat: 48.8566, lon: 2.3522},
-            {name: "Bogotá", lat: 4.7110, lon: -74.0721},
-            {name: "Jakarta", lat: -6.2088, lon: 106.8456},
-            {name: "Lima", lat: -12.0464, lon: -77.0428},
-            {name: "Bangkok", lat: 13.7563, lon: 100.5018},
-            {name: "Seoul", lat: 37.5665, lon: 126.9780},
-            {name: "London", lat: 51.5074, lon: -0.1278},
-            {name: "Tehran", lat: 35.6892, lon: 51.3890},
-            {name: "Chicago", lat: 41.8781, lon: -87.6298},
-            {name: "Hong Kong", lat: 22.3193, lon: 114.1694},
-            {name: "Berlin", lat: 52.5200, lon: 13.4050},
-            {name: "Madrid", lat: 40.4168, lon: -3.7038},
-            {name: "Rome", lat: 41.9028, lon: 12.4964},
-            {name: "Sydney", lat: -33.8688, lon: 151.2093},
-            {name: "Toronto", lat: 43.6510, lon: -79.3470},
-            {name: "Johannesburg", lat: -26.2041, lon: 28.0473},
-            {name: "Dubai", lat: 25.2048, lon: 55.2708},
-            {name: "Singapore", lat: 1.3521, lon: 103.8198}
-        ];
-        
-        map.addSource('cities', {
-            type: 'geojson',
-            data: {
-                type: 'FeatureCollection',
-                features: cities.map(c => ({
-                    type: 'Feature',
-                    properties: { name: c.name.toUpperCase() },
-                    geometry: { type: 'Point', coordinates: [c.lon, c.lat] }
-                }))
-            }
-        });
-
-        map.addLayer({
-            id: 'cities-label',
-            type: 'symbol',
-            source: 'cities',
-            layout: {
-                'text-field': ['get', 'name'],
-                'text-font': ['Open Sans Regular'],
-                'text-size': [
-                    'interpolate', ['linear'], ['zoom'],
-                    2.0, 8,
-                    6.0, 14,
-                    10.0, 20
-                ],
-                'text-anchor': 'center'
-            },
-            paint: {
-                'text-color': '#ffb000',
-                'text-halo-color': 'rgba(0, 0, 0, 0.9)',
-                'text-halo-width': 2,
-                'text-opacity': [
-                    'interpolate', ['linear'], ['zoom'],
-                    2.0, 0.4,     // partly visible even when zoomed out
-                    4.0, 1.0      // fully bright orange
-                ]
-            }
-        });
-
-        // Setup Earthquake geojson source
-        map.addSource('earthquakes', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
-        
-        // V4.1: Data-Driven Styling for Earthquakes (Size & Color by Magnitude)
-        map.addLayer({
-            id: 'earthquakes-core',
-            type: 'circle',
-            source: 'earthquakes',
-            layout: { visibility: 'none' },
-            paint: { 
-                'circle-radius': [
-                    'interpolate', ['linear'], ['get', 'mag'],
-                    1.0, 4,
-                    4.0, 8,  
-                    6.0, 14,  
-                    8.0, 24  
-                ],
-                'circle-color': [
-                    'step', ['get', 'mag'],
-                    'rgba(255, 176, 0, 0.4)',  // < 4.0: Subtle Amber
-                    4.0, '#ffb000',            // >= 4.0: Solid Amber
-                    6.0, '#ff3300'             // >= 6.0: Neon Orange / Danger Red
-                ],
-                'circle-opacity': 0.85 
-            }
-        });
-        map.addLayer({
-            id: 'earthquakes-halo',
-            type: 'circle',
-            source: 'earthquakes',
-            layout: { visibility: 'none' },
-            paint: { 
-                'circle-radius': [
-                    'interpolate', ['linear'], ['get', 'mag'],
-                    1.0, 8,
-                    4.0, 16,
-                    6.0, 32,
-                    8.0, 80
-                ],
-                'circle-color': 'transparent', 
-                'circle-stroke-width': [
-                    'step', ['get', 'mag'],
-                    1.0,       // < 4.0
-                    4.0, 1.5,
-                    6.0, 3     // >= 6.0: Bold stroke
-                ], 
-                'circle-stroke-color': [
-                    'step', ['get', 'mag'],
-                    'rgba(255, 176, 0, 0.3)',  // < 4.0: Subtle
-                    4.0, '#ffb000',
-                    6.0, '#ff3300'             // >= 6.0: Neon Orange
-                ],
-                'circle-stroke-opacity': 0.85 
-            }
-        });
-
-        // Initialize Feeds
-        fetchNASA_Fires();
-        fetchWeather();
-        fetchOceanSST();
-        fetchPopulationDensity();
-        fetchTemperatureLayer();
-        initVolcanoes();
-        initRadiationSites();
-        fetchSolarStorm();
-        setInterval(fetchSolarStorm, 120000); 
-        fetchInternetOutages();
-        setInterval(fetchInternetOutages, 300000); 
-        fetchLaunches();
-        setInterval(fetchLaunches, 600000); 
-        fetchISS();
-        setInterval(fetchISS, 15000);       
-        initGhostFleet();
-        fetchEarthquakes();
-        setInterval(fetchEarthquakes, 600000); 
-        fetchFlights();
-        setInterval(fetchFlights, 300000);     
-        initWebcams();
-        initStarlink();
-        initSatelliteTracker();
-        initIntelligenceCore();
-        initConflictZones();
-        initRegimeMap();            
-        initGeoBlocs();             
-        initUnderseaCables();       
-        initDataCenters();          
-        initNuclearLayer();         
-        fetchPowerOutages(); // New V7.0
-
-        // Dynamically update shadow every 60 seconds
-        terminatorInterval = setInterval(() => {
-            if(map.getSource('terminator')) {
-                map.getSource('terminator').setData(getTerminatorGeoJSON());
-            }
-        }, 60000);
-    });
-
-    // ----------------------------------------------------
-    // API: Solar Terminator Math (Pure JS Astro-Logic)
-    // ----------------------------------------------------
-    const getTerminatorGeoJSON = () => {
-        const now = new Date();
-        const t = now.getTime() / 86400000.0 + 2440587.5;
-        const d = t - 2451545.0;
-        const g = (357.529 + 0.98560028 * d) % 360;
-        const q = (280.459 + 0.98564736 * d) % 360;
-        const l = q + 1.915 * Math.sin(g * Math.PI / 180) + 0.020 * Math.sin(2 * g * Math.PI / 180);
-        const e = 23.439 - 0.00000036 * d;
-        
-        const declination = Math.asin(Math.sin(e * Math.PI / 180) * Math.sin(l * Math.PI / 180)) * 180 / Math.PI;
-        const gmst = (18.697374558 + 24.06570982441908 * d) % 24;
-        const subsolarLon = (-(gmst * 15)) % 360; 
-    
-        let coords = [];
-        for (let lon = -180; lon <= 180; lon += 1) {
-            const dLon = (lon - subsolarLon) * Math.PI / 180;
-            let lat = Math.atan(-Math.cos(dLon) / Math.tan(declination * Math.PI / 180)) * 180 / Math.PI;
-            coords.push([lon, lat]);
-        }
-    
-        const poleLat = declination > 0 ? -90 : 90;
-        coords.push([180, poleLat], [-180, poleLat], [coords[0][0], coords[0][1]]);
-    
-        return {
-            type: "FeatureCollection",
-            features: [{
-                type: "Feature",
-                geometry: { type: "Polygon", coordinates: [coords] }
-            }]
-        };
-    };
-
-    // ----------------------------------------------------
-    // API: NASA FIRMS (Global Wildfires)
-    // ----------------------------------------------------
-    const fetchNASA_Fires = () => {
-        // NASA GIBS tiles are typically 24-48 hours behind real time.
-        const pastDate = "2023-08-15"; // Historic Anchor: Intense global wildfire season (100% Tile Availability!)
-
-        try {   
-            map.addLayer({
-                id: 'nasa-fires',
-                type: 'raster',
-                source: {
-                    type: 'raster',
-                    tiles: [
-                        `https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/VIIRS_SNPP_Thermal_Anomalies_375m_All/default/${pastDate}/GoogleMapsCompatible_Level8/{z}/{y}/{x}.png`
-                    ],
-                    tileSize: 256,
-                    maxzoom: 15
-                },
-                paint: {
-                    'raster-opacity': 0.8
-                }
-            }, 'terminator-layer');
-            
-            if(!toggles.fires) {
-                map.setLayoutProperty('nasa-fires', 'visibility', 'none');
-            }
-            updateLayerStatus('fires', 'DELAYED'); // Tile data is historic/delayed
-            setStatus("NASA ACTIVE FIRES SYNCHRONIZED.");
-        } catch(err) {
-            updateLayerStatus('fires', 'ERROR', err.message);
-        }
-    };
-
-    // ----------------------------------------------------
-    // API: Weather Radar (RainViewer)
-    // ----------------------------------------------------
-    const fetchWeather = async () => {
-        try {
-            const { data, status, minutesAgo } = await window.reliableFetch('https://api.rainviewer.com/public/weather-maps.json', 'weather', { timeout: 10000, retries: 1 });
-            const latestTime = data.radar.past[data.radar.past.length - 1].path;
-            
-            map.addLayer({
-                id: 'weather-radar',
-                type: 'raster',
-                source: {
-                    type: 'raster',
-                    // Using color scheme 2 (Titan - very colorful) and smoothing 1 so clouds jump out over the map
-                    tiles: [`https://tilecache.rainviewer.com${latestTime}/256/{z}/{x}/{y}/2/1_1.png`],
-                    tileSize: 256,
-                    maxzoom: 15
-                },
-                paint: { 'raster-opacity': 0.85 }
-            }, 'terminator-layer');
-            
-            if(!toggles.weather) {
-                map.setLayoutProperty('weather-radar', 'visibility', 'none');
-            }
-            if (status === 'DEGRADED') {
-                updateLayerStatus('weather', 'DEGRADED', `Stale by ${minutesAgo}m`);
-            } else {
-                updateLayerStatus('weather', 'LIVE');
-            }
-        } catch(err) {
-            updateLayerStatus('weather', 'ERROR', err.message);
-        }
-    };
-
-    // ----------------------------------------------------
-    // API: ISS Tracker
-    // ----------------------------------------------------
-    const issSvg = `<svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M12 2L2 12L12 22L22 12L12 2Z" stroke="#ffb000" stroke-width="2"/>
-        <circle cx="12" cy="12" r="3" fill="#ffb000"/>
-    </svg>`;
-
-    const getIssPopupHtml = (alt, vel, lat, lon) => {
-        // High-reliability NASA YouTube Live Channel Embed
-        const nasaTvEmbed = 'https://www.youtube.com/embed/live_stream?channel=UC8uY_5XN0UvJ0z8C6rEIkVw&autoplay=1&mute=1&rel=0&modestbranding=1';
-        return `
-        <div style="font-family: 'Share Tech Mono', monospace; min-width: 320px; color: var(--amber);">
-            <h3 style="color: var(--amber); margin: 0 0 8px; border-bottom: 1px solid var(--amber-dim); padding-bottom: 6px;">
-                <i class="fa-solid fa-satellite"></i> ISS LIVE RECON V${VERSION}
-            </h3>
-            <div style="position:relative; width:100%; padding-top:56.25%; background:#000; border: 1px solid var(--amber-dim); margin-bottom: 10px; overflow:hidden; border-radius:3px;">
-                <iframe style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;" src="${nasaTvEmbed}" allow="autoplay; encrypted-media" allowfullscreen></iframe>
-                <div style="position:absolute;top:8px;left:8px;background:rgba(0,0,0,0.7);padding:4px 10px;border-radius:2px;pointer-events:none;color:var(--amber);font-size:10px;font-weight:bold;letter-spacing:1px;border:1px solid var(--amber-dim);">
-                    <i class="fa-solid fa-signal" style="animation:blink 1s infinite;"></i> SIGNAL: ACQUIRED
-                </div>
-            </div>
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; font-size: 0.78rem;">
-                <div style="background:rgba(255,176,0,0.08);padding:6px 8px;border:1px solid var(--amber-dim);">ALT: ${alt.toFixed(0)} KM</div>
-                <div style="background:rgba(255,176,0,0.08);padding:6px 8px;border:1px solid var(--amber-dim);">VEL: ${vel.toFixed(0)} KM/H</div>
-                <div style="background:rgba(0,180,255,0.08);padding:6px 8px;border:1px solid rgba(0,180,255,0.2);">LAT: ${lat.toFixed(4)}°</div>
-                <div style="background:rgba(0,180,255,0.08);padding:6px 8px;border:1px solid rgba(0,180,255,0.2);">LON: ${lon.toFixed(4)}°</div>
-            </div>
-            <div style="margin-top:8px; font-size:0.6rem; opacity:0.4; text-align:center; letter-spacing:1px;">ORBITAL DATA SOURCE: NASA_API_RELAY</div>
-        </div>`;
-    };
-
-    const fetchISS = async () => {
-        if (modeConfig[currentMode] && modeConfig[currentMode].disablePolling.includes('iss')) return;
-        try {
-            const { data, status, minutesAgo } = await window.reliableFetch('https://api.wheretheiss.at/v1/satellites/25544', 'iss', { timeout: 5000, retries: 1 });
-            const { latitude, longitude, velocity, altitude } = data;
-
-            if (!issMarker) {
-                const el = document.createElement('div');
-                el.className = 'marker-iss';
-                el.innerHTML = issSvg;
-                
-                issMarker = new maplibregl.Marker({ element: el })
-                    .setLngLat([longitude, latitude])
-                    .setPopup(new maplibregl.Popup({ offset: 25, maxWidth: '340px' })
-                        .setHTML(getIssPopupHtml(altitude, velocity, latitude, longitude)));
-                if (toggles.iss) issMarker.addTo(map);
-            } else {
-                issMarker.setLngLat([longitude, latitude]);
-                // Only refresh popup HTML if not open (avoids interrupting live stream)
-                if (!issMarker.getPopup().isOpen()) {
-                    issMarker.getPopup().setHTML(getIssPopupHtml(altitude, velocity, latitude, longitude));
-                }
-            }
-            if (status === 'DEGRADED') {
-                updateLayerStatus('iss', 'DEGRADED', `Stale by ${minutesAgo}m`);
-            } else {
-                updateLayerStatus('iss', 'LIVE');
-            }
-        } catch (error) {
-            updateLayerStatus('iss', 'ERROR', error.message);
-        }
-    };
-
-    // ----------------------------------------------------
-    // API: Power Outages (V7.0)
-    // ----------------------------------------------------
-    const powerOutageData = [
-        { id: 'PWR-UKR-01', name: 'UKR GRID DAMAGE', loc: [30.5234, 50.4501], date: 'ONGOING 2024', impact: '4.5M PEOPLE', status: 'live' },
-        { id: 'PWR-RSA-01', name: 'RSA LOAD SHEDDING', loc: [28.0473, -26.2041], date: 'ONGOING', impact: 'GRID INSTABILITY', status: 'live' },
-        { id: 'PWR-ECU-01', name: 'ECUADOR DROUGHT POWER CRISIS', loc: [-78.4678, -0.1807], date: 'APR 2024 - PRESENT', impact: 'NATIONWIDE RATIONING', status: 'live' },
-        { id: 'PWR-GER-01', name: 'BERLIN KÖPENICK FAILURE', loc: [13.4050, 52.5200], date: 'FEB 2024', impact: '30,000 HH / 24H', status: 'hist' },
-        { id: 'PWR-USA-TX', name: 'TEXAS GRID STRESS', loc: [-97.7431, 30.2672], date: 'JAN 2024', impact: 'STORM-RELATED FAILURE', status: 'hist' },
-        { id: 'PWR-BRA-01', name: 'BRAZIL BLACKOUT', loc: [-47.8825, -15.7942], date: 'AUG 2023', impact: '29M PEOPLE', status: 'hist' },
-        { id: 'PWR-PAK-01', name: 'PAKISTAN NATIONAL FAILURE', loc: [67.0011, 24.8607], date: 'JAN 2023', impact: '220M PEOPLE / 12H', status: 'hist' }
-    ];
-
-    const fetchPowerOutages = () => {
-        powerMarkers.forEach(m => m.remove());
-        powerMarkers = [];
-        powerOutageData.forEach(p => {
-            const el = document.createElement('div');
-            el.className = `marker-power marker-power-${p.status}`;
-            el.innerHTML = '<div class="core"></div>';
-            const marker = new maplibregl.Marker({ element: el }).setLngLat(p.loc).setPopup(new maplibregl.Popup({ offset: 10 }).setHTML(`
-                <div style="font-family:'Share Tech Mono',monospace; min-width:200px; color:${p.status === 'live' ? '#ff3300' : '#888'};">
-                    <header style="border-bottom:1px solid currentColor; margin-bottom:5px; font-weight:bold;">
-                        <i class="fa-solid fa-plug-circle-xmark"></i> ${p.name}
-                    </header>
-                    <div style="font-size:0.75rem;">
-                        <div>ID: ${p.id} | DATE: ${p.date}</div>
-                        <div style="color:#fff; margin-top:5px;">IMPACT: ${p.impact}</div>
-                    </div>
-                </div>`));
-            if (toggles.power) marker.addTo(map);
-            powerMarkers.push(marker);
-        });
-        updateLayerStatus('power', 'STATIC');
-    };
-
-
-    // ----------------------------------------------------
-    // MOCK: STARLINK CONSTELLATION
-    // ----------------------------------------------------
-    const starlinkSvg = `<svg width="12" height="12" viewBox="0 0 24 24" fill="#00ff00" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="12" cy="12" r="6"/>
-    </svg>`;
-    const mockStarlinkData = [];
-    const starlinkMarkers = [];
-    
-    for(let i=0; i<150; i++) {
-        mockStarlinkData.push({
-            id: 'STARLINK-' + Math.floor(1000 + Math.random()*9000),
-            lon: (Math.random() * 360) - 180,
-            lat: (Math.random() * 180) - 90,
-            hdg: 45 + (Math.random() * 10), // Mostly eastward polar orbit inclination
-            spd: 0.0003 + (Math.random() * 0.0001) // Super fast LEO speed
-        });
-    }
-
-    const initStarlink = () => {
-        mockStarlinkData.forEach(sat => {
-            const el = document.createElement('div');
-            el.className = 'marker-starlink';
-            el.innerHTML = starlinkSvg;
-            const marker = new maplibregl.Marker({ element: el, rotation: sat.hdg })
-                .setLngLat([sat.lon, sat.lat])
-                .setPopup(new maplibregl.Popup({ offset: 10 }).setHTML(`
-                    <h3 style="color:#00ff00;"><i class="fa-solid fa-satellite"></i> ${sat.id}</h3>
-                    <p style="color:#0ff;">LOW EARTH ORBIT</p>
-                    <p>STATUS: ACTIVE</p>
-                `));
-            sat.marker = marker;
-            marker.addTo(map);
-            if (!toggles.starlink) marker.getElement().style.display = 'none';
-            starlinkMarkers.push(sat);
-        });
-
-        const animateStarlink = () => {
-            starlinkMarkers.forEach(s => {
-                s.lat += Math.cos(s.hdg * Math.PI / 180) * s.spd;
-                s.lon += Math.sin(s.hdg * Math.PI / 180) * s.spd;
-                if(s.lon > 180) s.lon -= 360;
-                if(s.lon < -180) s.lon += 360;
-                if(s.lat > 90 || s.lat < -90) s.hdg += 180; 
-                if(toggles.starlink) {
-                    s.marker.setLngLat([s.lon, s.lat]);
-                }
-            });
-            requestAnimationFrame(animateStarlink);
-        }
-        requestAnimationFrame(animateStarlink);
-    };
-
-    // ----------------------------------------------------
-    // API: Earthquakes
-    // ----------------------------------------------------
-    let globalEarthquakesArray = []; // Safer data access
-    const fetchEarthquakes = async () => {
-        if (modeConfig[currentMode] && modeConfig[currentMode].disablePolling.includes('earthquakes')) return;
-        setStatus("FETCHING SEISMIC DATA...");
-        try {
-            const { data, status, minutesAgo } = await window.reliableFetch('https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/2.5_day.geojson', 'earthquakes', { timeout: 10000, retries: 1 });
-            globalEarthquakesArray = data.features;
-            const geojson = {
-                type: 'FeatureCollection',
-                features: data.features.map(f => {
-                    const mag = f.properties.mag;
-                    let tsunamiTag = '';
-                    if (f.properties.tsunami === 1) {
-                        tsunamiTag = `<div style="margin-top:8px; padding:4px; font-weight:bold; font-size:0.65rem; color:#fff; background:var(--neon-red); border:1px solid #fff;">
-                                        <i class="fa-solid fa-water"></i> ATS-WARNING: REGIONAL TSUNAMI THREAT OR MAJOR SEISMIC DISTURBANCE DETECTED
-                                      </div>`;
-                    }
-                    return {
-                        type: 'Feature',
-                        geometry: f.geometry,
-                        properties: { ...f.properties, time: new Date(f.properties.time).toLocaleTimeString(), tsunamiHTML: tsunamiTag }
-                    }
-                })
-            };
-            map.getSource('earthquakes').setData(geojson);
-            map.on('click', 'earthquakes-core', (e) => {
-                const p = e.features[0].properties;
-                new maplibregl.Popup({ offset: 15, maxWidth: '280px' })
-                    .setLngLat(e.lngLat)
-                    .setHTML(`
-                        <div style="font-family:'Share Tech Mono',monospace; font-size:0.75rem;">
-                            <h3 style="color:var(--amber); margin:0 0 6px; border-bottom:1px solid rgba(255,176,0,0.1); padding-bottom:4px;">
-                                <i class="fa-solid fa-burst"></i> SEISMIC EVENT
-                            </h3>
-                            <div style="background:rgba(255,255,255,0.03); padding:6px; border-radius:2px;">
-                                <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
-                                    <span>MAGNITUDE:</span> <span style="color:${p.mag > 5 ? 'var(--neon-red)' : 'var(--neon-blue)'}; font-weight:bold;">${p.mag}</span>
-                                </div>
-                                <div style="display:flex; justify-content:space-between;">
-                                    <span>DEPTH:</span> <span>${e.features[0].geometry.coordinates[2].toFixed(1)} KM</span>
-                                </div>
-                            </div>
-                            <div style="margin-top:6px; color:#ccc;">LOC: ${p.place.toUpperCase()}</div>
-                            <div style="font-size:0.6rem; opacity:0.5; margin-top:4px;">TIME: ${p.time}</div>
-                            ${p.tsunamiHTML}
-                        </div>
-                    `).addTo(map);
-            });
-            map.on('mouseenter', 'earthquakes-core', () => map.getCanvas().style.cursor = 'pointer');
-            map.on('mouseleave', 'earthquakes-core', () => map.getCanvas().style.cursor = '');
-            setStatus("SEISMIC DATA LOADED.");
-            if (status === 'DEGRADED') {
-                updateLayerStatus('earthquakes', 'DEGRADED', `Stale by ${minutesAgo}m`);
-            } else {
-                updateLayerStatus('earthquakes', 'LIVE');
-            }
-        } catch (error) {
-            updateLayerStatus('earthquakes', 'ERROR', error.message);
-        }
-    };
-
-    // ----------------------------------------------------
-    // API: Live Flights (OpenSky Network)
-    // ----------------------------------------------------
-    const planeSvg = `<svg width="24" height="24" viewBox="0 0 24 24" fill="#ffb000" xmlns="http://www.w3.org/2000/svg">
-        <path d="M21 16V14L13 9V3.5C13 2.67 12.33 2 11.5 2C10.67 2 10 2.67 10 3.5V9L2 14V16L10 13.5V19L8 20.5V22L11.5 21L15 22V20.5L13 19V13.5L21 16Z"/>
-    </svg>`;
-    
-    // Aviation Best-Guess Route Logic V7.0
-    const estimateRoute = (callsign) => {
-        if (!callsign) return "TRANSCONTINENTAL";
-        const num = parseInt(callsign.replace(/\D/g, ''));
-        if (num < 150) return "FRA/MUC —> JFK/LAX (US NORTH)";
-        if (num >= 400 && num < 500) return "FRA —> GRU/EZE (LATAM)";
-        if (num >= 700 && num < 800) return "FRA/MUC —> HND/SIN (ASIA)";
-        if (num >= 1000 && num < 2000) return "EUR REGIONAL RECON";
-        if (callsign.startsWith('CFG')) return "HOLIDAY CHARTER LOGISTICS";
-        return "SCHEDULED GLOBAL OPS";
-    };
-    // ----------------------------------------------------
-    // Aviation Simulation Relay (Fallback V7.1)
-    // ----------------------------------------------------
-    const AviationSimulationRelay = [
-        { call: 'DLH400', lat: 50.0333, lon: 8.5705, hdg: 275, alt: 36000, spd: 880, air: 'LUFTHANSA' },
-        { call: 'DLH710', lat: 48.3537, lon: 11.7860, hdg: 95, alt: 34000, spd: 840, air: 'LUFTHANSA' },
-        { call: 'DLH430', lat: 52.5588, lon: 13.2884, hdg: 260, alt: 32000, spd: 910, air: 'LUFTHANSA' },
-        { call: 'CFG152', lat: 50.1109, lon: 8.6821, hdg: 180, alt: 38000, spd: 820, air: 'CONDOR' },
-        { call: 'CFG788', lat: 28.1248, lon: -15.4300, hdg: 10, alt: 12000, spd: 450, air: 'CONDOR' },
-        { call: 'DLH510', lat: -23.5505, lon: -46.6333, hdg: 45, alt: 37000, spd: 890, air: 'LUFTHANSA' },
-        { call: 'DLH116', lat: 53.5511, lon: 9.9937, hdg: 195, alt: 22000, spd: 680, air: 'LUFTHANSA' },
-        { call: 'CFG221', lat: 39.4699, lon: -0.3763, hdg: 340, alt: 28000, spd: 740, air: 'CONDOR' }
-    ];
-
-    const renderFlightMarkers = (flights, isMock = false) => {
-        flightMarkers.forEach(m => m.marker.remove());
-        flightMarkers = [];
-        
-        flights.forEach(s => {
-            const callsign = (s.call || s[1]).trim();
-            const lon = s.lon || s[5];
-            const lat = s.lat || s[6];
-            const alt = s.alt || Math.round(s[7] * 3.28084);
-            const spd = s.spd || Math.round(s[9] * 3.6);
-            const hdg = s.hdg || s[10] || 0;
-            const airline = s.air || (callsign.startsWith('DLH') ? "LUFTHANSA" : "CONDOR");
-            const route = estimateRoute(callsign);
-
-            const el = document.createElement('div');
-            el.className = 'marker-flight';
-            el.innerHTML = airline === "CONDOR" ? planeSvg.replace('#ffb000', '#00ff88') : planeSvg;
-            
-            const marker = new maplibregl.Marker({ element: el, rotation: hdg, rotationAlignment: 'map', pitchAlignment: 'map' })
-                .setLngLat([lon, lat])
-                .setPopup(new maplibregl.Popup({ offset: 15, maxWidth: '280px' }).setHTML(`
-                    <div style="font-family:'Share Tech Mono',monospace; min-width:200px;">
-                        <h3 style="color:${airline === "CONDOR" ? '#00ff88' : '#ffb000'}; margin:0 0 8px; border-bottom:1px solid rgba(255,255,255,0.2); padding-bottom:5px;">
-                            <i class="fa-solid fa-plane-departure"></i> ${airline} ${isMock ? '<span style="font-size:0.6rem;opacity:0.5;">(SIM_RELAY)</span>' : ''}
-                        </h3>
-                        <div style="font-size:1.1rem; color:#fff; margin-bottom:8px;">FLIGHT: ${callsign}</div>
-                        <div style="background:rgba(255,255,255,0.05); padding:8px; border-radius:3px;">
-                            <div style="font-size:0.65rem; opacity:0.5; letter-spacing:1px;">ESTIMATED ROUTE</div>
-                            <div style="font-size:0.85rem; color:#0af; margin-bottom:10px;">${route}</div>
-                            <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
-                                <div><span style="opacity:0.4;font-size:10px;">ALT</span><br><strong>${alt} FT</strong></div>
-                                <div><span style="opacity:0.4;font-size:10px;">SPD</span><br><strong>${spd} KM/H</strong></div>
-                            </div>
-                        </div>
-                        <div style="font-size:0.6rem; opacity:0.3; margin-top:10px; text-align:right;">SOURCE: ${isMock ? 'INTELLIGENCE SIMULATION' : 'OPENSKY NETWORK'}</div>
-                    </div>
-                `));
-            
-            if (toggles.flights) marker.addTo(map);
-            flightMarkers.push({ marker, lon, lat, hdg, spd: (s.spd || s[9]) / 1000000 });
-        });
-    };
-
-    const fetchFlights = async () => {
-        if (modeConfig[currentMode] && modeConfig[currentMode].disablePolling.includes('flights')) return;
-        setStatus("SCANNING GLOBAL AIRSPACE (OPENSKY RELAY)...");
-        try {
-            const { data, status, minutesAgo } = await window.reliableFetch('https://opensky-network.org/api/states/all', 'flights', { timeout: 8000, retries: 1 });
-            
-            if (!data.states || data.states.length === 0) throw new Error("No data");
-
-            const fleetStates = data.states.filter(s => {
-                const callsign = (s[1] || "").trim().toUpperCase();
-                return callsign.startsWith('DLH') || callsign.startsWith('CFG');
-            }).slice(0, 50);
-
-            if (fleetStates.length > 0) {
-                renderFlightMarkers(fleetStates, false);
-                setStatus(`GLOBAL AIRSPACE SCANNED: ${fleetStates.length} TARGETS IDENTIFIED.`);
-                if (status === 'DEGRADED') {
-                    updateLayerStatus('flights', 'DEGRADED', `Stale by ${minutesAgo}m`);
-                } else {
-                    updateLayerStatus('flights', 'LIVE');
-                }
-            } else {
-                renderFlightMarkers(AviationSimulationRelay, true);
-                setStatus(`LIMITED DATA // INITIATING AVIATION SIMULATION RELAY.`);
-                updateLayerStatus('flights', 'LIMITED', 'Falling back to Simulation Relay');
-            }
-        } catch (error) {
-            console.warn("Aviation fetch error - switching to simulation relay.");
-            renderFlightMarkers(AviationSimulationRelay, true);
-            setStatus("AIRSPACE SCAN FAILED: RELAY TIMEOUT // SIMULATION ACTIVE.");
-            updateLayerStatus('flights', 'ERROR', error.message || 'API Timeout');
-        }
-    };
-
-    // ----------------------------------------------------
-    // MOCK: Marine AIS (Ghost Fleet)
-    // ----------------------------------------------------
-    const shipSvg = `<svg width="24" height="24" viewBox="0 0 24 24" fill="#00ffff" xmlns="http://www.w3.org/2000/svg">
-        <path d="M20 21L21 20L19.5 10L14.5 4L9.5 4L4.5 10L3 20L4 21L12 21L20 21Z" fill-opacity="0.3" stroke="currentColor" stroke-width="1.5"/>
-        <path d="M9 10L12 6L15 10H9Z" fill="currentColor"/>
-    </svg>`;
-
-    const fleetData = [
-        // Strait of Hormuz / Persian Gulf
-        { name: 'MT FRONT EMPIRE', type: 'tanker', cls: 'VLCC Oil Tanker', lat: 26.68, lon: 56.75, hdg: 120, spd: 0.00004 },
-        { name: 'AL KHAZNAH', type: 'tanker', cls: 'LNG Carrier', lat: 26.45, lon: 56.40, hdg: 300, spd: 0.00008 },
-        { name: 'USS NIMITZ', type: 'naval', cls: 'Carrier Strike Group', lat: 24.80, lon: 57.20, hdg: 60, spd: 0.00009 },
-        { name: 'IRGC FAST ATTACK SWARM', type: 'naval', cls: 'Asymmetric Fleet', lat: 26.10, lon: 56.90, hdg: 270, spd: 0.00015 },
-        // Suez / Red Sea
-        { name: 'MAERSK HALIFAX', type: 'cargo', cls: 'U-Large Container', lat: 27.54, lon: 34.25, hdg: 135, spd: 0.00006 },
-        { name: 'EVER GIVEN', type: 'cargo', cls: 'Container Ship', lat: 31.8, lon: 32.5, hdg: 180, spd: 0.00006 },
-        // Global Strategic
-        { name: 'MSC IRINA', type: 'cargo', cls: 'Container Giant', lat: 1.32, lon: 104.12, hdg: 315, spd: 0.00007 },
-        { name: 'HMS QUEEN ELIZABETH', type: 'naval', cls: 'Carrier Group', lat: 48.5, lon: -5.5, hdg: 220, spd: 0.00008 },
-        { name: 'SHANDONG', type: 'naval', cls: 'Carrier Group', lat: 22.1, lon: 114.5, hdg: 10, spd: 0.00006 }
-    ];
-
-    // Generate remaining ships up to 100 limit
-    for(let i=0; i<89; i++) {
-        const isHormuzArea = Math.random() > 0.5; // 50% density around Hormuz and Indian Ocean
-        let lat, lon;
-        if(isHormuzArea) {
-            lat = 10 + Math.random() * 20; 
-            lon = 45 + Math.random() * 30; 
-        } else {
-            lat = (Math.random() * 120) - 60;
-            lon = (Math.random() * 360) - 180;
-        }
-        
-        const typeRoll = Math.random();
-        let type = 'cargo';
-        let cls = 'Panamax Bulk Carrier';
-        if(typeRoll > 0.85) { type = 'naval'; cls = 'Guided Missile Destroyer'; }
-        else if(typeRoll > 0.60) { type = 'tanker'; cls = 'Crude Oil Tanker'; }
-
-        fleetData.push({
-            name: (type === 'naval' ? 'TASK_FORCE_' : 'MERCHANT_VESSEL_') + Math.floor(100 + Math.random()*9000),
-            type: type,
-            cls: cls,
-            lat: lat,
-            lon: lon,
-            hdg: Math.random() * 360,
-            spd: 0.00004 + (Math.random() * 0.00008)
-        });
-    }
-
-    const initGhostFleet = () => {
-        fleetData.forEach(ship => {
-            const el = document.createElement('div');
-            el.className = `marker-ship ship-${ship.type}`;
-            el.innerHTML = shipSvg.replace('currentColor', ship.type === 'naval' ? '#ff3333' : ship.type === 'tanker' ? '#ffa500' : '#00ffff');
-            
-            const marker = new maplibregl.Marker({ element: el, rotation: ship.hdg, rotationAlignment: 'map', pitchAlignment: 'map' })
-            .setLngLat([ship.lon, ship.lat])
-            .setPopup(new maplibregl.Popup({ offset: 15, maxWidth: '280px' }).setHTML(`
-                <div style="font-family:'Share Tech Mono',monospace; font-size:0.75rem;">
-                    <h3 style="color:${ship.type === 'naval' ? '#ff3333' : ship.type === 'tanker' ? '#ffa500' : '#00ffff'}; margin:0 0 6px; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:4px;">
-                        <i class="${ship.type === 'naval' ? 'fa-solid fa-person-military-rifle' : 'fa-solid fa-ship'}"></i> ${ship.name}
-                    </h3>
-                    <div style="background:rgba(255,255,255,0.03); padding:6px; border-radius:2px;">
-                        <div style="margin-bottom:4px;">TYPE: <span style="color:#fff;">${ship.cls.toUpperCase()}</span></div>
-                        <div style="display:flex; justify-content:space-between;">
-                            <span>HDG: ${ship.hdg}&deg;</span>
-                            <span>SPD: ${(ship.spd * 200000).toFixed(1)} KTS</span>
-                        </div>
-                    </div>
-                    <div style="margin-top:8px; font-size:0.6rem; opacity:0.5; text-align:right;">AIS TELEMETRY STATUS: <span style="color:#0f0;">ACTIVE</span></div>
-                </div>
-            `));
-            
-            ship.marker = marker;
-            marker.addTo(map);
-            if (!toggles.ships) marker.getElement().style.display = 'none';
-            shipMarkers.push(ship);
-        });
-
-        const animateShips = () => {
-            shipMarkers.forEach(s => {
-                s.lat += Math.cos(s.hdg * Math.PI / 180) * s.spd;
-                s.lon += Math.sin(s.hdg * Math.PI / 180) * s.spd;
-                if(toggles.ships) {
-                    s.marker.setLngLat([s.lon, s.lat]);
-                }
-            });
-            requestAnimationFrame(animateShips);
-        }
-        requestAnimationFrame(animateShips);
-    };
-
-    // ----------------------------------------------------
-    // API: Live Webcams
-    // ----------------------------------------------------
-    const webcamData = [
-        { name: 'NEW YORK — TIMES SQUARE', lat: 40.758, lon: -73.985, vid: 'mRe-514tG9A' },      // Stable EarthCam
-        { name: 'TOKYO — SHIBUYA', lat: 35.659, lon: 139.700, vid: 'W-unS6v0L2Y' },            // Shibuya Crossing Live
-        { name: 'LONDON — TOWER BRIDGE', lat: 51.505, lon: -0.075, vid: '2_z6xU-q4-M' },         // London Skyline
-        { name: 'PARIS — EIFFEL TOWER', lat: 48.858, lon: 2.294, vid: 'P6_I3nOog8E' },           // Paris Weather
-        { name: 'VENICE — RIALTO', lat: 45.438, lon: 12.336, vid: 'hpNYX_A9dLA' },              // Grand Canal Live
-        { name: 'SYDNEY — HARBOUR', lat: -33.856, lon: 151.215, vid: 'mRe-514tG9A' },           // Sydney Weather
-        { name: 'SINGAPORE — MARINA BAY', lat: 1.282, lon: 103.858, vid: 'hUCR5K4RSBY' },        // Singapore Skyline
-        { name: 'BERLIN — BRANDENBURG', lat: 52.516, lon: 13.377, vid: '8k7_bId8o_w' },         // Berlin Live
-        { name: 'ROME — TREVI FOUNTAIN', lat: 41.901, lon: 12.483, vid: '8k7_bId8o_w' },        // Rome Weather
-        { name: 'HONG KONG — VICTORIA', lat: 22.285, lon: 114.157, vid: 'dSMr75mJOlY' }         // HK Skyline
-    ];
-
-    const initWebcams = () => {
-        webcamData.forEach(cam => {
-            const el = document.createElement('div');
-            el.className = 'marker-webcam';
-            el.innerHTML = '<div class="marker-webcam-inner"><i class="fa-solid fa-video"></i></div>';
-
-            const popup = new maplibregl.Popup({ offset: 15, closeOnClick: false, maxWidth: '350px' });
-            
-            popup.on('open', () => {
-                popup.setHTML(`
-                    <div style="font-family:'Share Tech Mono',monospace; min-width:320px;">
-                        <h3 style="color:#0ff; margin:0 0 8px; border-bottom:1px solid rgba(0,255,255,0.2); padding-bottom:5px;">
-                            <i class="fa-solid fa-camera"></i> LIVE WEB-RECON: ${cam.name}
-                        </h3>
-                        <div style="position:relative; width:100%; padding-top:56.25%; background:#000; border:1px solid rgba(0,255,255,0.3); border-radius:2px; overflow:hidden;">
-                            <iframe
-                                style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;"
-                                src="https://www.youtube.com/embed/${cam.vid}?autoplay=1&mute=1&controls=0&rel=0&modestbranding=1"
-                                allow="autoplay; encrypted-media"
-                                allowfullscreen>
-                            </iframe>
-                            <div style="position:absolute;top:5px;left:5px;background:rgba(0,0,0,0.7);padding:2px 8px;border-radius:2px;font-size:9px;">
-                                <i class="fa-solid fa-circle" style="color:#f00; font-size:6px; vertical-align:middle; animation:blink 1.5s infinite;"></i> 
-                                <span style="margin-left:4px;">FEED: LIVE_RECON</span>
-                            </div>
-                        </div>
-                        <div style="margin-top:8px; display:flex; justify-content:space-between; font-size:0.65rem; opacity:0.6;">
-                            <span>COORD: ${cam.lat.toFixed(3)}N ${cam.lon.toFixed(3)}E</span>
-                            <span style="color:#0f0;">SIGNAL: ACQUIRED</span>
-                        </div>
-                    </div>
-                `);
-            });
-
-            const marker = new maplibregl.Marker({ element: el }).setLngLat([cam.lon, cam.lat]).setPopup(popup);
-            marker.addTo(map);
-            if (!toggles.webcams) marker.getElement().style.display = 'none';
-            webcamMarkers.push(marker);
-        });
-    };
-
-    // ----------------------------------------------------
-    // UI Toggles
-    // ----------------------------------------------------
-    
-    document.getElementById('toggle-all')?.addEventListener('change', (e) => {
-        const isChecked = e.target.checked;
-        const allToggles = ['toggle-borders','toggle-terminator','toggle-fires','toggle-weather','toggle-ships','toggle-flights','toggle-iss','toggle-starlink','toggle-earthquakes','toggle-webcams','toggle-sst','toggle-population','toggle-satellites','toggle-temperature','toggle-volcanoes','toggle-radiation','toggle-internet', 'toggle-power', 'toggle-intel', 'toggle-ai-atlas'];
-        allToggles.forEach(id => {
-            const cb = document.getElementById(id);
-            if(cb && cb.checked !== isChecked) {
-                cb.checked = isChecked;
-                cb.dispatchEvent(new Event('change')); 
-            }
-        });
-    });
-
-    document.getElementById('toggle-power')?.addEventListener('change', (e) => {
-        toggles.power = e.target.checked;
-        powerMarkers.forEach(m => toggles.power ? m.addTo(map) : m.remove());
-    });
-
-    document.getElementById('toggle-borders')?.addEventListener('change', (e) => {
-        toggles.borders = e.target.checked;
-        if (map.getLayer('country-borders')) {
-            map.setLayoutProperty('country-borders', 'visibility', toggles.borders ? 'visible' : 'none');
-            map.setLayoutProperty('country-labels', 'visibility', toggles.borders ? 'visible' : 'none');
-        }
-    });
-
-    document.getElementById('toggle-terminator')?.addEventListener('change', (e) => {
-        toggles.terminator = e.target.checked;
-        if (map.getLayer('terminator-layer')) {
-            map.setLayoutProperty('terminator-layer', 'visibility', toggles.terminator ? 'visible' : 'none');
-        }
-    });
-
-    document.getElementById('toggle-fires')?.addEventListener('change', (e) => {
-        toggles.fires = e.target.checked;
-        if (map.getLayer('nasa-fires')) {
-            map.setLayoutProperty('nasa-fires', 'visibility', toggles.fires ? 'visible' : 'none');
-        }
-    });
-
-    document.getElementById('toggle-iss')?.addEventListener('change', (e) => {
-        toggles.iss = e.target.checked;
-        if (issMarker) toggles.iss ? issMarker.addTo(map) : issMarker.remove();
-    });
-
-    document.getElementById('toggle-starlink')?.addEventListener('change', (e) => {
-        toggles.starlink = e.target.checked;
-        starlinkMarkers.forEach(s => {
-            if(s.marker.getElement()) s.marker.getElement().style.display = toggles.starlink ? 'block' : 'none';
-        });
-    });
-
-    document.getElementById('toggle-earthquakes')?.addEventListener('change', (e) => {
-        toggles.earthquakes = e.target.checked;
-        const visibility = toggles.earthquakes ? 'visible' : 'none';
-        if (map.getLayer('earthquakes-core')) {
-            map.setLayoutProperty('earthquakes-core', 'visibility', visibility);
-            map.setLayoutProperty('earthquakes-halo', 'visibility', visibility);
-        }
-    });
-
-    document.getElementById('toggle-flights')?.addEventListener('change', (e) => {
-        toggles.flights = e.target.checked;
-        flightMarkers.forEach(m => {
-            if (toggles.flights) m.marker.addTo(map);
-            else m.marker.remove();
-        });
-    });
-
-    document.getElementById('toggle-weather')?.addEventListener('change', (e) => {
-        toggles.weather = e.target.checked;
-        if (map.getLayer('weather-radar')) {
-            map.setLayoutProperty('weather-radar', 'visibility', toggles.weather ? 'visible' : 'none');
-        }
-    });
-
-    document.getElementById('toggle-ships')?.addEventListener('change', (e) => {
-        toggles.ships = e.target.checked;
-        shipMarkers.forEach(s => {
-            if(s.marker.getElement()) s.marker.getElement().style.display = toggles.ships ? 'block' : 'none';
-        });
-    });
-
-    document.getElementById('toggle-webcams')?.addEventListener('change', (e) => {
-        toggles.webcams = e.target.checked;
-        webcamMarkers.forEach(m => {
-            if(m.getElement()) m.getElement().style.display = toggles.webcams ? 'block' : 'none';
-        });
-    });
-
-    document.getElementById('toggle-temperature')?.addEventListener('change', (e) => {
-        toggles.temperature = e.target.checked;
-        if (map.getLayer('temperature')) map.setLayoutProperty('temperature', 'visibility', toggles.temperature ? 'visible' : 'none');
-        const legend = document.getElementById('layer-legend');
-        if (!legend) return;
-        legend.style.display = (toggles.sst || toggles.temperature) ? 'flex' : 'none';
-        if (toggles.temperature) legend.innerHTML = '<div class="legend-title">\u{1F321} SURFACE TEMP</div><div class="legend-bar" style="background:linear-gradient(to right,#0a0a6e,#2d6a9f,#00b4d8,#90e0ef,#00ff88,#ffe066,#ffb000,#ff6600,#cc0000)"></div><div class="legend-labels"><span>-50\u00b0C</span><span>0\u00b0C</span><span>+50\u00b0C</span></div>';
-        if (!toggles.temperature && !toggles.sst) { legend.innerHTML = ''; legend.style.display = 'none'; }
-    });
-
-    document.getElementById('toggle-volcanoes')?.addEventListener('change', (e) => {
-        toggles.volcanoes = e.target.checked;
-        volcanoMarkers.forEach(m => toggles.volcanoes ? m.addTo(map) : m.remove());
-    });
-
-    document.getElementById('toggle-radiation')?.addEventListener('change', (e) => {
-        toggles.radiation = e.target.checked;
-        radiationMarkers.forEach(m => toggles.radiation ? m.addTo(map) : m.remove());
-    });
-
-    document.getElementById('toggle-internet')?.addEventListener('change', (e) => {
-        toggles.internet = e.target.checked;
-        internetMarkers.forEach(m => toggles.internet ? m.addTo(map) : m.remove());
-    });
-
-    document.getElementById('toggle-sst')?.addEventListener('change', (e) => {
-        toggles.sst = e.target.checked;
-        if (map.getLayer('ocean-sst')) map.setLayoutProperty('ocean-sst', 'visibility', toggles.sst ? 'visible' : 'none');
-        const legend = document.getElementById('layer-legend');
-        if (!legend) return;
-        legend.style.display = (toggles.sst || toggles.temperature) ? 'flex' : 'none';
-        if (toggles.sst) legend.innerHTML = '<div class="legend-title">\u{1F30A} OCEAN TEMP</div><div class="legend-bar" style="background:linear-gradient(to right,#0a0a6e,#0077b6,#00b4d8,#90e0ef,#00ff88,#ffb000,#ff6600,#cc0000)"></div><div class="legend-labels"><span>&lt;0\u00b0C</span><span>15\u00b0C</span><span>&gt;30\u00b0C</span></div>';
-    });
-
-    document.getElementById('toggle-population')?.addEventListener('change', (e) => {
-        toggles.population = e.target.checked;
-        const vis = toggles.population ? 'visible' : 'none';
-        if (map.getLayer('population-density')) map.setLayoutProperty('population-density', 'visibility', vis);
-        if (map.getLayer('population-cities')) map.setLayoutProperty('population-cities', 'visibility', vis);
-    });
-
-    document.getElementById('toggle-satellites')?.addEventListener('change', (e) => {
-        toggles.satellites = e.target.checked;
-        satMarkers.forEach(s => {
-            if(s.el) s.el.style.display = toggles.satellites ? 'block' : 'none';
-        });
-    });
-
-    document.getElementById('toggle-intel')?.addEventListener('change', (e) => {
-        toggles.intel = e.target.checked;
-        const visibility = toggles.intel ? 'visible' : 'none';
-        if (map.getLayer('intel-clusters-halo')) {
-            map.setLayoutProperty('intel-clusters-halo', 'visibility', visibility);
-        }
-        
-        intelMarkers.forEach(item => {
-            if (toggles.intel) item.marker.addTo(map);
-            else item.marker.remove();
-        });
-    });
-
-    // ----------------------------------------------------
-    // API: INTELLIGENCE CORE (V5.5)
-    // ----------------------------------------------------
-    const initIntelligenceCore = () => {
-        // Setup Map Layers — hidden by default, visible on hover/pin
-        map.addSource('intel-clusters', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
-        
-        map.addLayer({
-            id: 'intel-clusters-halo',
-            type: 'circle',
-            source: 'intel-clusters',
-            layout: { visibility: 'none' }, // hidden until intel panel hovered/pinned
-            paint: {
-                'circle-radius': ['get', 'radius'],
-                'circle-color': ['get', 'color'],
-                'circle-opacity': 0.15,
-                'circle-stroke-width': 2,
-                'circle-stroke-color': ['get', 'color'],
-                'circle-stroke-opacity': 0.8
-            }
-        });
-
-        let hoverPopup = null;
-
-        // Hover handler for Intelligence Clusters
-        map.on('mouseenter', 'intel-clusters-halo', (e) => {
-            map.getCanvas().style.cursor = 'pointer';
-            const props = e.features[0].properties;
-            
-            // Assign a random indicator based on type
-            const indicators = {
-                "MILITARY": ["UHF TROOP COMM DETECTED", "UNREGISTERED ARMOR MOVEMENT", "AA-RADAR LOCK ESTABLISHED"],
-                "MARITIME": ["AIS TRANSPONDER SPOOFING", "ILLEGAL CARGO TRANSFER", "SUBMARINE ACOUSTIC SIGNATURE"],
-                "AEROSPACE": ["UNAUTHORIZED AIRSPACE INCURSION", "HYPERSONIC GLIDE VEHICLE DETECTED", "GPS JAMMING SIGNAL"],
-                "CYBER": ["SCADA SYSTEM INTRUSION", "DDoS ORIGIN NODE DETECTED", "ENCRYPTED BOTNET TRAFFIC"],
-                "ENVIRONMENTAL": ["NIGHTLIGHTS OUTAGE ANOMALY", "THERMAL BLOOM (EXPLOSION?)", "CO2 PLUME DETECTED"]
-            };
-            const possibleInd = indicators[props.typeLabel] || ["UNKNOWN CORRELATION ANOMALY"];
-            const selectedIndicator = possibleInd[Math.floor(Math.random() * possibleInd.length)];
-            
-            if(hoverPopup) hoverPopup.remove();
-            
-            hoverPopup = new maplibregl.Popup({ offset: 10, maxWidth: '300px', closeButton: false })
-                .setLngLat(e.lngLat)
-                .setHTML(`
-                    <div style="font-family:'Share Tech Mono',monospace; padding:4px;">
-                        <h3 style="color:${props.color}; margin:0 0 8px; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:4px; font-size:1rem;">
-                            <i class="fa-solid fa-satellite-dish"></i> ${props.typeLabel} ANOMALY
-                        </h3>
-                        <div style="font-size:0.85rem; color:#fff; line-height:1.4; border-left:2px solid ${props.color}; padding-left:8px; margin-bottom:8px;">${props.msg}</div>
-                        
-                        <div style="background:rgba(255,255,255,0.05); padding:6px; border:1px solid rgba(255,255,255,0.1); margin-top:8px;">
-                            <div style="font-size:0.6rem; opacity:0.5; letter-spacing:1px; margin-bottom:2px;">INDICATOR OBJECT:</div>
-                            <div style="font-size:0.75rem; color:var(--neon-blue);">${selectedIndicator}</div>
-                        </div>
-
-                        <div style="margin-top:10px; font-size:0.65rem; opacity:0.6; display:flex; justify-content:space-between; border-top:1px dashed rgba(255,255,255,0.2); padding-top:6px;">
-                            <span style="color:${props.severity === 'critical'? 'var(--neon-red)' : 'inherit'}">SEVERITY: ${props.severity.toUpperCase()}</span>
-                            <span>DETECTED BY AI_CORE</span>
-                        </div>
-                    </div>
-                `)
-                .addTo(map);
-        });
-
-        map.on('mouseleave', 'intel-clusters-halo', () => {
-            map.getCanvas().style.cursor = '';
-            if(hoverPopup) hoverPopup.remove();
-        });
-
-        // Click handler opens the Briefing Panel
-        map.on('click', 'intel-clusters-halo', (e) => {
-            const props = e.features[0].properties;
-            
-            window.openBriefing({
-                id: `INTEL-${props.typeLabel}-${Math.floor(Math.random()*1000)}`,
-                title: `${props.typeLabel} ANOMALY`,
-                severity: props.severity,
-                what: Object.values(props).includes("MILITARY") 
-                        ? "Unregistered armor movement and communications spike detected within sector." 
-                        : "AI_CORE detected high-probability abnormal activities correlating to systemic risks.",
-                why: `<strong>AI ASSESSMENT:</strong> ${props.msg}<br><br>Significant risk of escalation in the operational theater.`,
-                time: "Detected in the last 15 minutes",
-                source: "AI_CORE / GLOBAL SURVEILLANCE FEED",
-                location: e.lngLat.toArray(),
-                relatedLayers: [
-                    { label: 'View Logistics', layerId: 'ships' },
-                    { label: 'View Aerospace', layerId: 'flights' }
-                ]
-            });
-        });
-
-        const alertList = document.getElementById('alert-list');
-        const intelPanel = document.getElementById('intelligence-panel');
-        const MAX_ALERTS = 3; // rolling window
-        const activeAlerts = new Set();
-        let intelPinned = false; // true = circles locked visible by user click
-
-        // --- Intel circles visibility ---
-        const showIntelCircles = () => {
-            if (map.getLayer('intel-clusters-halo'))
-                map.setLayoutProperty('intel-clusters-halo', 'visibility', 'visible');
-        };
-        const hideIntelCircles = () => {
-            if (!intelPinned && !toggles.intel && map.getLayer('intel-clusters-halo'))
-                map.setLayoutProperty('intel-clusters-halo', 'visibility', 'none');
-        };
-
-        // Hover: show/hide circles with the panel
-        intelPanel?.addEventListener('mouseenter', showIntelCircles);
-        intelPanel?.addEventListener('mouseleave', hideIntelCircles);
-
-        // Click on panel header = toggle pin
-        intelPanel?.querySelector('h2')?.addEventListener('click', () => {
-            intelPinned = !intelPinned;
-            const h2 = intelPanel.querySelector('h2');
-            if (intelPinned) {
-                showIntelCircles();
-                if (h2) h2.style.borderBottom = '1px dashed rgba(0,255,0,.7)';
-            } else {
-                hideIntelCircles();
-                if (h2) h2.style.borderBottom = '';
-            }
-        });
-
-        const logAlert = (id, type, severity, msg, lat, lon) => {
-            if(activeAlerts.has(id)) return;
-            activeAlerts.add(id);
-            setTimeout(() => activeAlerts.delete(id), 300000); // clear after 5 min
-            
-            const timeStr = new Date().toLocaleTimeString();
-            const el = document.createElement('div');
-            el.className = `alert-item severity-${severity}`;
-            el.innerHTML = `
-                <h4><i class="fa-solid fa-triangle-exclamation"></i> ${type} ANOMALY</h4>
-                <p>${msg}</p>
-                <span class="timestamp">${timeStr} | SEC: [${lat.toFixed(2)}, ${lon.toFixed(2)}]</span>
-            `;
-            el.onclick = () => map.flyTo({ center: [lon, lat], zoom: 5, essential: true });
-            
-            alertList.prepend(el);
-            // Rolling window: keep only MAX_ALERTS newest
-            while (alertList.children.length > MAX_ALERTS) alertList.lastChild.remove();
-
-            // V8 Tactical Terminal Integration
-            if (toggles.surveillance) {
-                const tacticalType = severity === 'high' ? 'alert' : (severity === 'medium' ? 'warn' : 'sys');
-                addTacticalLog(`${type}_DETECTION: ${msg.toUpperCase()}`, tacticalType);
-            }
-        };
-
-        const scanPatterns = () => {
-            setStatus("UPLINKING TO GLOBAL STRATEGIC SURVEILLANCE FEED...");
-            let features = [];
-
-            // Clear previous high-severity visual markers
-            intelMarkers.forEach(m => m.marker.remove());
-            intelMarkers = [];
-            
-            // Authentic Geo-Political Hotspots
-            const crisesData = [
-                { id: "UKR-01", type: "MILITARY", label: "UKRAINE FRONTLINE", lat: 48.3794, lon: 31.1656, severity: "high", msg: "INTENSE ARTILLERY FIRE DETECTED. HEAVY ARMOR BUILDUP.", radius: 45, color: "#ff3300" },
-                { id: "IRN-01", type: "MILITARY", label: "IRAN NUCLEAR/ME", lat: 32.4279, lon: 53.6880, severity: "high", msg: "SUSPICIOUS CENTRIFUGE FACILITY ACTIVITY. DRONE LAUNCH DETECTED.", radius: 40, color: "#ff3300" },
-                { id: "TWN-01", type: "MARITIME", label: "TAIWAN STRAIT", lat: 23.6978, lon: 119.5, severity: "high", msg: "FLEET MOBILIZATION ESCALATION. AIRSPACE INCURSION DETECTED.", radius: 50, color: "#ff3300" },
-                { id: "RSI-01", type: "MARITIME", label: "RED SEA CORRIDOR", lat: 17.5, lon: 40.5, severity: "medium", msg: "HOUHI BALLISTIC MISSILE LAUNCH SUSPECTED OVER COMMERCIAL VESSEL.", radius: 35, color: "#ffb000" }
-            ];
-
-            // Add real earthquakes > 6.0 as massive environmental crises
-            globalEarthquakesArray.forEach(f => {
-                if(f.properties.mag >= 6.0) {
-                    const coords = f.geometry.coordinates;
-                    crisesData.push({
-                        id: `EQ-${f.properties.code}`, type: "ENVIRONMENTAL", label: "CRITICAL SEISMIC", lat: coords[1], lon: coords[0],
-                        severity: f.properties.tsunami === 1 ? "high" : "medium",
-                        msg: `MAGNITUDE ${f.properties.mag} DETECTED. IMMEDIATE RISK ASSESSMENT REQUIRED.`,
-                        radius: 60,
-                        color: f.properties.tsunami === 1 ? "#ff3300" : "#ffb000"
-                    });
-                }
-            });
-
-            crisesData.forEach(c => {
-                const { type, label, lat, lon, severity, msg, radius, color } = c;
-
-                logAlert(c.id, type, severity, msg, lat, lon);
-                features.push({ 
-                    type: 'Feature', 
-                    properties: { color, radius, severity, typeLabel: type, msg: msg }, 
-                    geometry: { type: 'Point', coordinates: [lon, lat] } 
-                });
-
-                if (severity === 'high' || severity === 'medium') {
-                    const pulseEl = document.createElement('div');
-                    pulseEl.className = severity === 'high' ? 'intel-pulse-red' : 'intel-pulse-red';
-                    if(severity !== 'high') pulseEl.style.border = '2px solid #ffb000';
-                    const marker = new maplibregl.Marker({ element: pulseEl }).setLngLat([lon, lat]);
-                    
-                    pulseEl.addEventListener('click', () => {
-                        window.openBriefing({
-                            id: c.id,
-                            title: `ALERT: ${label}`,
-                            severity: severity,
-                            what: msg,
-                            why: "AI_CORE identified this as a high-priority structural threat to global stability metrics.",
-                            time: "Detected during latest scan",
-                            source: "GLOBAL SURVEILLANCE FEED",
-                            location: [lon, lat],
-                            relatedLayers: [
-                                { label: 'View Logistics', layerId: 'ships' },
-                                { label: 'View Military Facilities', layerId: 'nuclear' },
-                                { label: 'Infrastructure', layerId: 'cables' }
-                            ]
-                        });
-                    });
-
-                    if (toggles.intel) marker.addTo(map);
-                    intelMarkers.push({ marker, severity });
-                }
-            });
-
-            map.getSource('intel-clusters').setData({ type: 'FeatureCollection', features });
-
-            const intro = alertList.querySelector('.alert-item i.fa-satellite-dish');
-            if(intro && intro.parentElement.parentElement) intro.parentElement.parentElement.remove();
-        };
-
-        // Scan every 5 minutes; initial scan after 3 seconds
-        setInterval(scanPatterns, 300000);
-        setTimeout(scanPatterns, 3000);
-    };
-
-    // ----------------------------------------------------
-    // NASA Black Marble 2016 — high-quality nighttime city lights
-    // VIIRS_Black_Marble_2016 is far more vivid than ENCC
-    // Shows cities, ship tracks, gas flares, fishing fleets
-    // ----------------------------------------------------
-    // ----------------------------------------------------
-    // NASA GHRSST MUR — Ocean Surface Temperature (daily, 1 km)
-    // Replaces Night Lights; shows SST with spectral color scale
-    // Blue = cold (<0°C), green = moderate, red = warm (>30°C)
-    // ----------------------------------------------------
-    const fetchOceanSST = () => {
-        try {
-            map.addSource('ocean-sst-src', {
-                type: 'raster',
-                tiles: [
-                    'https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/GHRSST_L4_MUR_Sea_Surface_Temperature/default/2024-08-15/GoogleMapsCompatible_Level7/{z}/{y}/{x}.png'
-                ],
-                tileSize: 256,
-                maxzoom: 7,
-                attribution: 'NASA JPL MUR SST / GIBS — Aug 2024'
-            });
-            map.addLayer({
-                id: 'ocean-sst',
-                type: 'raster',
-                source: 'ocean-sst-src',
-                layout: { visibility: 'none' },
-                paint: {
-                    'raster-opacity': 0.5,
-                    'raster-saturation': -0.35,
-                    'raster-contrast': -0.1
-                }
-            }, 'terminator-layer');
-        } catch(e) { console.warn('Ocean SST layer error:', e.message); }
-    };
-
-    // ----------------------------------------------------
-    // World Population Density — Heatmap + Clickable City Labels
-    // ----------------------------------------------------
-    const fetchPopulationDensity = () => {
-        // [lon, lat, population_millions, city_name, country]
-        const cities = [
-            [139.69,35.69,37.4,'Tokyo','Japan'],
-            [121.47,31.23,27.8,'Shanghai','China'],
-            [116.39,39.91,21.5,'Beijing','China'],
-            [88.37,22.57,20.1,'Kolkata','India'],
-            [72.88,19.08,20.7,'Mumbai','India'],
-            [-99.13,19.43,21.7,'Mexico City','Mexico'],
-            [-46.63,-23.55,22.4,'São Paulo','Brazil'],
-            [106.85,-6.21,34.5,'Jakarta','Indonesia'],
-            [28.95,41.01,15.3,'Istanbul','Turkey'],
-            [77.21,28.66,32.9,'Delhi','India'],
-            [126.98,37.57,9.7,'Seoul','South Korea'],
-            [100.52,13.75,17.6,'Bangkok','Thailand'],
-            [103.82,1.35,5.9,'Singapore','Singapore'],
-            [31.24,30.06,21.3,'Cairo','Egypt'],
-            [3.39,6.45,15.3,'Lagos','Nigeria'],
-            [37.97,-1.29,5.6,'Nairobi','Kenya'],
-            [101.69,3.16,8.2,'Kuala Lumpur','Malaysia'],
-            [120.98,14.59,14.4,'Manila','Philippines'],
-            [114.11,22.55,7.4,'Hong Kong','China SAR'],
-            [36.81,3.24,5.5,'Addis Ababa','Ethiopia'],
-            [-80.13,25.78,6.2,'Miami','USA'],
-            [-73.94,40.67,18.8,'New York','USA'],
-            [-87.63,41.88,9.6,'Chicago','USA'],
-            [-118.24,34.05,18.7,'Los Angeles','USA'],
-            [-122.33,37.78,7.7,'San Francisco','USA'],
-            [-79.38,43.65,6.8,'Toronto','Canada'],
-            [-43.18,-22.91,13.5,'Rio de Janeiro','Brazil'],
-            [-58.4,-34.6,15.3,'Buenos Aires','Argentina'],
-            [-77.04,38.89,6.4,'Washington D.C.','USA'],
-            [-66.86,10.49,6.7,'Caracas','Venezuela'],
-            [2.35,48.85,12.2,'Paris','France'],
-            [13.38,52.52,6.0,'Berlin','Germany'],
-            [-0.13,51.51,9.4,'London','United Kingdom'],
-            [4.34,50.85,2.1,'Brussels','Belgium'],
-            [23.72,37.98,3.8,'Athens','Greece'],
-            [12.48,41.89,4.3,'Rome','Italy'],
-            [2.17,41.39,5.3,'Barcelona','Spain'],
-            [28.05,53.9,2.0,'Minsk','Belarus'],
-            [37.61,55.75,12.5,'Moscow','Russia'],
-            [44.37,33.34,7.2,'Baghdad','Iraq'],
-            [51.43,35.69,16.0,'Tehran','Iran'],
-            [57.5,23.6,1.7,'Muscat','Oman'],
-            [67.09,24.86,16.1,'Karachi','Pakistan'],
-            [69.28,41.3,2.6,'Tashkent','Uzbekistan'],
-            [72.99,40.37,3.8,'Urumqi','China'],
-            [80.28,13.09,10.5,'Chennai','India'],
-            [85.32,27.72,1.5,'Kathmandu','Nepal'],
-            [87.63,43.79,4.0,'Ürümqi (W)','China'],
-            [90.41,23.81,21.0,'Dhaka','Bangladesh'],
-            [104.06,30.65,16.0,'Chengdu','China'],
-            [106.55,29.56,32.2,'Chongqing','China'],
-            [106.71,10.77,9.0,'Ho Chi Minh City','Vietnam'],
-            [108.94,34.27,13.0,'Xi\'an','China'],
-            [112.97,28.19,8.6,'Changsha','China'],
-            [113.26,23.13,13.5,'Guangzhou','China'],
-            [114.31,30.52,11.2,'Wuhan','China'],
-            [121.5,25.05,7.4,'Taipei','Taiwan'],
-            [123.45,41.8,8.1,'Shenyang','China'],
-            [125.35,43.88,4.4,'Changchun','China'],
-            [144.96,-37.81,5.0,'Melbourne','Australia'],
-            [151.21,-33.87,5.3,'Sydney','Australia'],
-            [172.63,-43.53,0.4,'Christchurch','New Zealand'],
-            [-70.67,-33.45,7.1,'Santiago','Chile'],
-            [-75.51,-8.12,1.1,'Lima','Peru'],
-            [-76.94,11.0,2.3,'Barranquilla','Colombia'],
-            [-79.88,-2.17,2.7,'Guayaquil','Ecuador'],
-            [-77.03,-12.04,10.9,'Lima Metro','Peru'],
-            [-57.68,-25.28,4.0,'Asunción','Paraguay'],
-            [-63.18,-17.78,2.3,'Santa Cruz','Bolivia'],
-            [-65.46,-24.79,0.7,'Salta','Argentina'],
-            [-47.93,-15.78,4.6,'Brasília','Brazil'],
-            [-43.18,-22.91,13.5,'Rio de Janeiro','Brazil'],
-            [-48.55,-27.61,1.1,'Florianópolis','Brazil']
-        ];
-
-        // Heatmap layer
-        map.addSource('population-heatmap', {
-            type: 'geojson',
-            data: {
-                type: 'FeatureCollection',
-                features: cities.map(c => ({
-                    type: 'Feature',
-                    properties: { weight: c[2], name: c[3], country: c[4], pop: c[2] },
-                    geometry: { type: 'Point', coordinates: [c[0], c[1]] }
-                }))
-            }
-        });
-        map.addLayer({
-            id: 'population-density',
-            type: 'heatmap',
-            source: 'population-heatmap',
-            layout: { visibility: 'none' },
-            paint: {
-                'heatmap-weight': ['interpolate', ['linear'], ['get', 'weight'], 0, 0, 40, 1],
-                'heatmap-intensity': ['interpolate', ['linear'], ['zoom'], 0, 1.5, 6, 3],
-                'heatmap-radius': ['interpolate', ['linear'], ['zoom'], 0, 25, 4, 60, 6, 120],
-                'heatmap-color': [
-                    'interpolate', ['linear'], ['heatmap-density'],
-                    0, 'rgba(0,0,0,0)',
-                    0.1, 'rgba(0,150,255,0.3)',
-                    0.3, 'rgba(0,255,150,0.5)',
-                    0.5, 'rgba(255,200,0,0.7)',
-                    0.8, 'rgba(255,80,0,0.85)',
-                    1.0, 'rgba(255,0,0,1.0)'
-                ],
-                'heatmap-opacity': 0.85
-            }
-        }, 'terminator-layer');
-
-        // Clickable circle layer on top — visible when zoomed in
-        map.addLayer({
-            id: 'population-cities',
-            type: 'circle',
-            source: 'population-heatmap',
-            layout: { visibility: 'none' },
-            minzoom: 2,
-            paint: {
-                'circle-radius': ['interpolate', ['linear'], ['zoom'],
-                    2, ['interpolate', ['linear'], ['get', 'pop'], 1, 3, 40, 9],
-                    6, ['interpolate', ['linear'], ['get', 'pop'], 1, 8, 40, 24]
-                ],
-                'circle-color': 'rgba(255,200,0,0)',
-                'circle-stroke-color': ['interpolate', ['linear'], ['get', 'pop'], 1, '#ffb00055', 40, '#ff4400cc'],
-                'circle-stroke-width': 1.5,
-                'circle-opacity': 0
-            }
-        });
-
-        // City popup on click
-        map.on('click', 'population-cities', (e) => {
-            const f = e.features[0];
-            const { name, country, pop } = f.properties;
-            const coords = f.geometry.coordinates.slice();
-            const popM = parseFloat(pop);
-            const tier = popM > 20 ? '🔴 MEGACITY' : popM > 10 ? '🟠 MAJOR METRO' : popM > 5 ? '🟡 MAJOR CITY' : '🟢 CITY';
-            new maplibregl.Popup({ maxWidth: '260px', closeButton: true })
-                .setLngLat(coords)
-                .setHTML(`
-                    <div style="font-family:'Share Tech Mono',monospace;">
-                    <h3 style="color:#ffb000;margin:0 0 6px;border-bottom:1px solid rgba(255,176,0,0.4);padding-bottom:4px;">
-                        &#127960; ${name}
-                    </h3>
-                    <div style="font-size:.72rem;margin-bottom:5px;opacity:.7;">${country}</div>
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:.75rem;">
-                        <div style="background:rgba(255,176,0,.08);padding:5px 8px;">
-                            <div style="opacity:.5;font-size:.6rem;">POPULATION</div>
-                            <div style="color:#ffb000;font-size:1.1rem;font-weight:bold;">${popM.toFixed(1)}M</div>
-                        </div>
-                        <div style="background:rgba(255,176,0,.08);padding:5px 8px;">
-                            <div style="opacity:.5;font-size:.6rem;">CLASS</div>
-                            <div style="font-size:.7rem;margin-top:2px;">${tier}</div>
-                        </div>
-                    </div>
-                    <div style="font-size:.6rem;opacity:.35;margin-top:6px;">Source: UN World Urbanization Prospects 2023</div>
-                    </div>`)
-                .addTo(map);
-        });
-        map.on('mouseenter', 'population-cities', () => { map.getCanvas().style.cursor = 'pointer'; });
-        map.on('mouseleave', 'population-cities', () => { map.getCanvas().style.cursor = ''; });
-    };
-
-
-    // ----------------------------------------------------
-    // Global Warming: MERRA-2 2m Air Temperature Monthly
-    // GIBS verified layer: MERRA2_2m_Air_Temperature_Monthly
-    // Max zoom: Level 6, available from 1980 to present
-    // Shows global heat — warm=orange, cold=blue/purple
-    // ----------------------------------------------------
-    const fetchTemperatureLayer = () => {
-        try {
-            map.addSource('temperature-src', {
-                type: 'raster',
-                tiles: [
-                    'https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MERRA2_2m_Air_Temperature_Monthly/default/2023-08-01/GoogleMapsCompatible_Level6/{z}/{y}/{x}.png'
-                ],
-                tileSize: 256,
-                maxzoom: 6,
-                attribution: 'NASA MERRA-2 / GIBS'
-            });
-            map.addLayer({
-                id: 'temperature',
-                type: 'raster',
-                source: 'temperature-src',
-                layout: { visibility: 'none' },
-                paint: { 'raster-opacity': 0.45, 'raster-saturation': -0.25 }
-            }, 'terminator-layer');
-        } catch(e) { console.warn('Temperature layer error:', e.message); }
-    };
-
-    // ----------------------------------------------------
-    // NEW: Satellite Debris + Orbital Tracker
-    // ----------------------------------------------------
-    const satMarkers = [];
-
-    const initSatelliteTracker = () => {
-        const satClasses = [
-            // GEO belt — Fixed at 35,786 km, equatorial ring (physically correct)
-            ...Array.from({ length: 42 }, (_, i) => ({
-                type: 'GEO', name: `GEO-${1000 + i}`,
-                lon: -180 + (i * 360/42) + (Math.random() - 0.5) * 3,
-                lat: (Math.random() - 0.5) * 2.5, // Nearly equatorial (±1.25°)
-                hdg: 90,
-                spd: 0, // Stationary relative to Earth
-                alt: '35,786 km',
-                color: '#00ffff'
-            })),
-            // MEO belt — GPS/Galileo, ~20,000 km, polar-ish
-            ...Array.from({ length: 80 }, (_, i) => ({
-                type: 'MEO', name: `GPS-${2000 + i}`,
-                lon: (Math.random() * 360) - 180,
-                lat: (Math.random() * 110) - 55,
-                hdg: 45 + (Math.random() * 90),
-                spd: 0.00015 + Math.random() * 0.00005,
-                alt: '20,200 km',
-                color: '#ffb000'
-            })),
-            // LEO — Debris & ISS-class, ~400-2000 km, all inclinations
-            ...Array.from({ length: 220 }, (_, i) => ({
-                type: 'LEO', name: `OBJ-${3000 + i}`,
-                lon: (Math.random() * 360) - 180,
-                lat: (Math.random() * 160) - 80,
-                hdg: Math.random() * 360,
-                spd: 0.0004 + Math.random() * 0.0002,
-                alt: `${Math.floor(400 + Math.random() * 1600)} km`,
-                color: 'rgba(255,255,255,0.7)'
-            }))
-        ];
-
-        satClasses.forEach(sat => {
-            const el = document.createElement('div');
-            el.style.cssText = `
-                width: 4px; height: 4px;
-                background: ${sat.color};
-                border-radius: 50%;
-                box-shadow: 0 0 4px ${sat.color};
-                position: absolute;
-                cursor: pointer;
-                transition: transform 0.1s;
-            `;
-            el.title = `${sat.name} [${sat.type}] — ALT: ${sat.alt}`;
-
-            const marker = new maplibregl.Marker({ element: el })
-                .setLngLat([sat.lon, sat.lat])
-                .setPopup(new maplibregl.Popup({ offset: 8, maxWidth:'260px' }).setHTML(`
-                    <div style="font-family:'Share Tech Mono',monospace;font-size:.72rem;">
-                    <h3 style="color:${sat.color};margin:0 0 6px;">
-                        <i class="fa-solid fa-satellite"></i> ${sat.name}
-                    </h3>
-                    <p style="margin:3px 0;">CLASS: <strong>${sat.type} ORBIT</strong></p>
-                    <p style="margin:3px 0;">ALTITUDE: ${sat.alt}</p>
-                    ${sat.type === 'GEO' ? '<p style="margin:6px 0 2px;opacity:.7;font-size:.65rem;">Part of the Geostationary Belt — 42 km-wide orbital ring at equator. All weather, TV and comms sats orbit here.</p>' : ''}
-                    <p style="margin:3px 0;">STATUS: <span style="color:#00ff00;">TRACKED</span></p>
-                    </div>
-                `))
-                .addTo(map);
-
-            el.style.display = 'none'; // Hidden until toggled
-            sat.el = el;
-            sat.marker = marker;
-            satMarkers.push(sat);
-        });
-
-        const animateSats = () => {
-            satMarkers.forEach(s => {
-                if (s.spd > 0) {
-                    s.lat += Math.cos(s.hdg * Math.PI / 180) * s.spd;
-                    s.lon += Math.sin(s.hdg * Math.PI / 180) * s.spd;
-                    if (s.lon > 180) s.lon -= 360;
-                    if (s.lon < -180) s.lon += 360;
-                    if (s.lat > 85 || s.lat < -85) s.hdg += 180;
-                }
-                // Always update position (visibility via display style)
-                s.marker.setLngLat([s.lon, s.lat]);
-            });
-            requestAnimationFrame(animateSats);
-        };
-        requestAnimationFrame(animateSats);
-        setStatus('ORBITAL SURVEILLANCE NETWORK ONLINE.');
-    };
-
-    setInterval(() => {
-        if(statusText.innerText.includes("UPDATED") || statusText.innerText.includes("LOADED") || statusText.innerText.includes("ESTABLISHED") || statusText.innerText.includes("SYNCHRONIZED") || statusText.innerText.includes("ONLINE")) {
-            setStatus("SYSTEM NOMINAL // RECEIVING UPLINK");
-        }
-    }, 5000);
-
-    // ============================================================
-    // 1. ACTIVE VOLCANOES (Smithsonian GVP curated list)
-    // ============================================================
-    const volcanoMarkers = [];
-    const LEVEL_COLORS = { 'ERUPTION': '#ff0000', 'WARNING': '#ff6600', 'WATCH': '#ffb000', 'ONGOING': '#ff4400', 'ADVISORY': '#ffe000' };
-    const VOLCANOES = [
-        { name: 'Reykjanes', lat: 63.87, lon: -22.56, country: 'Iceland', level: 'ERUPTION', desc: 'Active fissure eruption since 2023' },
-        { name: 'Ruang', lat: 2.30, lon: 125.37, country: 'Indonesia', level: 'ERUPTION', desc: 'Major explosive eruption 2024' },
-        { name: 'Etna', lat: 37.75, lon: 14.99, country: 'Italy', level: 'ONGOING', desc: 'Ongoing lava flows & paroxysms' },
-        { name: 'Stromboli', lat: 38.79, lon: 15.21, country: 'Italy', level: 'ONGOING', desc: 'Persistent strombolian activity' },
-        { name: 'Kilauea', lat: 19.42, lon: -155.29, country: 'USA (Hawaii)', level: 'WATCH', desc: 'Caldera lava lake activity' },
-        { name: 'Sakurajima', lat: 31.58, lon: 130.66, country: 'Japan', level: 'ONGOING', desc: 'Frequent explosions & ashfall' },
-        { name: 'Suwanosejima', lat: 29.64, lon: 129.72, country: 'Japan', level: 'ONGOING', desc: 'Continuous eruption column' },
-        { name: 'Popocatepetl', lat: 19.02, lon: -98.28, country: 'Mexico', level: 'WARNING', desc: 'Increased seismicity & gas flux' },
-        { name: 'Sabancaya', lat: -15.78, lon: -71.86, country: 'Peru', level: 'WARNING', desc: 'Continuous ash plumes' },
-        { name: 'Sangay', lat: -2.00, lon: -78.34, country: 'Ecuador', level: 'ONGOING', desc: 'Persistent lava flows & bombs' },
-        { name: 'Nyiragongo', lat: -1.52, lon: 29.25, country: 'DR Congo', level: 'WARNING', desc: 'Active lava lake; risk of flank eruption' },
-        { name: 'Piton de la Fournaise', lat: -21.23, lon: 55.71, country: 'Reunion Isl.', level: 'ONGOING', desc: 'Lava flows to coast' },
-        { name: 'Sinabung', lat: 3.17, lon: 98.39, country: 'Indonesia', level: 'WARNING', desc: 'Lava dome; pyroclastic flows possible' },
-        { name: 'Merapi', lat: -7.54, lon: 110.44, country: 'Indonesia', level: 'WARNING', desc: 'Dome growth; exclusion zone active' },
-        { name: 'Semeru', lat: -8.11, lon: 112.92, country: 'Indonesia', level: 'WARNING', desc: 'Continuous eruption & pyroclastic flows' },
-        { name: 'Ibu', lat: 1.49, lon: 127.63, country: 'Indonesia', level: 'ONGOING', desc: 'Explosion earthquakes daily' },
-        { name: 'Dukono', lat: 1.68, lon: 127.88, country: 'Indonesia', level: 'ONGOING', desc: 'Persistent ash-laden plumes' },
-        { name: 'Erebus', lat: -77.53, lon: 167.15, country: 'Antarctica', level: 'ONGOING', desc: 'Permanent lava lake in crater' },
-        { name: 'Shiveluch', lat: 56.65, lon: 161.36, country: 'Russia', level: 'WARNING', desc: 'Explosive activity & dome growth' },
-        { name: 'Bezymianny', lat: 55.98, lon: 160.59, country: 'Russia', level: 'WARNING', desc: 'Lava dome extrusion & ash' },
-        { name: 'Fuego', lat: 14.47, lon: -90.88, country: 'Guatemala', level: 'ONGOING', desc: 'Lava flows & ballistic projectiles' },
-        { name: 'Pacaya', lat: 14.38, lon: -90.60, country: 'Guatemala', level: 'ONGOING', desc: 'Strombolian activity' },
-        { name: 'Nevado del Ruiz', lat: 4.89, lon: -75.32, country: 'Colombia', level: 'WARNING', desc: 'Lahars possible; elevated seismicity' },
-        { name: 'Taal', lat: 14.00, lon: 120.99, country: 'Philippines', level: 'WARNING', desc: 'Elevated SO2 emissions' },
-        { name: 'Yasur', lat: -19.53, lon: 169.44, country: 'Vanuatu', level: 'ONGOING', desc: 'Continuous strombolian activity' },
-        { name: 'Kadovar', lat: -3.62, lon: 144.87, country: 'Papua New Guinea', level: 'ONGOING', desc: 'Steam & ash venting' },
-        { name: 'Krakatau', lat: -6.10, lon: 105.42, country: 'Indonesia', level: 'ADVISORY', desc: 'Periodic eruptions & sea disturbance' },
-        { name: 'Grimsvotn', lat: 64.42, lon: -17.33, country: 'Iceland', level: 'ADVISORY', desc: 'Subsurface activity increasing' },
-        { name: 'White Island', lat: -37.52, lon: 177.18, country: 'New Zealand', level: 'ADVISORY', desc: 'Ongoing hydrothermal activity' },
-        { name: 'Suwanose-jima', lat: 29.64, lon: 129.72, country: 'Japan', level: 'WATCH', desc: 'Sporadic strombolian activity' },
-    ];
-
-    const initVolcanoes = () => {
-        VOLCANOES.forEach(v => {
-            const c = LEVEL_COLORS[v.level] || '#ff4400';
-            const el = document.createElement('div');
-            el.style.cssText = `width:13px;height:13px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:radial-gradient(circle,${c},#200);border:1px solid ${c};box-shadow:0 0 8px 3px ${c}88;cursor:pointer;`;
-            const popup = new maplibregl.Popup({ offset: 14, maxWidth: '260px' }).setHTML(`
-                <div style="font-family:'Share Tech Mono',monospace;">
-                <h3 style="color:#ff5500;margin:0 0 6px;border-bottom:1px solid #ff5500;padding-bottom:4px;">🌋 ${v.name}</h3>
-                <p style="margin:2px 0;font-size:.8rem;">📍 ${v.country}</p>
-                <p style="margin:4px 0;font-size:.8rem;">Status: <strong style="color:${c};">${v.level}</strong></p>
-                <p style="margin:4px 0;font-size:.75rem;opacity:.85;">${v.desc}</p>
-                <p style="font-size:.62rem;opacity:.45;margin-top:6px;">Source: Smithsonian GVP</p></div>`);
-            const m = new maplibregl.Marker({ element: el }).setLngLat([v.lon, v.lat]).setPopup(popup);
-            volcanoMarkers.push(m);
-            if (toggles.volcanoes) m.addTo(map);
-        });
-        setStatus('VOLCANIC THREAT MATRIX LOADED.');
-    };
-
-    // ============================================================
-    // 2. RADIATION HOTSPOTS (Safecast + known nuclear sites)
-    // ============================================================
-    const radiationMarkers = [];
-    const RADIATION_SITES = [
-        { name: 'Chernobyl Exclusion Zone', lat: 51.39, lon: 30.09, uSv: 1.8, level: 'HIGH', desc: 'Nuclear disaster site 1986, Ukraine' },
-        { name: 'Fukushima Daiichi', lat: 37.42, lon: 141.03, uSv: 0.9, level: 'ELEVATED', desc: 'Nuclear disaster site 2011, Japan' },
-        { name: 'Zaporizhzhia NPP', lat: 47.51, lon: 34.58, uSv: 0.3, level: 'CAUTION', desc: 'Under military control since 2022' },
-        { name: 'Semipalatinsk Test Site', lat: 50.07, lon: 78.43, uSv: 0.5, level: 'ELEVATED', desc: 'Soviet nuclear test site, Kazakhstan (456 tests)' },
-        { name: 'Nevada Test Site', lat: 37.12, lon: -116.05, uSv: 0.38, level: 'MODERATE', desc: 'US nuclear test site (928 tests), Nevada' },
-        { name: 'Novaya Zemlya', lat: 73.5, lon: 54.9, uSv: 0.42, level: 'MODERATE', desc: 'Soviet Arctic nuclear test archipelago' },
-        { name: 'Bikini Atoll', lat: 11.50, lon: 165.50, uSv: 0.16, level: 'LOW', desc: 'US nuclear tests 1946-1958, Marshall Islands' },
-        { name: 'Hanford Site', lat: 46.65, lon: -119.65, uSv: 0.28, level: 'MODERATE', desc: 'Largest US nuclear waste site, Washington' },
-        { name: 'Los Alamos', lat: 35.88, lon: -106.29, uSv: 0.14, level: 'MONITORING', desc: 'National nuclear research lab, New Mexico' },
-        { name: 'Sellafield', lat: 54.42, lon: -3.50, uSv: 0.22, level: 'MONITORING', desc: 'Nuclear reprocessing plant, UK' },
-        { name: 'La Hague', lat: 49.68, lon: -1.88, uSv: 0.18, level: 'MONITORING', desc: 'Nuclear reprocessing plant, France' },
-        { name: 'Mayak Plant', lat: 55.71, lon: 60.85, uSv: 0.55, level: 'ELEVATED', desc: '1957 Kyshtym nuclear disaster site, Russia' },
-    ];
-    
-    const RAD_COLORS = { HIGH: '#ff0000', ELEVATED: '#ff6600', CAUTION: '#ffb000', MODERATE: '#ffe000', LOW: '#00ff88', MONITORING: '#00aaff' };
-
-    const initRadiationSites = () => {
-        RADIATION_SITES.forEach(r => {
-            const c = RAD_COLORS[r.level] || '#00ff88';
-            const el = document.createElement('div');
-            el.style.cssText = `width:14px;height:14px;border-radius:50%;background:radial-gradient(circle,${c}88,transparent);border:1px solid ${c};box-shadow:0 0 10px 4px ${c}55;cursor:pointer;animation:pulse-ring 2s infinite;`;
-            const popup = new maplibregl.Popup({ offset: 14, maxWidth: '270px' }).setHTML(`
-                <div style="font-family:'Share Tech Mono',monospace;">
-                <h3 style="color:${c};margin:0 0 6px;border-bottom:1px solid ${c}88;padding-bottom:4px;">☢ ${r.name}</h3>
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:.77rem;">
-                    <div style="background:rgba(255,100,0,.1);padding:4px 6px;border-radius:2px;">LEVEL: <strong style="color:${c};">${r.level}</strong></div>
-                    <div style="background:rgba(255,100,0,.1);padding:4px 6px;border-radius:2px;">μSv/h: <strong style="color:${c};">${r.uSv}</strong></div>
-                </div>
-                <p style="margin:6px 0 0;font-size:.73rem;opacity:.8;">${r.desc}</p>
-                <p style="font-size:.6rem;opacity:.4;margin-top:6px;">Source: Safecast / IAEA</p></div>`);
-            const m = new maplibregl.Marker({ element: el }).setLngLat([r.lon, r.lat]).setPopup(popup);
-            radiationMarkers.push(m);
-            if (toggles.radiation) m.addTo(map);
-        });
-        setStatus('RADIATION MONITORING NETWORK ACTIVE.');
-    };
-
-    // ============================================================
-    // 3. SOLAR STORM INDEX (NOAA SWPC — using reliable 3h Kp endpoint)
-    // ============================================================
-    const solarHud = document.getElementById('solar-hud');
-
-    const getSolarColor = (kp) => {
-        if (kp >= 8) return '#ff0000';
-        if (kp >= 6) return '#ff6600';
-        if (kp >= 4) return '#ffb000';
-        if (kp >= 2) return '#00ff88';
-        return '#00aaff';
-    };
-
-    const fetchSolarStorm = async () => {
-        try {
-            // Primary: NOAA planetary Kp 3h dataset (robust, always returns data)
-            const { data: kpRaw, status: kpStatus } = await window.reliableFetch('https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json', 'solar_kp', { timeout: 6000, retries: 1 });
-            // Format: [ ["time_tag","Kp","a","station_count"], [time, kp, a, n], ... ]
-            const lastRow = kpRaw[kpRaw.length - 1];
-            const kp = parseFloat(Array.isArray(lastRow) ? lastRow[1] : 0) || 0;
-
-            // Solar wind (optional, may return nulls when ACE satellite has data gaps)
-            let windSpeed = '--', bz = '--';
-            try {
-                const { data: windData } = await window.reliableFetch('https://services.swpc.noaa.gov/json/rtsw/rtsw_wind_1m.json', 'solar_wind', { timeout: 6000, retries: 1 });
-                // Find most recent row with valid data
-                const validWind = [...windData].reverse().find(w => w.speed != null && w.speed > 0);
-                if (validWind) {
-                    windSpeed = Math.round(validWind.speed);
-                    bz = validWind.bz_gsm != null ? validWind.bz_gsm.toFixed(1) : '--';
-                }
-            } catch(_) {}
-
-            const color = getSolarColor(kp);
-            const level = kp >= 8 ? 'EXTREME' : kp >= 7 ? 'SEVERE' : kp >= 6 ? 'STRONG' : kp >= 5 ? 'MODERATE' : kp >= 4 ? 'MINOR' : kp >= 2 ? 'QUIET' : 'CALM';
-
-            if (solarHud) {
-                solarHud.style.borderColor = color + '55';
-                solarHud.innerHTML = `
-                    <div class="solar-title">&#9728; SOLAR STORM INDEX</div>
-                    <div class="solar-grid">
-                        <div class="solar-cell">
-                            <span class="solar-val" style="color:${color};">${kp.toFixed(1)}</span>
-                            <span class="solar-lbl">Kp INDEX</span>
-                        </div>
-                        <div class="solar-cell">
-                            <span class="solar-val" style="color:#0ff;">${windSpeed}</span>
-                            <span class="solar-lbl">km/s WIND</span>
-                        </div>
-                        <div class="solar-cell">
-                            <span class="solar-val" style="color:${(parseFloat(bz)||0) < 0 ? '#ff6600' : '#00ff88'};">${bz}</span>
-                            <span class="solar-lbl">Bz nT</span>
-                        </div>
-                    </div>
-                    <div class="solar-level" style="color:${color};">${level} GEOMAGNETIC ACTIVITY</div>
-                    ${kp >= 5 ? '<div class="solar-alert">&#9888; AURORA ALERT &mdash; HIGH LATITUDES</div>' : ''}
-                `;
-            }
-            // Aurora oval at Kp >= 4
-            if (kp >= 4) {
-                const aurLat = 90 - (kp * 3.5);
-                if (!map.getSource('aurora-src')) {
-                    const ring = [];
-                    for (let i = 0; i <= 361; i++) ring.push([i - 180, aurLat]);
-                    map.addSource('aurora-src', { type: 'geojson', data: { type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: ring } } });
-                    map.addLayer({ id: 'aurora-ring', type: 'line', source: 'aurora-src', paint: { 'line-color': '#00ff88', 'line-width': 2, 'line-opacity': 0.6, 'line-dasharray': [4, 4] } });
-                }
-            }
-        } catch(e) {
-            if (solarHud) solarHud.innerHTML = '<div style="color:#555;font-size:.62rem;">&#9728; SOLAR: NOAA LINK TIMEOUT</div>';
-        }
-    };
-
-    // ============================================================
-    // 4. INTERNET OUTAGES (IODA — public API)
-    // ============================================================
-    const internetMarkers = [];
-    const COUNTRY_CAPITALS = {
-        'RU': [37.61, 55.75], 'CN': [116.39, 39.91], 'US': [-77.04, 38.89],
-        'UA': [30.52, 50.45], 'IR': [51.43, 35.69], 'KP': [125.74, 39.02],
-        'BY': [27.57, 53.90], 'MM': [96.15, 19.74], 'CU': [-82.37, 23.13],
-        'SY': [36.30, 33.51], 'ET': [38.73, 9.02], 'AF': [69.17, 34.52],
-        'IQ': [44.37, 33.34], 'SD': [32.53, 15.56], 'TR': [32.87, 39.93],
-        'PK': [73.04, 33.72], 'MX': [-99.13, 19.43], 'BD': [90.41, 23.81],
-        'NG': [7.48, 9.08], 'IN': [77.21, 28.66], 'BR': [-47.93, -15.78],
-        'ID': [106.82, -6.17], 'KZ': [71.45, 51.18], 'LY': [13.18, 32.90]
-    };
-
-    const fetchInternetOutages = async () => {
-        try {
-            const { data, status, minutesAgo } = await window.reliableFetch('https://api.ioda.inetintel.cc.gatech.edu/v2/alerts?from=-86400&format=json', 'internet', { timeout: 8000, retries: 1 });
-            internetMarkers.forEach(m => m.remove());
-            internetMarkers.length = 0;
-            const alerts = Array.isArray(data?.data?.alerts) ? data.data.alerts : [];
-            const seen = new Set();
-            alerts.slice(0, 20).forEach(alert => {
-                const code = alert?.entity?.code?.toUpperCase();
-                if (!code || seen.has(code) || !COUNTRY_CAPITALS[code]) return;
-                seen.add(code);
-                const [lon, lat] = COUNTRY_CAPITALS[code];
-                const severity = alert.level || 'low';
-                const color = severity === 'critical' ? '#ff0000' : severity === 'warning' ? '#ff6600' : '#ffb000';
-                const el = document.createElement('div');
-                el.style.cssText = `width:16px;height:16px;border-radius:50%;background:${color}44;border:1px solid ${color};box-shadow:0 0 10px 4px ${color}55;cursor:pointer;animation:pulse-ring 1.5s infinite;`;
-                const popup = new maplibregl.Popup({ offset: 14, maxWidth: '250px' }).setHTML(`
-                    <div style="font-family:'Share Tech Mono',monospace;">
-                    <h3 style="color:${color};margin:0 0 6px;border-bottom:1px solid ${color}55;padding-bottom:4px;">🌐 INTERNET DISRUPTION</h3>
-                    <p style="font-size:.8rem;margin:2px 0;">Country: <strong>${alert?.entity?.name || code}</strong></p>
-                    <p style="font-size:.8rem;margin:2px 0;">Severity: <strong style="color:${color};">${severity.toUpperCase()}</strong></p>
-                    <p style="font-size:.72rem;opacity:.7;margin-top:4px;">BGP routing anomaly detected</p>
-                    <p style="font-size:.6rem;opacity:.4;margin-top:4px;">Source: IODA / Georgia Tech</p></div>`);
-                const m = new maplibregl.Marker({ element: el }).setLngLat([lon, lat]).setPopup(popup);
-                internetMarkers.push(m);
-                if (toggles.internet) m.addTo(map);
-            });
-            if (seen.size === 0) {
-                setStatus('INTERNET: NO ANOMALIES DETECTED.');
-            } else {
-                setStatus(`INTERNET: ${seen.size} ROUTING ANOMALIES DETECTED.`);
-            }
-            if (status === 'DEGRADED') {
-                updateLayerStatus('internet', 'DEGRADED', `Stale by ${minutesAgo}m`);
-            } else {
-                updateLayerStatus('internet', 'LIVE');
-            }
-        } catch(e) {
-            setStatus('INTERNET FEED: SIGNAL LOST. FALLBACK FAILED.');
-            updateLayerStatus('internet', 'ERROR', 'Signal lost');
+            if (infoPanel) infoPanel.classList.remove('active');
+            document.body.classList.remove('mobile-panel-open');
+            activeMobilePanel = null;
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+            const scopeBtn = document.querySelector('.nav-btn[data-target="map"]');
+            if (scopeBtn) scopeBtn.classList.add('active');
         }
     };
 
@@ -2362,12 +567,12 @@ document.addEventListener("DOMContentLoaded", () => {
                 const countdown = getCountdown(l.net);
                 const pad = l.pad?.location?.name || '';
                 return `<div style="padding:4px 0;border-bottom:1px solid rgba(255,100,0,.15);font-size:.65rem;">
-                    <div style="color:#ff9955;">${icon} ${name.length > 28 ? name.slice(0,27)+'…' : name}</div>
+                    <div style="color:#ff9955;">${icon} ${escHtml(name.length > 28 ? name.slice(0,27)+'…' : name)}</div>
                     <div style="display:flex;justify-content:space-between;margin-top:2px;">
-                        <span style="opacity:.55;">${rocket}</span>
+                        <span style="opacity:.55;">${escHtml(rocket)}</span>
                         ${countdown}
                     </div>
-                    ${pad ? `<div style="opacity:.35;font-size:.58rem;">${pad}</div>` : ''}
+                    ${pad ? `<div style="opacity:.35;font-size:.58rem;">${escHtml(pad)}</div>` : ''}
                 </div>`;
             }).join('');
         } catch(e) {
@@ -2922,6 +1127,64 @@ document.addEventListener("DOMContentLoaded", () => {
             [6.02,47.33,'Bugey + Cruas NPP','France',4,2.6,'OPERATIONAL',''],
             [8.04,47.91,'Leibstadt NPP','Switzerland',1,1.2,'OPERATIONAL',''],
             [7.59,47.52,'Beznau NPP','Switzerland',2,0.73,'OPERATIONAL','Oldest operational NPP in world (1969).'],
+            [-112.86, 33.38, 'Palo Verde', 'USA', 3, 3.9, 'OPERATIONAL', 'Largest US power plant by net generation.'],
+            [-87.11, 34.70, 'Browns Ferry', 'USA', 3, 3.4, 'OPERATIONAL', 'Tennessee Valley Authority.'],
+            [-76.26, 39.75, 'Peach Bottom', 'USA', 2, 2.7, 'OPERATIONAL', 'Operated by Constellation.'],
+            [-76.69, 37.16, 'Surry NPP', 'USA', 2, 1.6, 'OPERATIONAL', 'Located in Virginia.'],
+            [-84.78, 35.60, 'Watts Bar', 'USA', 2, 2.3, 'OPERATIONAL', 'Last US reactor online before Vogtle 3&4.'],
+            [-120.85, 35.21, 'Diablo Canyon', 'USA', 2, 2.2, 'OPERATIONAL', 'Only remaining operational in California.'],
+            [-88.22, 41.24, 'Braidwood', 'USA', 2, 2.3, 'OPERATIONAL', 'Illinois.'],
+            [-88.66, 41.24, 'LaSalle', 'USA', 2, 2.2, 'OPERATIONAL', 'Illinois.'],
+            [-75.58, 40.23, 'Limerick', 'USA', 2, 2.3, 'OPERATIONAL', 'Pennsylvania.'],
+            [-72.16, 41.31, 'Millstone', 'USA', 2, 2.1, 'OPERATIONAL', 'Connecticut.'],
+            [-85.08, 35.22, 'Sequoyah', 'USA', 2, 2.3, 'OPERATIONAL', 'Tennessee.'],
+            [-76.14, 41.09, 'Susquehanna', 'USA', 2, 2.5, 'OPERATIONAL', 'Pennsylvania.'],
+            [-75.53, 39.46, 'Salem / Hope Creek', 'USA', 3, 3.4, 'OPERATIONAL', 'New Jersey.'],
+            [-81.76, 33.14, 'Vogtle NPP', 'USA', 4, 4.5, 'OPERATIONAL', 'Largest US NPP. Units 3 & 4 (AP1000) online.'],
+            [-81.59, 44.32, 'Bruce NPP', 'Canada', 8, 6.4, 'OPERATIONAL', 'Largest operating NPP globally. CANDU.'],
+            [-79.06, 43.81, 'Pickering', 'Canada', 6, 3.1, 'OPERATIONAL', 'Expected to operate until ~2026.'],
+            [-78.71, 43.87, 'Darlington', 'Canada', 4, 3.5, 'OPERATIONAL', 'Undergoing refurbishment.'],
+            [-66.86, 45.15, 'Point Lepreau', 'Canada', 1, 0.6, 'OPERATIONAL', 'New Brunswick.'],
+            [2.13, 51.01, 'Gravelines', 'France', 6, 5.4, 'OPERATIONAL', 'Largest NPP in France.'],
+            [0.63, 49.85, 'Paluel', 'France', 4, 5.3, 'OPERATIONAL', 'Second largest in France.'],
+            [6.21, 49.41, 'Cattenom', 'France', 4, 5.2, 'OPERATIONAL', 'Grand Est region.'],
+            [4.78, 50.09, 'Chooz', 'France', 2, 3.0, 'OPERATIONAL', 'N4 reactor design.'],
+            [1.21, 49.97, 'Penly', 'France', 2, 2.6, 'OPERATIONAL', 'Located in Normandy.'],
+            [3.51, 48.51, 'Nogent', 'France', 2, 2.6, 'OPERATIONAL', 'Grand Est.'],
+            [2.87, 47.51, 'Belleville', 'France', 2, 2.6, 'OPERATIONAL', 'Centre-Val de Loire.'],
+            [12.11, 57.25, 'Ringhals', 'Sweden', 2, 2.1, 'PARTIAL', 'Two reactors closed, two operational.'],
+            [18.16, 60.40, 'Forsmark', 'Sweden', 3, 3.1, 'OPERATIONAL', 'Produces 1/6 of Swedens electricity.'],
+            [16.66, 57.41, 'Oskarshamn', 'Sweden', 1, 1.4, 'PARTIAL', 'Only Unit 3 remains operational.'],
+            [21.44, 61.23, 'Olkiluoto', 'Finland', 3, 3.3, 'OPERATIONAL', 'Unit 3 is Europes most powerful.'],
+            [26.33, 60.36, 'Loviisa', 'Finland', 2, 1.0, 'OPERATIONAL', 'Soviet VVER design with Western control.'],
+            [0.56, 41.20, 'Ascó', 'Spain', 2, 2.0, 'OPERATIONAL', 'Catalonia.'],
+            [0.86, 40.95, 'Vandellòs', 'Spain', 1, 1.0, 'OPERATIONAL', 'Unit 1 closed, Unit 2 operational.'],
+            [-5.69, 39.80, 'Almaraz', 'Spain', 2, 2.0, 'OPERATIONAL', 'Expected to close 2027-2028.'],
+            [14.37, 49.18, 'Temelín', 'Czechia', 2, 2.1, 'OPERATIONAL', 'South Bohemian Region.'],
+            [16.14, 49.08, 'Dukovany', 'Czechia', 4, 2.0, 'OPERATIONAL', 'VVER-440 reactors.'],
+            [18.45, 48.26, 'Mochovce', 'Slovakia', 3, 1.4, 'OPERATIONAL', 'Unit 3 started 2023. Unit 4 building.'],
+            [17.68, 48.49, 'Bohunice', 'Slovakia', 2, 1.0, 'OPERATIONAL', 'V-2 plant operational.'],
+            [18.85, 46.57, 'Paks', 'Hungary', 4, 2.0, 'OPERATIONAL', 'Provides ~50% of Hungarys electricity.'],
+            [15.52, 45.93, 'Krško', 'Slovenia', 1, 0.7, 'OPERATIONAL', 'Co-owned with Croatia.'],
+            [4.25, 51.32, 'Doel', 'Belgium', 4, 2.9, 'OPERATIONAL', 'Scheduled for phase-out.'],
+            [5.28, 50.53, 'Tihange', 'Belgium', 3, 3.0, 'OPERATIONAL', 'Along the Meuse river.'],
+            [3.71, 51.43, 'Borssele', 'Netherlands', 1, 0.4, 'OPERATIONAL', 'Only commercial NPP in Netherlands.'],
+            [1.62, 52.21, 'Sizewell B', 'UK', 1, 1.2, 'OPERATIONAL', 'Only PWR in the UK.'],
+            [-2.40, 55.96, 'Torness', 'UK', 2, 1.2, 'OPERATIONAL', 'Advanced Gas-cooled Reactors (AGR).'],
+            [-1.18, 54.63, 'Hartlepool', 'UK', 2, 1.2, 'OPERATIONAL', 'AGR design.'],
+            [138.60, 37.42, 'Kashiwazaki-Kariwa', 'Japan', 7, 7.9, 'SUSPENDED', 'Offline since Fukushima.'],
+            [129.87, 33.51, 'Genkai', 'Japan', 2, 2.2, 'PARTIAL', 'Units 3 & 4 restarted.'],
+            [130.17, 31.83, 'Sendai', 'Japan', 2, 1.7, 'OPERATIONAL', 'First to restart post-Fukushima.'],
+            [132.31, 33.48, 'Ikata', 'Japan', 1, 0.8, 'PARTIAL', 'Unit 3 operational.'],
+            [136.72, 37.05, 'Shika', 'Japan', 2, 1.6, 'SUSPENDED', 'Offline since Fukushima.'],
+            [140.51, 43.03, 'Tomari', 'Japan', 3, 1.9, 'SUSPENDED', 'Hokkaido. Offline.'],
+            [120.25, 27.04, 'Ningde', 'China', 4, 4.0, 'OPERATIONAL', 'Fujian province.'],
+            [119.44, 25.44, 'Fuqing', 'China', 6, 6.0, 'OPERATIONAL', 'First Hualong One reactor.'],
+            [112.26, 21.71, 'Yangjiang', 'China', 6, 6.0, 'OPERATIONAL', 'Guangdong province.'],
+            [121.38, 36.71, 'Haiyang', 'China', 2, 2.0, 'OPERATIONAL', 'Shandong. Also provides district heating.'],
+            [112.98, 21.91, 'Taishan', 'China', 2, 3.3, 'OPERATIONAL', 'First EPR reactors to enter commercial op.'],
+            [128.32, 36.85, 'Hanul/Shin-Hanul', 'South Korea', 8, 8.7, 'OPERATIONAL', 'One of largest plant clusters.'],
+            [129.32, 35.32, 'Shin-Kori/Saeul', 'South Korea', 4, 4.2, 'OPERATIONAL', 'Includes APR1400 reactors.'],
         ];
 
         plants.forEach(([lon, lat, name, country, reactors, capacity, status, note]) => {
@@ -3146,179 +1409,14 @@ document.addEventListener("DOMContentLoaded", () => {
         },
         {
             name: 'Syria — Post-War Transition', lat: 35.5, lon: 38.5, severity: 'HIGH',
-            type: 'Civil War → Transition', since: 2011,
-            parties: [['HTS (Hayat Tahrir al-Sham)', 'Controls most of Syria since Dec 2024'], ['SDF (Kurds)', 'NE Syria'], ['SNA + Turkey', 'NW border zone']],
-            support: 'HTS: Turkey (ambivalent). SDF: US. IS: self-financed.',
-            casualties: '>580,000 dead since 2011 (SOHR)',
-            displaced: '~7M refugees abroad, 7M+ IDPs — largest refugee crisis before Ukraine',
-            status: 'TRANSITION — Assad fell Dec 8, 2024; HTS forming new govt',
-            note: 'Assad regime collapsed Dec 8, 2024 after rebel offensive. HTS (ex-al-Nusra) now governing.'
-        },
-        {
-            name: 'Lebanon — Post-War Fragility', lat: 33.6, lon: 35.5, severity: 'HIGH',
-            type: 'Post-Conflict / Political Crisis', since: 2023,
-            parties: [['🇮🇱 Israel', 'Military operation in S. Lebanon'], ['Hezbollah (Iran-backed)', 'Dominant armed group']],
-            support: 'Hezbollah: Iran (weapons, money). Israel: US military aid.',
-            casualties: '>4,000 dead in Lebanon-Israel fighting, 2024; ~1,200 Hezbollah fighters',
-            displaced: '~1.2M displaced in Lebanon during conflict',
-            status: 'CEASEFIRE (Nov 2024) — Fragile; Hezbollah rebuilt; IDF partial withdrawal',
-            note: 'Full escalation Jun-Nov 2024. Ceasefire Nov 27, 2024. Hezbollah severely weakened (Nasrallah killed).'
-        },
-        {
             name: 'Pakistan — TTP Insurgency', lat: 33.0, lon: 70.5, severity: 'MODERATE',
-            type: 'Islamist Insurgency', since: 2007,
-            parties: [['🇵🇰 Pakistan Army', 'Federal security forces'], ['TTP (Tehrik-i-Taliban)', 'Taliban-linked insurgency']],
-            support: 'Pakistan: Chinese military cooperation. TTP: Afghan Taliban support.',
-            casualties: '>80,000 dead (2007-present, all causes)',
-            displaced: '>500,000 IDPs in KPK/FATA regions',
-            status: 'ESCALATING — TTP attacks surged 70% since Afghan Taliban takeover 2021',
-            note: 'TTP attacks dramatically increased after Afghan Taliban return to power in 2021. Safe haven in Afghanistan.'
-        },
-        {
-            name: 'Nagorno-Karabakh Aftermath', lat: 40.2, lon: 46.8, severity: 'MODERATE',
-            type: 'Post-Conflict Ethnic Cleansing / Tensions', since: 1988,
-            parties: [['🇦🇿 Azerbaijan', 'Retook NKR Sept 2023'], ['🇦🇲 Armenia', 'Ceded NKR; border demarcation ongoing']],
-            support: 'Azerbaijan: Turkey, Israel (weapons). Armenia: Russia (failed to protect).',
-            casualties: '~7,000 dead in 2020 war; ~200 in Sept 2023 operation',
-            displaced: '~100,000 ethnic Armenians fled NKR in Sept 2023 (full depopulation)',
-            status: 'NO ACTIVE FIGHTING — Peace treaty negotiations ongoing 2025',
-            note: 'Azerbaijan\'s 24h "anti-terror" op (Sept 19-20, 2023) ended NKR existence. All Armenians fled.'
-        },
-        {
-            name: 'Libya — Rival Governments', lat: 29.0, lon: 18.0, severity: 'MODERATE',
-            type: 'Political-Military Standoff', since: 2011,
-            parties: [['GNU (Tripoli, West)', 'UN-recognised govt of Dbeibah'], ['LNA/GECOL (Benghazi, East)', 'Haftar\'s rival military command']],
-            support: 'GNU: Turkey troops. LNA: UAE, Russia/Wagner, Egypt.',
-            casualties: '>25,000 dead since 2011 civil war',
-            displaced: '>200,000 Libyans displaced; major migrant transit country',
-            status: 'FROZEN CONFLICT — Ceasefire Oct 2020; sporadic clashes; oil disputes',
-            note: 'Split since Gaddafi fall 2011. Two rival govts. Occasional fighting despite 2020 ceasefire.'
-        },
-        {
-            name: 'Iran — Israel Shadow War', lat: 32.5, lon: 43.5, severity: 'CRITICAL',
-            type: 'Regional Proxy / Direct Military Clash', since: 2019,
-            parties: [['🇮🇱 Israel (IDF/Mossad)', 'Strikes, assassinations, sabotage'], ['🇮🇷 Iran (IRGC)', 'Proxies + direct strikes']],
-            support: 'Israel: US backing, F-35s, Iron Dome. Iran: Hezbollah, Hamas, Houthis, PMF Iraq.',
-            casualties: 'Hundreds killed in strikes/assassinations; April 2024: first direct Iran-Israel exchange',
-            displaced: 'N/A — shadow war, no mass displacement',
-            status: 'ACTIVE — Ongoing covert war; direct missile/drone exchanges Apr+Oct 2024',
-            note: 'Iran fired 300+ drones/missiles at Israel Apr 13-14, 2024. Israel retaliated Oct 26, 2024. Proxy network: Hezbollah, Hamas, Houthis, Iraqi PMF.'
-        },
-        {
-            name: 'Iran — USA Tensions', lat: 26.0, lon: 56.0, severity: 'HIGH',
-            type: 'Geopolitical / Military Confrontation', since: 2019,
-            parties: [['🇺🇸 USA (CENTCOM)', 'Carrier groups, airbases, sanctions'], ['🇮🇷 Iran (IRGC)', 'Proxy attacks, nuclear program, tanker seizures']],
-            support: 'USA: Israel, Gulf states (KSA, UAE, Bahrain). Iran: Russia, China (limited).',
-            casualties: 'Jan 2024: Jordan base attack killed 3 US soldiers. 160+ US strikes on Iran proxies in Iraq/Syria.',
-            displaced: 'N/A',
-            status: 'HIGH TENSION — Naval confrontations, proxy strikes, nuclear standoff',
-            note: 'Maximum pressure campaign (Trump 2018/2025). IRGC-backed PMF targeting US forces 160+ times since Oct 2023. Strait of Hormuz flashpoint: 20% of global oil.'
-        },
-    ];
-    const CONFLICT_COLORS = { CRITICAL: '#ff0000', HIGH: '#ff6600', MODERATE: '#ffb000' };
-
-    const initConflictZones = () => {
-        const currentYear = new Date().getFullYear();
-        CONFLICTS.forEach(c => {
-            const col = CONFLICT_COLORS[c.severity] || '#ff6600';
-            const duration = currentYear - c.since;
-            const el = document.createElement('div');
-            el.style.cssText = 'width:22px;height:22px;cursor:pointer;';
-            el.innerHTML = `<svg width="22" height="22" viewBox="0 0 22 22" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="11" cy="11" r="9" fill="none" stroke="${col}" stroke-width="1.5" opacity="0.9"/>
-                <line x1="0" y1="11" x2="22" y2="11" stroke="${col}" stroke-width="1"/>
-                <line x1="11" y1="0" x2="11" y2="22" stroke="${col}" stroke-width="1"/>
-                <circle cx="11" cy="11" r="2.5" fill="${col}" opacity="0.8"/>
-            </svg>`;
-            el.style.filter = `drop-shadow(0 0 4px ${col})`;
-
-            const partiesHtml = c.parties.map(([name, role]) =>
-                `<div style="background:rgba(255,0,0,.05);padding:3px 7px;border-left:2px solid ${col}55;">
-                    <div style="color:${col};font-size:.72rem;">${name}</div>
-                    <div style="opacity:.55;font-size:.62rem;">${role}</div>
-                </div>`
-            ).join('');
-
-            const m = new maplibregl.Marker({ element: el, anchor: 'center' })
-                .setLngLat([c.lon, c.lat]);
-                
-            el.addEventListener('click', () => {
-                window.openBriefing({
-                    id: `CONF-${c.name.replace(/\s+/g,'-').toUpperCase()}`,
-                    title: c.name,
-                    severity: c.severity,
-                    what: `<strong>${c.type}</strong><br>${c.status}<br><br><strong>Combatants:</strong><br>${c.parties.map(p=>`• ${p[0]} (${p[1]})`).join('<br>')}`,
-                    why: `<strong>Casualties:</strong> ${c.casualties}<br><strong>Displaced:</strong> ${c.displaced}<br><br>${c.note}`,
-                    time: `Ongoing since ${c.since} (${duration} yrs)`,
-                    source: 'ACLED / SIPRI / UN OCHA',
-                    location: [c.lon, c.lat],
-                    relatedLayers: [
-                        { label: 'View Power Infrastructure', layerId: 'power' },
-                        { label: 'View Internet Cables', layerId: 'cables' }
-                    ]
-                });
-            });
-            conflictMarkers.push(m);
-            if (toggles.conflicts) m.addTo(map);
-        });
-        setStatus('CONFLICT ZONE DATABASE LOADED.');
-    };
-
-    document.getElementById('toggle-conflicts')?.addEventListener('change', (e) => {
-        toggles.conflicts = e.target.checked;
         conflictMarkers.forEach(m => toggles.conflicts ? m.addTo(map) : m.remove());
     });
 
     document.getElementById('toggle-regimes')?.addEventListener('change', (e) => {
-        toggles.regimes = e.target.checked;
-        console.log('[REGIME] toggled', toggles.regimes, '| markers:', regimeMarkers.length);
-        regimeMarkers.forEach(m => toggles.regimes ? m.addTo(map) : m.remove());
-    });
-
-    document.getElementById('toggle-blocs')?.addEventListener('change', (e) => {
-        toggles.blocs = e.target.checked;
-        console.log('[BLOCS] toggled', toggles.blocs, '| markers:', blocMarkers.length);
-        blocMarkers.forEach(m => toggles.blocs ? m.addTo(map) : m.remove());
-    });
-
-    document.getElementById('toggle-cables')?.addEventListener('change', (e) => {
-        toggles.cables = e.target.checked;
-        console.log('[CABLES] toggled', toggles.cables, '| layer:', map.getLayer('cables-layer'));
-        if (map.getLayer('cables-layer'))
-            map.setLayoutProperty('cables-layer', 'visibility', toggles.cables ? 'visible' : 'none');
-    });
-
-    document.getElementById('toggle-datacenters')?.addEventListener('change', (e) => {
-        toggles.datacenters = e.target.checked;
-        console.log('[DATACENTERS] toggled', toggles.datacenters, '| markers:', dcMarkers.length);
-        dcMarkers.forEach(m => toggles.datacenters ? m.addTo(map) : m.remove());
-    });
-
-    document.getElementById('toggle-nuclear')?.addEventListener('change', (e) => {
-        toggles.nuclear = e.target.checked;
-        console.log('[NUCLEAR] toggled', toggles.nuclear, '| markers:', nuclearMarkers.length);
-        nuclearMarkers.forEach(m => toggles.nuclear ? m.addTo(map) : m.remove());
-    });
-
     document.getElementById('toggle-nukes')?.addEventListener('change', (e) => {
         toggles.nukes = e.target.checked;
         console.log('[NUKES] toggled', toggles.nukes, '| markers:', nukeArsenalMarkers.length);
-        nukeArsenalMarkers.forEach(m => toggles.nukes ? m.addTo(map) : m.remove());
-    });
-
-    // Expose debug info on window for console inspection
-    window.__wv = { regimeMarkers, blocMarkers, dcMarkers, nuclearMarkers, nukeArsenalMarkers, toggles, map };
-
-});
-
-    // ============================================================
-    // AI INFRASTRUCTURE ATLAS
-    // ============================================================
-    let aiAtlasSourceAdded = false;
-    let aiAtlasMarkers = [];
-
-    const AI_ATLAS_CLUSTERS = [
-        {
             id: 'US-EAST',
             name: 'US-East Hub (N. Virginia)',
             lat: 38.99, lon: -77.49,
@@ -3463,3 +1561,17 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
+    const sidePanel = document.getElementById('sidebar');
+    const expandHint = document.querySelector('.sidebar-expand-hint');
+    if (expandHint && sidePanel) {
+        expandHint.addEventListener('click', () => {
+            if (sidePanel.style.maxHeight === '90vh') {
+                sidePanel.style.maxHeight = '42px';
+            } else {
+                sidePanel.style.maxHeight = '90vh';
+                sidePanel.style.overflowY = 'auto';
+            }
+        });
+    }
+
+});
