@@ -1,8 +1,8 @@
 // Global Worldview Configuration
 window.WorldviewConfig = {
-    VERSION: "9.0",
+    VERSION: "10.0",
     API_KEYS: {
-        AISSTREAM: "44b523190ef5f82f602075fd071ffe5f25ce966e" // USER_INSERT_API_KEY_HERE
+        AISSTREAM: "" // Get your free key at https://aisstream.io
     },
     METRICS: {
         FEEDS: 18,

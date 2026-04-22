@@ -5,14 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Worldview | Command Manual</title>
     <!-- Security Headers -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self' data: blob:; connect-src 'self';">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self' data: blob:; connect-src 'self';">
     <meta http-equiv="X-Content-Type-Options" content="nosniff">
     <meta name="referrer" content="no-referrer">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
+    <script src="./config.js"></script>
     <style>
         :root {
             --bg: #010408;
@@ -260,13 +260,14 @@
         <div class="nav-links">
             <a href="./index.html"><i class="fa-solid fa-satellite"></i> LAUNCH TERMINAL</a>
             <a href="./about.html"><i class="fa-solid fa-circle-info"></i> ABOUT SYSTEM</a>
+            <a href="./changelog.html"><i class="fa-solid fa-code-branch"></i> CHANGELOG</a>
             <a href="#" class="action-btn"><i class="fa-brands fa-github"></i> GITHUB</a>
         </div>
     </header>
 
     <main>
         <div class="manual-title">
-            <div class="classification">OPEN-ACCESS // WORLDVIEW V9.0</div>
+            <div class="classification">OPEN-ACCESS // WORLDVIEW <span class="dyn-version"></span></div>
             <h1>COMMAND MANUAL</h1>
             <p style="color: var(--text-muted); max-width: 600px; margin: 0 auto;">Comprehensive documentation for operating the Worldview Command Center interface, utilizing data layers, and interpreting AI anomaly assessments.</p>
         </div>
@@ -380,8 +381,12 @@
     </main>
 
     <footer style="text-align: center; padding: 40px; border-top: 1px solid var(--border); margin-top: 40px;">
-        <p style="font-family: 'Share Tech Mono', monospace; font-size: 0.8rem; color: var(--text-muted);">WORLDVIEW V9.0 // <a href="./index.html" style="color: var(--cyan); text-decoration: none;">INITIALIZE SYSTEM</a></p>
+        <p style="font-family: 'Share Tech Mono', monospace; font-size: 0.8rem; color: var(--text-muted);">WORLDVIEW <span class="dyn-version"></span> // <a href="./index.html" style="color: var(--cyan); text-decoration: none;">INITIALIZE SYSTEM</a> · <a href="./changelog.html" style="color: var(--cyan); text-decoration: none;">CHANGELOG</a></p>
     </footer>
+
+    <script>
+        document.querySelectorAll('.dyn-version').forEach(el => el.innerText = `V${window.WorldviewConfig.VERSION}`);
+    </script>
 
 </body>
 </html>

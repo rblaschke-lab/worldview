@@ -344,69 +344,23 @@ document.addEventListener("DOMContentLoaded", () => {
     // ----------------------------------------------------
     // LAYER STATUS MANAGEMENT (V8.7)
     // ----------------------------------------------------
-    const initLayerBadges = () => {
-        const metadata = window.WorldviewConfig.LAYER_METADATA;
-        if (!metadata) {
-            console.error("LAYER_METADATA not found in config!");
-            return;
-        }
-
-        let badgeCount = 0;
-        document.querySelectorAll('.control-item').forEach(item => {
-            const labelEle = item.querySelector('span'); // Find the first span which is the label
-            const toggle = item.querySelector('input[type="checkbox"]');
-            if (labelEle && toggle && toggle.id.startsWith('toggle-')) {
-                const id = toggle.id.replace('toggle-', '');
-                const meta = metadata[id];
-                if (meta) {
-                    item.dataset.layerId = id;
-                    labelEle.outerHTML = `
-                        <div class="layer-name-container" style="display:flex; flex-direction:column; gap:2px; padding-bottom:4px; flex:1;">
-                            <span style="font-size:0.72rem;">${meta.name}</span>
-                            <span class="layer-status-badge status-${meta.status.toLowerCase()}" id="badge-${id}" title="Source: ${meta.source} | Rel: ${meta.reliabilityScore}%">${meta.status}</span>
-                        </div>
-                    `;
-                    badgeCount++;
-                }
-            }
-        });
-        console.log(`Initialized ${badgeCount} layer badges.`);
-    };
-
+    // Non-destructive layer status tracking — preserves all sidebar HTML
     const updateLayerStatus = (id, status, infoMsg = "") => {
         const meta = window.WorldviewConfig.LAYER_METADATA?.[id];
         if (!meta) return;
-
         meta.status = status;
         meta.lastUpdate = Date.now();
-
-        const badgeEl = document.getElementById(`badge-${id}`);
-        if (badgeEl) {
-            badgeEl.className = `layer-status-badge status-${status.toLowerCase()}`;
-            badgeEl.innerHTML = status;
-            
-            let tooltipText = `Source: ${meta.source} | Rel: ${meta.reliabilityScore}%`;
-            if (infoMsg) {
-                tooltipText += ` | Info: ${infoMsg}`;
-                // Log to terminal if it's an error
-                if (status === 'ERROR') {
-                    if (typeof addTacticalLog === 'function') {
-                        addTacticalLog(`DATASTREAM_LOSS [${id.toUpperCase()}]: ${infoMsg}`, 'alert');
-                    } else {
-                        console.error(`[LAYER STATUS] ${id} failed: ${infoMsg}`);
-                    }
-                } else if (status === 'DEGRADED') {
-                    if (typeof addTacticalLog === 'function') {
-                        addTacticalLog(`DATASTREAM_DEGRADED [${id.toUpperCase()}]: ${infoMsg}`, 'warn');
-                    }
-                }
-            }
-            badgeEl.title = tooltipText;
-        }
+        if (status === 'ERROR') console.warn(`[LAYER] ${id}: ${infoMsg}`);
     };
-    
-    // Initialize UI badges immediately
-    initLayerBadges();
+
+    // Set dataset attributes for styling hooks — does NOT replace DOM
+    document.querySelectorAll('.control-item').forEach(item => {
+        const toggle = item.querySelector('input[type="checkbox"]');
+        if (toggle && toggle.id.startsWith('toggle-')) {
+            const id = toggle.id.replace('toggle-', '');
+            if (window.WorldviewConfig.LAYER_METADATA?.[id]) item.dataset.layerId = id;
+        }
+    });
 
     // ----------------------------------------------------
     const statusText = document.getElementById("status-text");
@@ -523,6 +477,188 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
+    // ============================================================
+    // MAP LOAD — Initialize All Data Layers
+    // ============================================================
+    map.on('load', async () => {
+        setStatus('MAP LOADED. INITIALIZING DATA STREAMS...');
+
+        // ── EARTHQUAKES (USGS — Live GeoJSON) ──────────────────
+        try {
+            const eqResult = await window.reliableFetch(
+                'https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/2.5_day.geojson', 'earthquakes'
+            );
+            map.addSource('earthquakes-src', { type: 'geojson', data: eqResult.data });
+            map.addLayer({
+                id: 'earthquakes-ring', type: 'circle', source: 'earthquakes-src',
+                layout: { visibility: 'none' },
+                paint: {
+                    'circle-radius': ['interpolate', ['linear'], ['get', 'mag'], 2.5, 10, 5, 22, 7, 40],
+                    'circle-color': 'transparent',
+                    'circle-stroke-color': ['interpolate', ['linear'], ['get', 'mag'], 2.5, '#ffb000', 5, '#ff6600', 7, '#ff0000'],
+                    'circle-stroke-width': 1.5, 'circle-stroke-opacity': 0.35
+                }
+            });
+            map.addLayer({
+                id: 'earthquakes-core', type: 'circle', source: 'earthquakes-src',
+                layout: { visibility: 'none' },
+                paint: {
+                    'circle-radius': ['interpolate', ['linear'], ['get', 'mag'], 2.5, 3, 5, 7, 7, 14],
+                    'circle-color': ['interpolate', ['linear'], ['get', 'mag'], 2.5, '#ffb000', 5, '#ff6600', 7, '#ff0000'],
+                    'circle-opacity': 0.85
+                }
+            });
+            map.on('click', 'earthquakes-core', (e) => {
+                const p = e.features[0].properties;
+                const t = new Date(p.time).toLocaleString();
+                new maplibregl.Popup({ maxWidth: '260px' }).setLngLat(e.lngLat).setHTML(
+                    `<div style="font-family:'Share Tech Mono',monospace;font-size:.72rem;"><h3 style="color:#ff6600;margin:0 0 5px;border-bottom:1px solid #ff660044;padding-bottom:4px;">🌍 SEISMIC EVENT</h3><div style="display:grid;grid-template-columns:1fr 1fr;gap:3px;margin-bottom:5px;"><div style="background:rgba(255,100,0,.08);padding:3px 6px;"><div style="opacity:.5;font-size:.6rem;">MAGNITUDE</div><div style="color:#ff6600;font-size:1.1rem;font-weight:bold;">${escHtml(p.mag)}</div></div><div style="background:rgba(255,100,0,.08);padding:3px 6px;"><div style="opacity:.5;font-size:.6rem;">DEPTH</div><div>${escHtml(Math.round(e.features[0].geometry.coordinates[2]))} km</div></div></div><div style="font-size:.65rem;opacity:.75;line-height:1.4;">${escHtml(p.place)}</div><div style="font-size:.55rem;opacity:.3;margin-top:5px;">${escHtml(t)} — USGS</div></div>`
+                ).addTo(map);
+            });
+            map.on('mouseenter', 'earthquakes-core', () => map.getCanvas().style.cursor = 'pointer');
+            map.on('mouseleave', 'earthquakes-core', () => map.getCanvas().style.cursor = '');
+            updateLayerStatus('earthquakes', 'LIVE', 'USGS Feed Online');
+        } catch(e) { console.warn('[EARTHQUAKES] Init failed:', e.message); }
+
+        // ── NASA FIRES (GIBS MODIS Thermal Anomalies) ──────────
+        try {
+            const dateStr = getYesterdaysDateForGIBS();
+            map.addSource('fires-src', {
+                type: 'raster',
+                tiles: [`https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_Thermal_Anomalies_Day/default/${dateStr}/GoogleMapsCompatible_Level7/{z}/{y}/{x}.png`],
+                tileSize: 256
+            });
+            map.addLayer({ id: 'fires-layer', type: 'raster', source: 'fires-src', layout: { visibility: 'none' }, paint: { 'raster-opacity': 0.75 } });
+            updateLayerStatus('fires', 'LIVE', 'NASA GIBS Online');
+        } catch(e) { console.warn('[FIRES] Init failed:', e.message); }
+
+        // ── SOLAR TERMINATOR (Calculated) ──────────────────────
+        try {
+            const calcTerminator = () => {
+                const now = new Date();
+                const start = new Date(now.getFullYear(), 0, 0);
+                const dayOfYear = Math.floor((now - start) / 86400000);
+                const decl = -23.44 * Math.cos((2 * Math.PI / 365) * (dayOfYear + 10));
+                const declRad = decl * Math.PI / 180;
+                const utcHours = now.getUTCHours() + now.getUTCMinutes() / 60;
+                const solarNoonLon = (12 - utcHours) * 15;
+                const nightCoords = [];
+                for (let lon = -180; lon <= 180; lon += 2) {
+                    const ha = (lon - solarNoonLon) * Math.PI / 180;
+                    const latRad = Math.atan(-Math.cos(ha) / Math.tan(declRad));
+                    nightCoords.push([lon, latRad * 180 / Math.PI]);
+                }
+                if (decl > 0) { nightCoords.push([180, -90], [-180, -90]); }
+                else { nightCoords.push([180, 90], [-180, 90]); }
+                nightCoords.push(nightCoords[0]);
+                return { type: 'Feature', geometry: { type: 'Polygon', coordinates: [nightCoords] } };
+            };
+            map.addSource('terminator-src', { type: 'geojson', data: calcTerminator() });
+            map.addLayer({ id: 'terminator-layer', type: 'fill', source: 'terminator-src', layout: { visibility: 'none' }, paint: { 'fill-color': '#000011', 'fill-opacity': 0.35 } });
+            terminatorInterval = setInterval(() => { const s = map.getSource('terminator-src'); if(s) s.setData(calcTerminator()); }, 300000);
+        } catch(e) { console.warn('[TERMINATOR] Init failed:', e.message); }
+
+        // ── SHIPS (AIS — placeholder source, populated by WebSocket if key set) ──
+        map.addSource('ships-src', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
+        map.addLayer({ id: 'ships-layer', type: 'circle', source: 'ships-src', layout: { visibility: 'none' }, paint: { 'circle-radius': 4, 'circle-color': '#00ffcc', 'circle-opacity': 0.8 } });
+
+        // ── FLIGHTS (OpenSky Network — European airspace) ──────
+        try {
+            map.addSource('flights-src', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
+            map.addLayer({ id: 'flights-layer', type: 'circle', source: 'flights-src', layout: { visibility: 'none' }, paint: { 'circle-radius': 3, 'circle-color': '#00d4ff', 'circle-opacity': 0.7 } });
+            const fetchFlights = async () => {
+                if (!toggles.flights) return;
+                try {
+                    const result = await window.reliableFetch('https://opensky-network.org/api/states/all?lamin=35&lamax=60&lomin=-10&lomax=30', 'flights', { timeout: 12000 });
+                    const states = result.data?.states || [];
+                    const features = states.slice(0, 200).filter(s => s[5] && s[6]).map(s => ({
+                        type: 'Feature', geometry: { type: 'Point', coordinates: [s[5], s[6]] },
+                        properties: { callsign: (s[1]||'').trim(), alt: Math.round(s[7]||0), vel: Math.round((s[9]||0)*3.6) }
+                    }));
+                    map.getSource('flights-src')?.setData({ type: 'FeatureCollection', features });
+                    updateLayerStatus('flights', 'LIVE', `${features.length} aircraft`);
+                } catch(err) { updateLayerStatus('flights', 'ERROR', 'Feed timeout'); }
+            };
+            setInterval(fetchFlights, 15000);
+        } catch(e) { console.warn('[FLIGHTS] Init failed:', e.message); }
+
+        // ── STARLINK (Simulated LEO Constellation — 500 sats) ──
+        try {
+            const slFeatures = [];
+            for (let i = 0; i < 500; i++) {
+                const ma = Math.random() * 360;
+                const raan = Math.random() * 360;
+                const lon = ((raan + ma) % 360) - 180;
+                const lat = 53 * Math.sin(ma * Math.PI / 180) * (0.7 + Math.random() * 0.3);
+                slFeatures.push({ type: 'Feature', geometry: { type: 'Point', coordinates: [lon, Math.max(-55, Math.min(55, lat))] } });
+            }
+            map.addSource('starlink-src', { type: 'geojson', data: { type: 'FeatureCollection', features: slFeatures } });
+            map.addLayer({ id: 'starlink-layer', type: 'circle', source: 'starlink-src', layout: { visibility: 'none' }, paint: { 'circle-radius': 1.5, 'circle-color': '#ffffff', 'circle-opacity': 0.45 } });
+        } catch(e) { console.warn('[STARLINK] Init failed:', e.message); }
+
+        // ── POPULATION DENSITY (NASA GIBS SEDAC) ──────────────
+        try {
+            map.addSource('population-src', {
+                type: 'raster',
+                tiles: ['https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/SEDAC_POP_2000-2005-01-01T00:00:00Z/default/2000-01-01/GoogleMapsCompatible_Level7/{z}/{y}/{x}.png'],
+                tileSize: 256
+            });
+            map.addLayer({ id: 'population-layer', type: 'raster', source: 'population-src', layout: { visibility: 'none' }, paint: { 'raster-opacity': 0.55 } });
+        } catch(e) { console.warn('[POPULATION] Init failed:', e.message); }
+
+        setStatus('ALL DATA STREAMS INITIALIZED. SYSTEM READY.');
+
+        // Kick off periodic data fetches
+        fetchNewsTicker();
+        setInterval(fetchNewsTicker, 300000);
+        fetchLaunches();
+        setInterval(fetchLaunches, 600000);
+        fetchSolarData();
+        setInterval(fetchSolarData, 600000);
+    });
+
+    // ============================================================
+    // NEWS TICKER — BBC World RSS via rss2json (free, CORS-enabled)
+    // ============================================================
+    const fetchNewsTicker = async () => {
+        try {
+            const result = await window.reliableFetch(
+                'https://api.rss2json.com/v1/api.json?rss_url=https://feeds.bbci.co.uk/news/world/rss.xml', 'newsticker'
+            );
+            const items = result.data?.items || [];
+            if (!items.length) return;
+            const tickerText = items.map(i => `⚡ ${i.title.toUpperCase()}`).join('    //    ');
+            document.querySelectorAll('.ticker-content').forEach(el => el.textContent = tickerText);
+        } catch(e) { console.warn('[TICKER] RSS fetch failed:', e.message); }
+    };
+
+    // ============================================================
+    // SOLAR STORM INDEX — NOAA SWPC Kp Index
+    // ============================================================
+    const fetchSolarData = async () => {
+        const hud = document.getElementById('solar-hud');
+        if (!hud) return;
+        try {
+            const result = await window.reliableFetch(
+                'https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json', 'solar'
+            );
+            const rows = result.data || [];
+            if (rows.length < 2) return;
+            const latest = rows[rows.length - 1];
+            const kp = parseFloat(latest[1]);
+            const kpColor = kp >= 7 ? '#ff0000' : kp >= 5 ? '#ff6600' : kp >= 4 ? '#ffb000' : '#00ff88';
+            const kpLabel = kp >= 7 ? 'EXTREME STORM' : kp >= 5 ? 'GEOMAGNETIC STORM' : kp >= 4 ? 'UNSETTLED' : 'QUIET';
+            hud.innerHTML = `
+                <div class="solar-title">☀ SOLAR STORM INDEX</div>
+                <div class="solar-grid">
+                    <div class="solar-cell"><div class="solar-val" style="color:${kpColor}">${kp.toFixed(1)}</div><div class="solar-lbl">Kp INDEX</div></div>
+                    <div class="solar-cell"><div class="solar-val" style="color:${kpColor}">${kpLabel.split(' ')[0]}</div><div class="solar-lbl">STATUS</div></div>
+                    <div class="solar-cell"><div class="solar-val" style="color:#aaa">${escHtml(latest[0]?.split(' ')[1]?.slice(0,5) || '--')}</div><div class="solar-lbl">UTC TIME</div></div>
+                </div>
+                <div class="solar-level" style="color:${kpColor}">${kpLabel}</div>
+            `;
+        } catch(e) { hud.innerHTML = '<div class="solar-title">☀ SOLAR STORM INDEX</div><div class="solar-loading">NOAA SWPC OFFLINE</div>'; }
+    };
 
     // ============================================================
     // ROCKET LAUNCH TRACKER (Launch Library 2 — free, CORS-enabled)
@@ -1667,8 +1803,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const trackISS = async () => {
             try {
-                const res = await window.reliableFetch('https://api.wheretheiss.at/v1/satellites/25544', 'iss_telemetry');
-                const data = await res.json();
+                const result = await window.reliableFetch('https://api.wheretheiss.at/v1/satellites/25544', 'iss_telemetry');
+                const data = result.data;
                 issMarker.setLngLat([data.longitude, data.latitude]);
                 if (toggles.iss && !issMarker._map) issMarker.addTo(map);
             } catch(e) {}
@@ -1732,6 +1868,140 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         if (map.getLayer('temp-layer')) {
             map.setLayoutProperty('temp-layer', 'visibility', toggles.temperature ? 'visible' : 'none');
+        }
+    });
+
+    // ── POPULATION DENSITY TOGGLE ─────────────────────────
+    document.getElementById('toggle-population')?.addEventListener('change', (e) => {
+        toggles.population = e.target.checked;
+        if (map.getLayer('population-layer'))
+            map.setLayoutProperty('population-layer', 'visibility', toggles.population ? 'visible' : 'none');
+    });
+
+    // ── VOLCANOES (Smithsonian GVP — curated dataset) ─────
+    const volcanoMarkers = [];
+    const initVolcanoes = () => {
+        const volcanoes = [
+            [14.43,40.82,'Vesuvius','Italy','1281m','Last erupted 1944. Threatens 3M+ people in Naples.'],
+            [15.21,37.73,'Mount Etna','Italy','3357m','Europe\'s most active. Erupts almost continuously.'],
+            [14.96,38.79,'Stromboli','Italy','924m','Active for 2,000+ years.'],
+            [-17.83,28.57,'Cumbre Vieja','Spain','2426m','2021 eruption destroyed 3,000 buildings.'],
+            [-155.29,19.41,'Kilauea','USA (Hawaii)','1247m','One of most active. 2018 eruption destroyed 700 homes.'],
+            [-122.20,46.20,'Mount St. Helens','USA','2549m','1980 eruption killed 57. VEI-5.'],
+            [-121.76,46.85,'Mount Rainier','USA','4392m','Most dangerous in Cascades. Lahars threaten Tacoma.'],
+            [29.24,-1.51,'Nyiragongo','DR Congo','3470m','Lava lake. 2021 eruption killed 32.'],
+            [110.44,-7.54,'Mount Merapi','Indonesia','2930m','Most active in Indonesia. 2010 killed 353.'],
+            [105.42,-6.10,'Krakatoa (Anak)','Indonesia','813m','2018 tsunami from flank collapse.'],
+            [120.35,15.13,'Mount Pinatubo','Philippines','1486m','1991 VEI-6. Cooled Earth 0.5C.'],
+            [130.66,31.59,'Sakurajima','Japan','1117m','Most active in Japan. Erupts hundreds of times/year.'],
+            [-19.02,63.63,'Eyjafjallajokull','Iceland','1651m','2010 eruption shut down European airspace.'],
+            [-17.32,64.63,'Katla','Iceland','1512m','Overdue for major eruption.'],
+            [174.06,-39.28,'Mount Ruapehu','New Zealand','2797m','1953 lahar killed 151.'],
+            [-78.44,-0.68,'Cotopaxi','Ecuador','5897m','One of highest active volcanoes.'],
+            [-90.88,14.47,'Fuego','Guatemala','3763m','2018 eruption killed 431.'],
+            [40.52,7.35,'Erta Ale','Ethiopia','613m','Persistent lava lake in Afar Depression.'],
+            [-75.37,2.93,'Nevado del Ruiz','Colombia','5321m','1985 eruption killed 23,000 (Armero).'],
+            [127.17,37.75,'Baekdu/Changbai','China/N.Korea','2744m','946 AD Millennium Eruption VEI-7.'],
+            [168.12,-16.25,'Yasur','Vanuatu','361m','Continuously erupting for 800+ years.'],
+        ];
+        volcanoes.forEach(([lon, lat, name, country, elev, note]) => {
+            const el = document.createElement('div');
+            el.style.cssText = 'width:14px;height:14px;cursor:pointer;';
+            el.innerHTML = '<svg width="14" height="14" viewBox="0 0 14 14"><polygon points="7,1 13,13 1,13" fill="rgba(255,100,0,0.25)" stroke="#ff6600" stroke-width="1.2"/><circle cx="7" cy="5" r="1.5" fill="#ff4400" opacity="0.9"/></svg>';
+            el.style.filter = 'drop-shadow(0 0 4px #ff6600)';
+            const popup = new maplibregl.Popup({ offset: 8, maxWidth: '260px' }).setHTML(
+                '<div style="font-family:\'Share Tech Mono\',monospace;font-size:.72rem;">' +
+                '<h3 style="color:#ff6600;margin:0 0 5px;border-bottom:1px solid #ff660044;padding-bottom:3px;">🌋 ' + escHtml(name) + '</h3>' +
+                '<div style="display:grid;grid-template-columns:1fr 1fr;gap:3px;margin-bottom:5px;">' +
+                '<div style="background:rgba(255,100,0,.08);padding:3px 6px;"><div style="opacity:.5;font-size:.6rem;">COUNTRY</div><div style="font-size:.65rem;">' + escHtml(country) + '</div></div>' +
+                '<div style="background:rgba(255,100,0,.08);padding:3px 6px;"><div style="opacity:.5;font-size:.6rem;">ELEVATION</div><div style="color:#ff6600;">' + escHtml(elev) + '</div></div>' +
+                '</div>' +
+                '<div style="font-size:.65rem;opacity:.75;line-height:1.4;">' + escHtml(note) + '</div>' +
+                '<div style="font-size:.55rem;opacity:.3;margin-top:5px;">Source: Smithsonian GVP 2024</div>' +
+                '<a href="https://en.wikipedia.org/wiki/' + encodeURIComponent(name.replace(/\s+/g,'_')) + '" target="_blank" rel="noopener" style="display:block;margin-top:6px;font-size:.6rem;color:#00d4ff;text-decoration:none;letter-spacing:1px;border-top:1px solid rgba(0,212,255,.15);padding-top:4px;">📚 Learn more on Wikipedia ↗</a></div>');
+            const m = new maplibregl.Marker({ element: el, anchor: 'center' }).setLngLat([lon, lat]).setPopup(popup);
+            volcanoMarkers.push(m);
+        });
+    };
+
+    document.getElementById('toggle-volcanoes')?.addEventListener('change', (e) => {
+        toggles.volcanoes = e.target.checked;
+        if (toggles.volcanoes && volcanoMarkers.length === 0) initVolcanoes();
+        volcanoMarkers.forEach(m => toggles.volcanoes ? m.addTo(map) : m.remove());
+    });
+
+    // ── RADIATION SITES (Nuclear Accidents) ───────────────
+    const radiationMarkers = [];
+    const initRadiation = () => {
+        const sites = [
+            [30.10,51.39,'Chernobyl','Ukraine','1986','RBMK-1000 meltdown. 350,000 evacuated. 30km Exclusion Zone.','CRITICAL'],
+            [141.03,37.42,'Fukushima Daiichi','Japan','2011','3 reactor meltdowns after tsunami. 154,000 evacuated.','CRITICAL'],
+            [-76.72,40.17,'Three Mile Island','USA','1979','Partial meltdown Unit 2. Led to major US nuclear reforms.','HIGH'],
+            [30.07,46.59,'Kyshtym/Mayak','Russia','1957','3rd worst nuclear disaster (INES-6). Plutonium explosion.','HIGH'],
+            [-1.19,54.42,'Windscale (Sellafield)','UK','1957','Graphite fire. Europe\'s most contaminated site.','MODERATE'],
+            [140.71,41.18,'Tokaimura','Japan','1999','Criticality accident. 2 workers died from radiation.','MODERATE'],
+            [26.97,65.01,'Semipalatinsk','Kazakhstan','1949-89','456 nuclear tests. 1.5M people exposed.','CRITICAL'],
+            [-116.05,37.07,'Nevada Test Site','USA','1951-92','928 nuclear tests. Downwinders exposed.','HIGH'],
+            [166.35,11.58,'Bikini Atoll','Marshall Islands','1946-58','67 US nuclear tests. Still uninhabitable.','CRITICAL'],
+            [-149.00,-21.10,'Moruroa Atoll','French Polynesia','1966-96','193 French nuclear tests.','HIGH'],
+        ];
+        const sevColors = { CRITICAL: '#ff0000', HIGH: '#ff6600', MODERATE: '#ffb000' };
+        sites.forEach(([lon, lat, name, country, year, note, severity]) => {
+            const c = sevColors[severity] || '#ff6600';
+            const el = document.createElement('div');
+            el.style.cssText = 'width:16px;height:16px;cursor:pointer;';
+            el.innerHTML = '<svg width="16" height="16" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="' + c + '15" stroke="' + c + '" stroke-width="1.5"/><text x="8" y="12" text-anchor="middle" font-size="10" fill="' + c + '">☢</text></svg>';
+            el.style.filter = 'drop-shadow(0 0 5px ' + c + ')';
+            const popup = new maplibregl.Popup({ offset: 8, maxWidth: '280px' }).setHTML(
+                '<div style="font-family:\'Share Tech Mono\',monospace;font-size:.72rem;">' +
+                '<h3 style="color:' + c + ';margin:0 0 5px;border-bottom:1px solid ' + c + '44;padding-bottom:3px;">☢ ' + escHtml(name) + '</h3>' +
+                '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:3px;margin-bottom:5px;">' +
+                '<div style="background:' + c + '11;padding:3px;text-align:center;"><div style="opacity:.5;font-size:.55rem;">COUNTRY</div><div style="font-size:.6rem;">' + escHtml(country) + '</div></div>' +
+                '<div style="background:' + c + '11;padding:3px;text-align:center;"><div style="opacity:.5;font-size:.55rem;">YEAR</div><div style="color:' + c + ';">' + escHtml(year) + '</div></div>' +
+                '<div style="background:' + c + '11;padding:3px;text-align:center;"><div style="opacity:.5;font-size:.55rem;">SEVERITY</div><div style="color:' + c + ';font-size:.6rem;">' + severity + '</div></div>' +
+                '</div>' +
+                '<div style="font-size:.65rem;opacity:.75;line-height:1.4;">' + escHtml(note) + '</div>' +
+                '<div style="font-size:.55rem;opacity:.3;margin-top:5px;">Source: INES / IAEA / Safecast 2024</div>' +
+                '<a href="https://en.wikipedia.org/wiki/' + encodeURIComponent(name.replace(/\s+/g,'_')) + '" target="_blank" rel="noopener" style="display:block;margin-top:6px;font-size:.6rem;color:#00d4ff;text-decoration:none;letter-spacing:1px;border-top:1px solid rgba(0,212,255,.15);padding-top:4px;">📚 Learn more on Wikipedia ↗</a></div>');
+            const m = new maplibregl.Marker({ element: el, anchor: 'center' }).setLngLat([lon, lat]).setPopup(popup);
+            radiationMarkers.push(m);
+        });
+    };
+
+    document.getElementById('toggle-radiation')?.addEventListener('change', (e) => {
+        toggles.radiation = e.target.checked;
+        if (toggles.radiation && radiationMarkers.length === 0) initRadiation();
+        radiationMarkers.forEach(m => toggles.radiation ? m.addTo(map) : m.remove());
+    });
+
+    // ── NUCLEAR ARSENAL TOGGLE (nukes) ────────────────────
+    document.getElementById('toggle-nukes')?.addEventListener('change', (e) => {
+        toggles.nukes = e.target.checked;
+        if (toggles.nukes && nukeArsenalMarkers.length === 0 && nuclearMarkers.length === 0) initNuclearLayer();
+        nukeArsenalMarkers.forEach(m => toggles.nukes ? m.addTo(map) : m.remove());
+    });
+
+    // ── SYSTEM OVERRIDE (toggle-all) ──────────────────────
+    document.getElementById('toggle-all')?.addEventListener('change', (e) => {
+        const isOn = e.target.checked;
+        const allToggles = document.querySelectorAll('.control-item input[type="checkbox"]');
+        allToggles.forEach(cb => {
+            if (cb.id === 'toggle-all' || cb.id === 'toggle-ticker') return;
+            if (cb.checked !== isOn) {
+                cb.checked = isOn;
+                cb.dispatchEvent(new Event('change'));
+            }
+        });
+        setStatus(isOn ? 'SYSTEM OVERRIDE: ALL LAYERS ACTIVATED' : 'SYSTEM OVERRIDE: ALL LAYERS DEACTIVATED');
+    });
+
+    // ── NEWS BAND TOGGLE (toggle-ticker) ──────────────────
+    document.getElementById('toggle-ticker')?.addEventListener('change', (e) => {
+        const isOn = e.target.checked;
+        if (isOn) {
+            document.body.classList.remove('no-ticker');
+        } else {
+            document.body.classList.add('no-ticker');
         }
     });
 
@@ -1900,5 +2170,315 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
     }
+
+    // ============================================================
+    // WELCOME OVERLAY (First Visit Experience)
+    // ============================================================
+    const welcomeOverlay = document.getElementById('welcome-overlay');
+    const dismissWelcome = (startTourId) => {
+        if (!welcomeOverlay) return;
+        const dontShow = document.getElementById('welcome-dont-show')?.checked;
+        if (dontShow) localStorage.setItem('worldview_welcomed', '1');
+        welcomeOverlay.classList.add('hidden');
+        if (startTourId) {
+            setTimeout(() => startTour(startTourId), 600);
+        }
+    };
+
+    if (welcomeOverlay) {
+        if (localStorage.getItem('worldview_welcomed') === '1') {
+            welcomeOverlay.classList.add('hidden');
+        }
+        document.getElementById('welcome-explore')?.addEventListener('click', () => dismissWelcome(null));
+        document.getElementById('welcome-tour')?.addEventListener('click', () => {
+            const tourId = document.getElementById('welcome-tour')?.dataset.tour || 'ringoffire';
+            dismissWelcome(tourId);
+        });
+    }
+
+    // ============================================================
+    // GUIDED TOUR ENGINE
+    // ============================================================
+    const TOURS = {
+        ringoffire: {
+            name: 'Ring of Fire',
+            steps: [
+                {
+                    center: [140, 35], zoom: 4, title: '\ud83c\udf0b MOUNT FUJI \u2014 JAPAN',
+                    text: 'Japan sits on the Pacific Ring of Fire \u2014 a 40,000km horseshoe of seismic and volcanic activity. Mount Fuji (3,776m) last erupted in 1707 and is monitored 24/7. Japan experiences ~1,500 earthquakes per year.',
+                    layers: ['earthquakes', 'volcanoes']
+                },
+                {
+                    center: [110, -7.5], zoom: 5, title: '\ud83c\udf0b KRAKATOA & MERAPI \u2014 INDONESIA',
+                    text: 'Indonesia has 130+ active volcanoes \u2014 the most of any country. Krakatoa\'s 1883 eruption was heard 5,000km away and caused a global temperature drop. The child volcano, Anak Krakatau, triggered a tsunami in 2018.',
+                    layers: ['earthquakes', 'volcanoes']
+                },
+                {
+                    center: [-122, 46.2], zoom: 5, title: '\ud83c\udf0b CASCADES RANGE \u2014 USA',
+                    text: 'The Cascade Range stretches from BC to California. Mount St. Helens\' 1980 eruption killed 57 and was the deadliest in US history. Mount Rainier is considered the most dangerous due to lahar risk threatening 3M+ residents near Tacoma and Seattle.',
+                    layers: ['earthquakes', 'volcanoes']
+                },
+                {
+                    center: [-78, -1], zoom: 4, title: '\ud83c\udf0b ANDES VOLCANOES \u2014 SOUTH AMERICA',
+                    text: 'The Andes chain hosts Earth\'s highest active volcanoes. Cotopaxi (5,897m) in Ecuador is one of the world\'s most dangerous. Nevado del Ruiz in Colombia killed 23,000 people in 1985 when lahars buried the town of Armero.',
+                    layers: ['earthquakes', 'volcanoes']
+                },
+                {
+                    center: [-20, 64], zoom: 5, title: '\ud83c\udf0b ICELAND \u2014 MID-ATLANTIC RIDGE',
+                    text: 'Iceland sits directly on the Mid-Atlantic Ridge where the Eurasian and North American tectonic plates pull apart. Eyjafjallaj\u00f6kull\'s 2010 eruption shut down European airspace for 6 days, stranding 10 million travelers. The island has 30+ active volcanic systems.',
+                    layers: ['earthquakes', 'volcanoes']
+                },
+                {
+                    center: [155, 0], zoom: 2, title: '\ud83c\udf0d THE COMPLETE RING OF FIRE',
+                    text: 'The Pacific Ring of Fire accounts for 75% of all volcanic eruptions and 90% of all earthquakes worldwide. It stretches 40,000km from New Zealand, through Japan, across Alaska, and down the Americas. Over 450 volcanoes line this arc, making it the most geologically active zone on Earth.',
+                    layers: ['earthquakes', 'volcanoes']
+                }
+            ]
+        },
+        nuclear: {
+            name: 'Nuclear Legacy',
+            steps: [
+                {
+                    center: [30.1, 51.4], zoom: 5, title: '\u2622\ufe0f CHERNOBYL \u2014 UKRAINE, 1986',
+                    text: 'On April 26, 1986, Reactor 4 of the Chernobyl Nuclear Power Plant suffered a catastrophic meltdown and explosion. It released 400 times more radiation than the Hiroshima bomb. 350,000 people were permanently evacuated. The 30km Exclusion Zone remains uninhabitable. Click the ☢️ markers to see each site\'s full details.',
+                    layers: ['radiation']
+                },
+                {
+                    center: [141.03, 37.42], zoom: 5, title: '\u2622\ufe0f FUKUSHIMA DAIICHI \u2014 JAPAN, 2011',
+                    text: 'On March 11, 2011, a magnitude 9.1 earthquake triggered a 14-meter tsunami that overwhelmed Fukushima\'s sea walls. Three reactors suffered full meltdowns. 154,000 residents were evacuated. In 2023, Japan began the controversial release of treated radioactive water into the Pacific Ocean \u2014 a process that will continue for 30+ years.',
+                    layers: ['radiation']
+                },
+                {
+                    center: [-76.7, 40.2], zoom: 5, title: '\u2622\ufe0f THREE MILE ISLAND \u2014 USA, 1979',
+                    text: 'The partial meltdown of TMI-2 near Harrisburg, Pennsylvania was the worst nuclear accident in US history. Though no deaths resulted, it fundamentally changed nuclear regulation worldwide. No new US reactor was approved for 34 years. In 2024, Microsoft announced a deal to restart TMI-1 to power AI data centers.',
+                    layers: ['radiation']
+                },
+                {
+                    center: [70, 50], zoom: 4, title: '\u2622\ufe0f SEMIPALATINSK \u2014 KAZAKHSTAN, 1949\u20131989',
+                    text: 'The Soviet "Polygon" hosted 456 nuclear weapon tests over 40 years \u2014 including 116 atmospheric detonations. 1.5 million people in surrounding villages were exposed to fallout without their knowledge. Cancer rates remain 50% above national baseline. The site was closed in 1991 after Kazakh independence.',
+                    layers: ['radiation']
+                },
+                {
+                    center: [166.35, 11.6], zoom: 5, title: '\u2622\ufe0f BIKINI ATOLL \u2014 MARSHALL ISLANDS, 1946\u20131958',
+                    text: 'The US conducted 67 nuclear tests at Bikini, including Castle Bravo (1954) \u2014 a 15-megaton blast 1,000 times more powerful than Hiroshima. The 167 Bikini islanders were relocated "temporarily" and have never returned. Radiation levels remain too high for habitation 70+ years later. The crater is visible from space.',
+                    layers: ['radiation']
+                }
+            ]
+        },
+        cables: {
+            name: 'Digital Silk Road',
+            steps: [
+                {
+                    center: [-5, 50], zoom: 4, title: '\ud83c\udf10 CORNWALL \u2014 CABLE LANDING HUB',
+                    text: '95% of intercontinental data travels through undersea fiber-optic cables \u2014 NOT satellites. Cornwall, England is one of the world\'s most important cable landing points. Cables connecting to the US, Europe, and Africa converge here. A single cable can carry 250 terabits per second.',
+                    layers: ['cables']
+                },
+                {
+                    center: [32, 30], zoom: 4, title: '\ud83c\udf10 SUEZ CANAL & RED SEA \u2014 CHOKEPOINT',
+                    text: 'Over a dozen submarine cables pass through the Red Sea and Suez corridor, carrying internet traffic between Europe and Asia. In 2024, Houthi attacks damaged 3 cables, disrupting 25% of traffic for months. This narrow passage is one of the most vulnerable points in global internet infrastructure.',
+                    layers: ['cables']
+                },
+                {
+                    center: [103.8, 1.3], zoom: 4, title: '\ud83c\udf10 SINGAPORE \u2014 ASIA\'S DIGITAL CROSSROADS',
+                    text: 'Singapore is the largest submarine cable hub in Asia, where cables from Europe, Australia, Japan, and the Americas converge. It houses over 70 data centers. If Singapore\'s cable connections were severed, half of Southeast Asia\'s internet would go dark.',
+                    layers: ['cables']
+                },
+                {
+                    center: [-40, 30], zoom: 3, title: '\ud83c\udf10 TRANSATLANTIC CABLES \u2014 THE BACKBONE',
+                    text: 'The first transatlantic telegraph cable was laid in 1858. Today, over 15 fiber-optic cables connect North America to Europe across the Atlantic seabed. Google, Meta, Microsoft, and Amazon have invested billions in private cables. A single modern cable can handle the entire internet traffic of a medium-sized country.',
+                    layers: ['cables']
+                },
+                {
+                    center: [60, 20], zoom: 2, title: '\ud83c\udf0d THE GLOBAL CABLE NETWORK',
+                    text: 'There are over 550 active submarine cables spanning 1.4 million kilometers across the ocean floor. They are just 3cm thick but carry $10 trillion in financial transactions daily. Cable damage from ship anchors, earthquakes, and even shark bites causes ~200 faults per year. Without these cables, the modern internet would cease to exist.',
+                    layers: ['cables']
+                }
+            ]
+        },
+        bri: {
+            name: 'Belt & Road Initiative',
+            steps: [
+                {
+                    center: [108.9, 34.3], zoom: 5, title: '\ud83d\udee4\ufe0f XI\'AN \u2014 WHERE IT ALL BEGINS',
+                    text: 'Xi\'an was the starting point of the ancient Silk Road 2,000 years ago. In 2013, President Xi Jinping announced the Belt and Road Initiative (BRI) here \u2014 the largest infrastructure project in human history. Over $1 trillion invested across 150+ countries. The "Belt" is land routes, the "Road" is maritime.',
+                    layers: ['blocs', 'cables']
+                },
+                {
+                    center: [62.3, 30.5], zoom: 5, title: '\ud83d\udee4\ufe0f CPEC \u2014 CHINA-PAKISTAN CORRIDOR',
+                    text: 'The China\u2013Pakistan Economic Corridor (CPEC) is BRI\'s flagship: a $62 billion network of roads, railways, and pipelines connecting Kashgar in western China to Gwadar Port on the Arabian Sea. It gives China direct access to the Indian Ocean, bypassing the Strait of Malacca. Pakistan receives infrastructure but faces debt concerns exceeding $30 billion.',
+                    layers: ['blocs', 'cables']
+                },
+                {
+                    center: [23.7, 37.9], zoom: 5, title: '\ud83d\udee4\ufe0f PIRAEUS \u2014 CHINA\'S GATEWAY TO EUROPE',
+                    text: 'In 2016, Chinese state shipping giant COSCO acquired 67% of Piraeus port in Greece for \u20ac1.5 billion. Container throughput has grown 700% since. Piraeus is now China\'s entry point into the European market, connecting via rail to Budapest, Belgrade, and Central Europe. The EU has since tightened foreign investment screening.',
+                    layers: ['blocs']
+                },
+                {
+                    center: [43.1, 11.6], zoom: 5, title: '\ud83d\udee4\ufe0f DJIBOUTI \u2014 CHINA\'S MILITARY FOOTPRINT',
+                    text: 'This tiny East African nation hosts China\'s first overseas military base (opened 2017), located just 10km from the US base Camp Lemonnier. China also built Djibouti\'s $3.5 billion railway to Addis Ababa, its largest port, and its water pipeline. Djibouti\'s debt to China exceeds 70% of GDP \u2014 a textbook case in the "debt-trap diplomacy" debate.',
+                    layers: ['blocs', 'conflicts']
+                },
+                {
+                    center: [36.8, -1.3], zoom: 5, title: '\ud83d\udee4\ufe0f NAIROBI \u2014 AFRICA\'S BRI HUB',
+                    text: 'Kenya\'s $3.6 billion Mombasa\u2013Nairobi Standard Gauge Railway was built by China Road and Bridge Corporation. It cut travel time from 12 hours to 4.5. But Kenya had to use Mombasa port as collateral for the loan, sparking sovereignty concerns across Africa. China is now the continent\'s largest bilateral lender, with $170+ billion in loans since 2000.',
+                    layers: ['blocs']
+                },
+                {
+                    center: [80, 30], zoom: 2, title: '\ud83c\udf0d BELT & ROAD \u2014 THE FULL PICTURE',
+                    text: 'The BRI now spans 150+ countries and $1 trillion in investments: ports in Sri Lanka, railways in Laos, bridges in Bangladesh, power plants in Indonesia. Critics call it debt-trap diplomacy \u2014 Sri Lanka handed over Hambantota port for 99 years after defaulting. Supporters say it fills a $40 trillion global infrastructure gap. Either way, it is reshaping the world order.',
+                    layers: ['blocs', 'cables']
+                }
+            ]
+        },
+        coldwar: {
+            name: 'Cold War to Reunification',
+            steps: [
+                {
+                    center: [13.4, 52.5], zoom: 6, title: '\ud83e\uddf1 BERLIN \u2014 THE DIVIDED CITY',
+                    text: 'From 1961 to 1989, the Berlin Wall split the city into West (democratic, NATO) and East (communist, Warsaw Pact). Over 140 people died trying to cross. On November 9, 1989, East Germany opened the border after weeks of mass protests. Thousands streamed through with hammers and chisels. The Wall fell in a single night \u2014 live on television worldwide.',
+                    layers: ['blocs', 'regimes']
+                },
+                {
+                    center: [21, 52], zoom: 5, title: '\u2694\ufe0f THE WARSAW PACT (1955\u20131991)',
+                    text: 'The Warsaw Pact united 8 communist states under Soviet military command: USSR, Poland, East Germany, Czechoslovakia, Hungary, Romania, Bulgaria, and Albania. At its peak it had 6 million troops and 60,000 tanks facing NATO across the Iron Curtain. Soviet forces crushed uprisings in Hungary (1956) and Czechoslovakia (1968) to keep members in line.',
+                    layers: ['blocs', 'regimes']
+                },
+                {
+                    center: [37.6, 55.75], zoom: 5, title: '\u2b50 MOSCOW \u2014 THE CENTER COLLAPSES',
+                    text: 'Mikhail Gorbachev\'s reforms \u2014 glasnost (openness) and perestroika (restructuring) \u2014 unintentionally unraveled the Soviet Union. In August 1991, a failed coup against Gorbachev sealed the USSR\'s fate. On December 25, 1991, the Soviet flag was lowered over the Kremlin for the last time. 15 independent nations emerged from the ruins of the world\'s largest country.',
+                    layers: ['regimes']
+                },
+                {
+                    center: [20, 48], zoom: 5, title: '\ud83c\uddea\ud83c\uddfa THE EASTERN EXPANSION',
+                    text: 'After the Wall fell, former Warsaw Pact nations raced toward the West. Poland, Czech Republic, and Hungary joined NATO in 1999 \u2014 just 8 years after the Pact dissolved. The Baltic states (Estonia, Latvia, Lithuania) joined in 2004, along with Romania, Bulgaria, Slovakia, and Slovenia. By 2024, even Finland and Sweden had joined NATO. Russia views this expansion as an existential threat.',
+                    layers: ['blocs', 'regimes']
+                },
+                {
+                    center: [31, 49], zoom: 5, title: '\ud83c\uddfa\ud83c\udde6 UKRAINE \u2014 THE UNFINISHED STORY',
+                    text: 'Ukraine sits at the exact fault line between the former Warsaw Pact and NATO. The 2014 Euromaidan revolution overthrew a pro-Russian president. Russia annexed Crimea and backed separatists in Donbas. In February 2022, Russia launched a full-scale invasion \u2014 the largest European war since 1945. The conflict continues and has reshaped global alliances.',
+                    layers: ['blocs', 'conflicts', 'regimes']
+                },
+                {
+                    center: [25, 52], zoom: 3, title: '\ud83c\udf0d FROM IRON CURTAIN TO NEW FRONTLINES',
+                    text: 'The Cold War ended in 1991 but its echoes define today\'s world. NATO grew from 16 to 32 members. Russia went from superpower to isolated aggressor. China rose from rural poverty to the world\'s second economy. The Iron Curtain is gone, but new dividing lines \u2014 in Ukraine, in Taiwan, in cyberspace \u2014 have taken its place. History doesn\'t repeat, but it rhymes.',
+                    layers: ['blocs', 'conflicts', 'regimes']
+                }
+            ]
+        }
+    };
+
+    let activeTour = null;
+    let tourStepIndex = 0;
+    const tourPanel = document.getElementById('tour-briefing');
+    const tourTitle = document.getElementById('tour-briefing-title');
+    const tourText = document.getElementById('tour-briefing-text');
+    const tourCounter = document.getElementById('tour-step-counter');
+    const tourPrev = document.getElementById('tour-prev');
+    const tourNext = document.getElementById('tour-next');
+    const tourClose = document.getElementById('tour-close');
+
+    function startTour(tourId) {
+        const tour = TOURS[tourId];
+        if (!tour) return;
+        activeTour = tour;
+        tourStepIndex = 0;
+        showTourStep();
+        setStatus('GUIDED TOUR: ' + tour.name.toUpperCase() + ' INITIATED');
+    }
+
+    function showTourStep() {
+        if (!activeTour || !tourPanel) return;
+        const step = activeTour.steps[tourStepIndex];
+        if (!step) return;
+
+        // Enable required layers
+        if (step.layers) {
+            step.layers.forEach(layerId => {
+                const toggle = document.getElementById('toggle-' + layerId);
+                if (toggle && !toggle.checked) {
+                    toggle.checked = true;
+                    toggle.dispatchEvent(new Event('change'));
+                }
+            });
+        }
+
+        // Hide briefing during flight
+        tourPanel.classList.add('hidden');
+        tourPanel.classList.add('flying');
+
+        // Disable nav during flight
+        if (tourPrev) tourPrev.disabled = true;
+        if (tourNext) tourNext.disabled = true;
+
+        // Fly to location — mid speed, cinematic
+        map.flyTo({
+            center: step.center,
+            zoom: step.zoom,
+            duration: 5500,
+            essential: true,
+            curve: 1.5,
+            pitch: step.zoom >= 6 ? 30 : 0,
+            bearing: 0
+        });
+
+        // Show briefing AFTER flight completes
+        map.once('moveend', () => {
+            tourPanel.classList.remove('flying');
+            tourTitle.textContent = step.title;
+            tourText.textContent = step.text;
+            tourCounter.textContent = 'STOP ' + (tourStepIndex + 1) + ' OF ' + activeTour.steps.length;
+            tourPanel.classList.remove('hidden');
+
+            // Re-enable nav
+            if (tourPrev) tourPrev.disabled = false;
+            if (tourNext) tourNext.disabled = false;
+
+            // Update nav buttons
+            tourPrev.style.display = tourStepIndex === 0 ? 'none' : 'flex';
+            if (tourStepIndex < activeTour.steps.length - 1) {
+                tourNext.innerHTML = 'NEXT <i class="fa-solid fa-chevron-right"></i>';
+            } else {
+                tourNext.innerHTML = '<i class="fa-solid fa-check"></i> FINISH TOUR';
+            }
+        });
+    }
+
+    function endTour() {
+        activeTour = null;
+        tourStepIndex = 0;
+        if (tourPanel) tourPanel.classList.add('hidden');
+        setStatus('TOUR COMPLETE \u2014 EXPLORE FREELY');
+    }
+
+    tourPrev?.addEventListener('click', () => {
+        if (tourStepIndex > 0) { tourStepIndex--; showTourStep(); }
+    });
+    tourNext?.addEventListener('click', () => {
+        if (activeTour && tourStepIndex < activeTour.steps.length - 1) {
+            tourStepIndex++;
+            showTourStep();
+        } else {
+            endTour();
+        }
+    });
+    tourClose?.addEventListener('click', () => endTour());
+
+    // Sidebar tour buttons
+    document.querySelectorAll('.tour-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const tourId = btn.dataset.tour;
+            if (tourId) startTour(tourId);
+        });
+    });
+
+    // ============================================================
+    // WIKIPEDIA LINK HELPER (for popup enrichment)
+    // ============================================================
+    window._wikiLink = function(name) {
+        const slug = name.replace(/\s+/g, '_').replace(/[()]/g, '');
+        return '<a href="https://en.wikipedia.org/wiki/' + encodeURIComponent(slug) + '" target="_blank" rel="noopener" ' +
+               'style="display:block;margin-top:6px;font-size:.6rem;color:#00d4ff;text-decoration:none;letter-spacing:1px;border-top:1px solid rgba(0,212,255,.15);padding-top:4px;">' +
+               '\ud83d\udcda Learn more on Wikipedia \u2197</a>';
+    };
 
 });

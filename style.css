@@ -602,7 +602,7 @@ body.no-ticker #intelligence-panel { top: 14px !important; }
 ------------------------------------------------------- */
 #info-panel {
     position: fixed; z-index: 100;
-    top: 52px; left: 14px; width: 240px;
+    top: 110px; left: 14px; width: 240px;
     border-left: 3px solid var(--neon-blue);
     max-height: 42px;
     background: var(--panel-bg);
@@ -719,7 +719,7 @@ body.no-ticker #intelligence-panel { top: 14px !important; }
 #briefing-panel {
     position: absolute;
     top: 110px;
-    right: 20px;
+    right: 340px;
     width: 360px;
     max-height: calc(100vh - 130px);
     overflow-y: auto;
@@ -933,8 +933,334 @@ body.no-ticker #intelligence-panel { top: 14px !important; }
 
 .layer-desc {
     font-size: 0.55rem !important;
-    color: rgba(255,255,255,0.35) !important;
+    color: rgba(255,255,255,0.45) !important;
     line-height: 1.3;
     margin: 0;
-    opacity: 0.7 !important;
+    opacity: 1 !important;
+}
+
+/* -------------------------------------------------------
+   WELCOME OVERLAY (First Visit)
+------------------------------------------------------- */
+#welcome-overlay {
+    position: fixed; inset: 0; z-index: 10000;
+    background: rgba(0, 0, 0, 0.85);
+    display: flex; align-items: center; justify-content: center;
+    backdrop-filter: blur(8px);
+    animation: fadeIn 0.6s ease;
+    padding: 20px;
+}
+
+#welcome-overlay.hidden { display: none; }
+
+#welcome-card {
+    position: relative;
+    background: linear-gradient(135deg, rgba(10,15,25,0.95), rgba(15,20,35,0.95));
+    border: 1px solid rgba(255,176,0,0.3);
+    border-radius: 8px;
+    padding: 40px 36px 30px;
+    max-width: 420px;
+    width: 100%;
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.8), 0 0 80px rgba(255,176,0,0.08);
+    overflow: hidden;
+}
+
+.welcome-glow {
+    position: absolute; top: -50%; left: -50%;
+    width: 200%; height: 200%;
+    background: radial-gradient(circle at 50% 80%, rgba(255,176,0,0.06) 0%, transparent 50%);
+    pointer-events: none;
+    animation: welcome-rotate 20s linear infinite;
+}
+@keyframes welcome-rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+.welcome-icon {
+    font-size: 3.5rem;
+    margin-bottom: 8px;
+    animation: welcome-float 3s ease-in-out infinite;
+}
+@keyframes welcome-float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+}
+
+.welcome-title {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 2rem;
+    letter-spacing: 6px;
+    color: var(--amber);
+    text-shadow: 0 0 20px rgba(255,176,0,0.4);
+    margin: 0 0 4px;
+}
+
+.welcome-subtitle {
+    font-size: 0.7rem;
+    letter-spacing: 2px;
+    color: var(--neon-blue);
+    opacity: 0.8;
+    margin: 0 0 20px;
+}
+
+.welcome-features {
+    display: flex; flex-direction: column; gap: 6px;
+    margin-bottom: 24px;
+    text-align: left;
+}
+
+.welcome-feat {
+    font-size: 0.72rem;
+    color: rgba(255,255,255,0.7);
+    display: flex; align-items: center; gap: 10px;
+    padding: 6px 10px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 4px;
+}
+
+.welcome-feat i {
+    width: 18px; text-align: center;
+    color: var(--amber); font-size: 0.8rem;
+}
+
+.welcome-actions {
+    display: flex; flex-direction: column; gap: 8px;
+    margin-bottom: 14px;
+}
+
+.welcome-btn {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.8rem;
+    letter-spacing: 2px;
+    padding: 12px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    border: 1px solid;
+    transition: all 0.3s;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+
+.welcome-btn-primary {
+    background: rgba(255,176,0,0.15);
+    border-color: var(--amber);
+    color: var(--amber);
+}
+.welcome-btn-primary:hover {
+    background: var(--amber);
+    color: #000;
+    box-shadow: 0 0 30px rgba(255,176,0,0.4);
+}
+
+.welcome-btn-secondary {
+    background: rgba(0,212,255,0.08);
+    border-color: rgba(0,212,255,0.4);
+    color: var(--neon-blue);
+}
+.welcome-btn-secondary:hover {
+    background: rgba(0,212,255,0.2);
+    border-color: var(--neon-blue);
+    box-shadow: 0 0 20px rgba(0,212,255,0.2);
+}
+
+.welcome-remember {
+    font-size: 0.6rem;
+    color: rgba(255,255,255,0.35);
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    cursor: pointer; margin-bottom: 12px;
+}
+.welcome-remember input { accent-color: var(--amber); }
+
+.welcome-footer {
+    font-size: 0.55rem;
+    color: rgba(255,255,255,0.25);
+    letter-spacing: 1px;
+}
+
+/* -------------------------------------------------------
+   TOUR BRIEFING PANEL
+------------------------------------------------------- */
+.tour-briefing-panel {
+    position: fixed;
+    bottom: 50px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 2000;
+    width: 420px;
+    max-width: calc(100vw - 30px);
+    background: rgba(5, 10, 20, 0.95);
+    border: 1px solid rgba(255,176,0,0.35);
+    border-radius: 6px;
+    padding: 16px 20px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.8), 0 0 40px rgba(255,176,0,0.08);
+    backdrop-filter: blur(15px);
+    font-family: 'Share Tech Mono', monospace;
+    transition: all 0.4s cubic-bezier(0.19, 1, 0.22, 1);
+}
+
+.tour-briefing-panel.hidden {
+    opacity: 0;
+    transform: translateX(-50%) translateY(30px);
+    pointer-events: none;
+}
+
+.tour-briefing-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.tour-step-num {
+    font-size: 0.6rem;
+    color: var(--amber);
+    letter-spacing: 2px;
+    opacity: 0.7;
+}
+
+.tour-title {
+    font-size: 1rem;
+    color: var(--amber);
+    letter-spacing: 1.5px;
+    margin: 0 0 8px;
+    text-shadow: 0 0 10px rgba(255,176,0,0.3);
+}
+
+.tour-text {
+    font-size: 0.72rem;
+    color: rgba(255,255,255,0.7);
+    line-height: 1.5;
+    margin: 0 0 14px;
+}
+
+.tour-nav {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+}
+
+.tour-nav-btn {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 1.5px;
+    padding: 6px 14px;
+    border: 1px solid rgba(255,255,255,0.15);
+    background: rgba(255,255,255,0.04);
+    color: rgba(255,255,255,0.6);
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex; align-items: center; gap: 5px;
+}
+.tour-nav-btn:hover {
+    background: rgba(255,255,255,0.08);
+    border-color: rgba(255,255,255,0.3);
+    color: #fff;
+}
+
+.tour-nav-primary {
+    background: rgba(255,176,0,0.12);
+    border-color: rgba(255,176,0,0.4);
+    color: var(--amber);
+}
+.tour-nav-primary:hover {
+    background: rgba(255,176,0,0.25);
+    border-color: var(--amber);
+    box-shadow: 0 0 12px rgba(255,176,0,0.2);
+}
+
+.tour-interact-hint {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.6rem;
+    color: var(--neon-blue);
+    opacity: 0.7;
+    padding: 8px 10px;
+    margin: 8px 0;
+    background: rgba(0,212,255,0.05);
+    border: 1px solid rgba(0,212,255,0.12);
+    border-radius: 4px;
+    letter-spacing: 0.5px;
+}
+
+.tour-interact-hint i {
+    font-size: 0.75rem;
+    animation: tour-point 1.5s ease-in-out infinite;
+}
+
+@keyframes tour-point {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-3px); }
+}
+
+.tour-briefing-panel.flying .tour-text {
+    opacity: 0.3;
+}
+
+.tour-briefing-panel.flying .tour-title::after {
+    content: ' ...';
+    animation: blink 1s infinite;
+}
+
+@keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+}
+
+@media (max-width: 768px) {
+    .tour-briefing-panel {
+        bottom: calc(var(--mobile-nav-h) + 10px);
+        width: calc(100vw - 20px);
+    }
+    #welcome-card {
+        padding: 28px 20px 20px;
+    }
+    .welcome-title { font-size: 1.5rem; }
+    #quick-links { display: none; }
+}
+
+/* -------------------------------------------------------
+   QUICK LINKS (bottom-left corner)
+------------------------------------------------------- */
+#quick-links {
+    position: fixed;
+    bottom: 10px;
+    left: 10px;
+    z-index: 500;
+    display: flex;
+    gap: 2px;
+    background: rgba(5, 10, 20, 0.8);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 5px;
+    overflow: hidden;
+    pointer-events: auto;
+}
+
+#quick-links a {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.58rem;
+    letter-spacing: 0.5px;
+    color: rgba(255,255,255,0.4);
+    text-decoration: none;
+    padding: 5px 10px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.2s;
+    border-right: 1px solid rgba(255,255,255,0.04);
+}
+
+#quick-links a:last-child {
+    border-right: none;
+}
+
+#quick-links a:hover {
+    color: var(--amber);
+    background: rgba(255,176,0,0.08);
+}
+
+#quick-links a i {
+    font-size: 0.55rem;
+    opacity: 0.7;
 }

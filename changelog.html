@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Worldview — Changelog | Development History</title>
+    <meta name="description" content="Full development history and changelog for Worldview Command Center — from V3.0 initial release to the latest version.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="./config.js"></script>
+    <style>
+        :root {
+            --bg: #010408;
+            --surface: rgba(255,255,255,0.03);
+            --surface2: rgba(255,255,255,0.06);
+            --border: rgba(255,255,255,0.08);
+            --amber: #ffb000;
+            --cyan: #00d4ff;
+            --green: #00ff88;
+            --red: #ff3355;
+            --text: #e0e0e0;
+            --text-muted: rgba(255,255,255,0.45);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        /* NAV */
+        nav {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 100;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 18px 48px;
+            background: rgba(1,4,8,0.9);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+        }
+        .nav-logo {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 1.1rem;
+            color: var(--amber);
+            letter-spacing: 3px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+        }
+        .nav-logo .dot {
+            width: 8px; height: 8px; background: var(--green);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(0.8); }
+        }
+        .nav-links {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+        .nav-link {
+            text-decoration: none;
+            font-size: .82rem;
+            color: var(--text-muted);
+            transition: color .2s;
+            letter-spacing: 0.5px;
+        }
+        .nav-link:hover { color: var(--text); }
+        .nav-link.active { color: var(--amber); }
+        .nav-cta {
+            text-decoration: none;
+            background: linear-gradient(135deg, var(--amber), #ff8800);
+            color: #000;
+            font-weight: 700;
+            font-size: .8rem;
+            padding: 8px 18px;
+            border-radius: 6px;
+            transition: all .2s;
+        }
+        .nav-cta:hover { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(255,176,0,0.4); }
+
+        /* HERO */
+        .changelog-hero {
+            padding: 140px 48px 60px;
+            text-align: center;
+            position: relative;
+        }
+        .changelog-hero::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(ellipse 60% 50% at 50% 0%, rgba(0,80,160,0.2) 0%, transparent 60%);
+        }
+        .changelog-hero h1 {
+            font-size: clamp(2rem, 5vw, 3.5rem);
+            font-weight: 900;
+            letter-spacing: -1px;
+            position: relative;
+            z-index: 1;
+        }
+        .gradient-text {
+            background: linear-gradient(135deg, #fff 0%, var(--cyan) 50%, var(--amber) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .changelog-hero p {
+            color: var(--text-muted);
+            font-size: 1rem;
+            margin-top: 12px;
+            position: relative;
+            z-index: 1;
+        }
+        .version-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(0,212,255,0.1);
+            border: 1px solid rgba(0,212,255,0.25);
+            padding: 6px 14px;
+            border-radius: 100px;
+            font-size: .72rem;
+            color: var(--cyan);
+            font-family: 'Share Tech Mono', monospace;
+            letter-spacing: 1px;
+            margin-bottom: 16px;
+        }
+
+        /* TIMELINE */
+        .timeline {
+            max-width: 820px;
+            margin: 0 auto;
+            padding: 40px 48px 100px;
+            position: relative;
+        }
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 24px;
+            top: 0; bottom: 0;
+            width: 1px;
+            background: linear-gradient(180deg, var(--amber), rgba(255,176,0,0.1));
+        }
+
+        .version-entry {
+            position: relative;
+            padding-left: 56px;
+            margin-bottom: 48px;
+        }
+        .version-dot {
+            position: absolute;
+            left: 16px;
+            top: 6px;
+            width: 18px; height: 18px;
+            border-radius: 50%;
+            border: 2px solid var(--amber);
+            background: var(--bg);
+            z-index: 1;
+        }
+        .version-dot.major {
+            background: var(--amber);
+            box-shadow: 0 0 15px rgba(255,176,0,0.5);
+        }
+        .version-dot.current {
+            background: var(--green);
+            border-color: var(--green);
+            box-shadow: 0 0 15px rgba(0,255,136,0.5);
+            animation: pulse 2s infinite;
+        }
+
+        .version-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+        }
+        .version-number {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--amber);
+            letter-spacing: 2px;
+        }
+        .version-name {
+            font-size: .9rem;
+            color: var(--text);
+            font-weight: 600;
+        }
+        .version-date {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: .65rem;
+            color: var(--text-muted);
+            letter-spacing: 1px;
+        }
+        .version-type {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: .6rem;
+            padding: 2px 8px;
+            border-radius: 3px;
+            letter-spacing: 1px;
+            font-weight: 600;
+        }
+        .type-major { background: rgba(255,176,0,0.15); color: var(--amber); border: 1px solid rgba(255,176,0,0.3); }
+        .type-minor { background: rgba(0,212,255,0.1); color: var(--cyan); border: 1px solid rgba(0,212,255,0.2); }
+        .type-patch { background: rgba(255,255,255,0.05); color: var(--text-muted); border: 1px solid rgba(255,255,255,0.08); }
+
+        .version-changes {
+            list-style: none;
+            padding: 0;
+        }
+        .version-changes li {
+            font-size: .85rem;
+            color: rgba(255,255,255,0.7);
+            line-height: 1.7;
+            padding: 4px 0;
+            display: flex;
+            gap: 10px;
+            align-items: baseline;
+        }
+        .change-icon {
+            flex-shrink: 0;
+            font-size: .65rem;
+            width: 18px;
+            text-align: center;
+        }
+        .change-icon.feat { color: var(--green); }
+        .change-icon.fix { color: var(--red); }
+        .change-icon.ui { color: var(--cyan); }
+        .change-icon.perf { color: var(--amber); }
+
+        /* FOOTER */
+        footer {
+            padding: 40px 48px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+        .footer-logo {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: .9rem;
+            color: var(--amber);
+            letter-spacing: 2px;
+        }
+        .footer-copy {
+            font-size: .78rem;
+            color: var(--text-muted);
+        }
+        .footer-copy a { color: var(--cyan); text-decoration: none; }
+
+        @media (max-width: 768px) {
+            nav { padding: 14px 20px; }
+            .changelog-hero { padding: 120px 20px 40px; }
+            .timeline { padding: 30px 20px 60px; }
+            .timeline::before { left: 14px; }
+            .version-entry { padding-left: 42px; }
+            .version-dot { left: 6px; }
+            .nav-links { gap: 12px; }
+        }
+
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-thumb { background: rgba(255,176,0,0.3); border-radius: 3px; }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <a href="./about.html" class="nav-logo">
+            <span class="dot"></span>
+            WORLDVIEW
+        </a>
+        <div class="nav-links">
+            <a href="./about.html" class="nav-link">About</a>
+            <a href="./manual.html" class="nav-link">Manual</a>
+            <a href="./changelog.html" class="nav-link active">Changelog</a>
+            <a href="./index.html" class="nav-cta"><i class="fa-solid fa-satellite"></i> Open Map</a>
+        </div>
+    </nav>
+
+    <section class="changelog-hero">
+        <div class="version-badge">
+            <i class="fa-solid fa-code-branch"></i> DEVELOPMENT HISTORY
+        </div>
+        <h1><span class="gradient-text">Changelog</span></h1>
+        <p>Every feature, fix, and upgrade since the first commit — <span class="dyn-version"></span></p>
+    </section>
+
+    <div class="timeline">
+
+        <!-- V10.0 -->
+        <div class="version-entry">
+            <div class="version-dot current"></div>
+            <div class="version-header">
+                <span class="version-number">V10.0</span>
+                <span class="version-type type-major">MAJOR</span>
+                <span class="version-name">Educational Platform</span>
+                <span class="version-date">APR 2026</span>
+            </div>
+            <ul class="version-changes">
+                <li><span class="change-icon feat">✦</span> Guided Tour Engine — 5 interactive cinematic tours with map flyTo animations</li>
+                <li><span class="change-icon feat">✦</span> Tour: 🌋 Ring of Fire — 6 stops covering Pacific seismic activity</li>
+                <li><span class="change-icon feat">✦</span> Tour: ☢️ Nuclear Legacy — 5 stops from Chernobyl to Bikini Atoll</li>
+                <li><span class="change-icon feat">✦</span> Tour: 🌐 Digital Silk Road — 5 stops following undersea cables</li>
+                <li><span class="change-icon feat">✦</span> Tour: 🛤️ Belt & Road Initiative — 6 stops mapping China's global infrastructure</li>
+                <li><span class="change-icon feat">✦</span> Tour: 🧱 Cold War to Reunification — 6 stops from Berlin Wall to NATO expansion</li>
+                <li><span class="change-icon feat">✦</span> First-Visit Welcome Overlay with tour launcher</li>
+                <li><span class="change-icon feat">✦</span> Wikipedia "Learn More" links on all volcano and radiation popups</li>
+                <li><span class="change-icon feat">✦</span> Open Graph + Twitter Card meta tags for social media sharing</li>
+                <li><span class="change-icon feat">✦</span> Social media advert assets (TikTok 9:16 story images)</li>
+                <li><span class="change-icon ui">◆</span> Tour briefing panel with cinematic reveal-after-flight UX</li>
+                <li><span class="change-icon ui">◆</span> Interactive "Click markers for details" hint with pulsing animation</li>
+                <li><span class="change-icon fix">●</span> Fixed about.html blank page (CSP blocking inline scripts)</li>
+                <li><span class="change-icon fix">●</span> Removed duplicate &lt;/footer&gt; tag corrupting DOM</li>
+                <li><span class="change-icon feat">✦</span> This changelog page</li>
+            </ul>
+        </div>
+
+        <!-- V9.0 -->
+        <div class="version-entry">
+            <div class="version-dot major"></div>
+            <div class="version-header">
+                <span class="version-number">V9.0</span>
+                <span class="version-type type-major">MAJOR</span>
+                <span class="version-name">Stability & Mobile Overhaul</span>
+                <span class="version-date">APR 2026</span>
+            </div>
+            <ul class="version-changes">
+                <li><span class="change-icon fix">●</span> Fixed critical JavaScript character escaping exceptions breaking map init</li>
+                <li><span class="change-icon fix">●</span> Resolved git-mangled syntax holes in main.js</li>
+                <li><span class="change-icon fix">●</span> Fixed critical map click syntax error causing dark screen</li>
+                <li><span class="change-icon feat">✦</span> Restored ISS tracking and AIS ship configuration</li>
+                <li><span class="change-icon ui">◆</span> Mobile navigation stability — fixed CSS pointer-event conflicts</li>
+                <li><span class="change-icon ui">◆</span> Sidebar restructured into 3 curated educational tiers</li>
+                <li><span class="change-icon perf">⚡</span> Removed legacy unreliable telemetry code</li>
+            </ul>
+        </div>
+
+        <!-- V8.8 -->
+        <div class="version-entry">
+            <div class="version-dot"></div>
+            <div class="version-header">
+                <span class="version-number">V8.8</span>
+                <span class="version-type type-minor">MINOR</span>
+                <span class="version-name">Global Scenarios & About Page</span>
+                <span class="version-date">APR 2026</span>
+            </div>
+            <ul class="version-changes">
+                <li><span class="change-icon feat">✦</span> Global Threat Scenarios preset system</li>
+                <li><span class="change-icon ui">◆</span> Updated About page to reflect V8.8 feature set</li>
+                <li><span class="change-icon feat">✦</span> AI Infrastructure Atlas concept (data centers + energy + cables)</li>
+            </ul>
+        </div>
+
+        <!-- V8.7 -->
+        <div class="version-entry">
+            <div class="version-dot"></div>
+            <div class="version-header">
+                <span class="version-number">V8.7</span>
+                <span class="version-type type-minor">MINOR</span>
+                <span class="version-name">Artemis II Physics Engine</span>
+                <span class="version-date">APR 2026</span>
+            </div>
+            <ul class="version-changes">
+                <li><span class="change-icon feat">✦</span> Artemis II high-fidelity orbital physics engine</li>
+                <li><span class="change-icon ui">◆</span> Unified version ID system across all pages</li>
+                <li><span class="change-icon ui">◆</span> Updated documentation and about page</li>
+            </ul>
+        </div>
+
+        <!-- V8.5 -->
+        <div class="version-entry">
+            <div class="version-dot"></div>
+            <div class="version-header">
+                <span class="version-number">V8.5</span>
+                <span class="version-type type-minor">MINOR</span>
+                <span class="version-name">Mobile 9:16 & Artemis HUD</span>
+                <span class="version-date">APR 2026</span>
+            </div>
+            <ul class="version-changes">
+                <li><span class="change-icon ui">◆</span> Mobile 9:16 portrait UI optimizations</li>
+                <li><span class="change-icon feat">✦</span> Artemis HUD with real-time physics and dynamic telemetry</li>
+                <li><span class="change-icon fix">●</span> Footer text cleared from global ticker overlap</li>
+                <li><span class="change-icon fix">●</span> Branding z-index and HUD collision fixes</li>
+            </ul>
+        </div>
+
+        <!-- V8.4 -->
+        <div class="version-entry">
+            <div class="version-dot"></div>
+            <div class="version-header">
+                <span class="version-number">V8.4</span>
+                <span class="version-type type-minor">MINOR</span>
+                <span class="version-name">Artemis Telemetry & Geo-Hotspots</span>
+                <span class="version-date">APR 2026</span>
+            </div>
+            <ul class="version-changes">
+                <li><span class="change-icon feat">✦</span> Live Artemis telemetry integration</li>
+                <li><span class="change-icon feat">✦</span> Realistic global geo-hotspot data</li>
+            </ul>
+        </div>
+
+        <!-- V8.3 -->
+        <div class="version-entry">
+            <div class="version-dot"></div>
+            <div class="version-header">
+                <span class="version-number">V8.3</span>
+                <span class="version-type type-minor">MINOR</span>
+                <span class="version-name">Tsunami, Ships & Artemis HUD</span>
+                <span class="version-date">APR 2026</span>
+            </div>
+            <ul class="version-changes">
+                <li><span class="change-icon feat">✦</span> Artemis HUD display</li>
+                <li><span class="change-icon feat">✦</span> 100 ships AIS tracking</li>
+                <li><span class="change-icon feat">✦</span> Tsunami alerts (USGS real-time condition parameter)</li>
+                <li><span class="change-icon fix">●</span> Footer positioning fixes</li>
+            </ul>
+        </div>
+
+        <!-- V8.2 -->
+        <div class="version-entry">
+            <div class="version-dot major"></div>
+            <div class="version-header">
+                <span class="version-number">V8.2</span>
+                <span class="version-type type-minor">MINOR</span>
+                <span class="version-name">Tactical UI & Intel Popups</span>
+                <span class="version-date">MAR 2026</span>
+            </div>
+            <ul class="version-changes">
+                <li><span class="change-icon ui">◆</span> Tactical UI overhaul</li>
+                <li><span class="change-icon feat">✦</span> Interactive intelligence popups on all markers</li>
+                <li><span class="change-icon feat">✦</span> Video feed restoration</li>
+            </ul>
+        </div>
+
+        <!-- V7.x -->
+        <div class="version-entry">
+            <div class="version-dot major"></div>
+            <div class="version-header">
+                <span class="version-number">V7.0 – 7.4</span>
+                <span class="version-type type-major">MAJOR</span>
+                <span class="version-name">Premium UI, Mobile Nav & News</span>
+                <span class="version-date">MAR 2026</span>
+            </div>
+            <ul class="version-changes">
+                <li><span class="change-icon feat">✦</span> Unified mobile navigation system</li>
+                <li><span class="change-icon feat">✦</span> Live news ticker with RSS feeds</li>
+                <li><span class="change-icon feat">✦</span> Power outage monitoring layer</li>
+                <li><span class="change-icon feat">✦</span> Intelligence alert cards with severity color-coding</li>
+                <li><span class="change-icon feat">✦</span> Ocean SST map replacing night lights</li>
+                <li><span class="change-icon feat">✦</span> Solar storm index in Hazards menu</li>
+                <li><span class="change-icon ui">◆</span> Midnight Slate glassmorphism design system</li>
+                <li><span class="change-icon ui">◆</span> Hardware toggle switches</li>
+                <li><span class="change-icon ui">◆</span> Share Tech Mono typography</li>
+                <li><span class="change-icon ui">◆</span> Amber ticker color with adjusted speed</li>
+                <li><span class="change-icon fix">●</span> Flight tracker persistence fix</li>
+                <li><span class="change-icon fix">●</span> Cable popup with capacity, year, length, and owner data</li>
+            </ul>
+        </div>
+
+        <!-- V6.0 – 6.1 -->
+        <div class="version-entry">
+            <div class="version-dot major"></div>
+            <div class="version-header">
+                <span class="version-number">V6.0 – 6.1</span>
+                <span class="version-type type-major">MAJOR</span>
+                <span class="version-name">Global Command Center</span>
+                <span class="version-date">MAR 2026</span>
+            </div>
+            <ul class="version-changes">
+                <li><span class="change-icon feat">✦</span> Complete rebranding as "Global Command Center"</li>
+                <li><span class="change-icon feat">✦</span> Political regime maps (Freedom House)</li>
+                <li><span class="change-icon feat">✦</span> Undersea cable network visualization</li>
+                <li><span class="change-icon feat">✦</span> Data center layer (hyperscale locations)</li>
+                <li><span class="change-icon feat">✦</span> Nuclear power plant layer</li>
+                <li><span class="change-icon feat">✦</span> Iran-Israel/USA conflict zones</li>
+                <li><span class="change-icon feat">✦</span> Black Marble night lights</li>
+                <li><span class="change-icon feat">✦</span> Clickable city popups</li>
+                <li><span class="change-icon feat">✦</span> Intelligence anomaly scanner (5min scan, 3-entry rolling)</li>
+                <li><span class="change-icon ui">◆</span> Menu redesign with collapsible categories</li>
+                <li><span class="change-icon fix">●</span> Myanmar lat/lon fix that was blocking all layer inits</li>
+            </ul>
+        </div>
+
+        <!-- V5.x -->
+        <div class="version-entry">
+            <div class="version-dot"></div>
+            <div class="version-header">
+                <span class="version-number">V5.0 – 5.6</span>
+                <span class="version-type type-minor">STABILITY</span>
+                <span class="version-name">Mobile & Toggle Fixes</span>
+                <span class="version-date">FEB 2026</span>
+            </div>
+            <ul class="version-changes">
+                <li><span class="change-icon fix">●</span> MapLibre initial DOM mount lifecycle fix</li>
+                <li><span class="change-icon fix">●</span> Mobile menu click-outside hook</li>
+                <li><span class="change-icon fix">●</span> Touch event conflict between overlay and map canvas</li>
+                <li><span class="change-icon fix">●</span> Asynchronous debounce locking for mobile toggle</li>
+                <li><span class="change-icon fix">●</span> Duplicate DOM toggle listener eradication</li>
+                <li><span class="change-icon fix">●</span> Critical JavaScript crash from unclosed try-catch</li>
+                <li><span class="change-icon fix">●</span> Earthquake DOM toggle missing element fix</li>
+                <li><span class="change-icon perf">⚡</span> Cache busting and toggle default improvements</li>
+            </ul>
+        </div>
+
+        <!-- V4.x -->
+        <div class="version-entry">
+            <div class="version-dot major"></div>
+            <div class="version-header">
+                <span class="version-number">V4.0 – 4.8</span>
+                <span class="version-type type-major">MAJOR</span>
+                <span class="version-name">Mobile UI & Live Feeds</span>
+                <span class="version-date">FEB 2026</span>
+            </div>
+            <ul class="version-changes">
+                <li><span class="change-icon feat">✦</span> Full mobile UI with responsive layout</li>
+                <li><span class="change-icon feat">✦</span> Solar terminator (day/night line)</li>
+                <li><span class="change-icon feat">✦</span> NASA FIRMS wildfire data integration</li>
+                <li><span class="change-icon feat">✦</span> Top 40 global city labels (dynamic zoom scaling)</li>
+                <li><span class="change-icon feat">✦</span> Webcam feeds (global CCTV streams)</li>
+                <li><span class="change-icon feat">✦</span> Local Python batch server for data aggregation</li>
+                <li><span class="change-icon feat">✦</span> Esri satellite overzoom interpolation</li>
+                <li><span class="change-icon feat">✦</span> Simulated global airspace (Lufthansa)</li>
+                <li><span class="change-icon feat">✦</span> USGS earthquake feed</li>
+                <li><span class="change-icon ui">◆</span> Master switch override for all toggles</li>
+                <li><span class="change-icon fix">●</span> Webcam image source fixes</li>
+                <li><span class="change-icon fix">●</span> Weather radar enhancements</li>
+            </ul>
+        </div>
+
+        <!-- V3.0 -->
+        <div class="version-entry">
+            <div class="version-dot major"></div>
+            <div class="version-header">
+                <span class="version-number">V3.0</span>
+                <span class="version-type type-major">INITIAL</span>
+                <span class="version-name">Satellite Globe Edition</span>
+                <span class="version-date">JAN 2026</span>
+            </div>
+            <ul class="version-changes">
+                <li><span class="change-icon feat">✦</span> Initial release — MapLibre GL satellite globe</li>
+                <li><span class="change-icon feat">✦</span> Weather radar overlay</li>
+                <li><span class="change-icon feat">✦</span> AIS ship tracking</li>
+                <li><span class="change-icon feat">✦</span> ISS real-time position</li>
+                <li><span class="change-icon feat">✦</span> Basic layer toggle system</li>
+                <li><span class="change-icon ui">◆</span> Dark tactical command center aesthetic</li>
+            </ul>
+        </div>
+
+    </div>
+
+    <footer>
+        <div class="footer-logo">WORLDVIEW <span class="dyn-version"></span></div>
+        <div class="footer-copy">
+            Open Source · <a href="./about.html">About</a> · <a href="./manual.html">Manual</a> · <a href="./index.html">Launch Map</a>
+        </div>
+    </footer>
+
+    <script>
+        document.querySelectorAll('.dyn-version').forEach(el => el.innerText = `V${window.WorldviewConfig.VERSION}`);
+    </script>
+
+</body>
+</html>
