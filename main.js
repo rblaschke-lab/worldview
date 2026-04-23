@@ -434,6 +434,34 @@ document.addEventListener("DOMContentLoaded", () => {
             if (section) section.classList.toggle('open');
         });
     });
+    // ── AUTO-COLLAPSE SIDEBAR ON TOGGLE (Mobile) ──
+    // When user toggles a layer or clicks a scenario, close the sidebar
+    // after a brief delay so they see the map change
+    const autoCollapseMobile = () => {
+        if (window.innerWidth > 768) return;
+        setTimeout(() => {
+            sidebar.classList.remove('active');
+            intelPanel.classList.remove('active');
+            if (infoPanel) infoPanel.classList.remove('active');
+            document.body.classList.remove('mobile-panel-open');
+            activeMobilePanel = null;
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            const scopeBtn = document.querySelector('.nav-btn[data-target="map"]');
+            if (scopeBtn) scopeBtn.classList.add('active');
+        }, 400);
+    };
+    // Attach to all layer toggles
+    sidebar.querySelectorAll('.toggle-switch input[type="checkbox"]').forEach(cb => {
+        cb.addEventListener('change', autoCollapseMobile);
+    });
+    // Attach to scenario buttons
+    sidebar.querySelectorAll('.tactical-btn').forEach(btn => {
+        btn.addEventListener('click', autoCollapseMobile);
+    });
+    // Attach to tour buttons
+    sidebar.querySelectorAll('.tour-btn').forEach(btn => {
+        btn.addEventListener('click', autoCollapseMobile);
+    });
     // ── END MOBILE NAVIGATION SETUP ──
 
     // INITIALIZE V4 MAPLIBRE GL JS
