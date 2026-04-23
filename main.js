@@ -620,12 +620,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // ── SHIPS (AIS — placeholder source, populated by WebSocket if key set) ──
         map.addSource('ships-src', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
-        map.addLayer({ id: 'ships-layer', type: 'circle', source: 'ships-src', layout: { visibility: 'none' }, paint: { 'circle-radius': 4, 'circle-color': '#00ffcc', 'circle-opacity': 0.8 } });
+        map.addLayer({ id: 'ships-layer', type: 'circle', source: 'ships-src', layout: { visibility: 'none' }, paint: { 'circle-radius': ['interpolate', ['linear'], ['zoom'], 1, 4, 5, 6, 10, 8], 'circle-color': '#00ffcc', 'circle-opacity': 0.8 } });
 
         // ── FLIGHTS (OpenSky Network — European airspace) ──────
         try {
             map.addSource('flights-src', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
-            map.addLayer({ id: 'flights-layer', type: 'circle', source: 'flights-src', layout: { visibility: 'none' }, paint: { 'circle-radius': 3, 'circle-color': '#00d4ff', 'circle-opacity': 0.7 } });
+            map.addLayer({ id: 'flights-layer', type: 'circle', source: 'flights-src', layout: { visibility: 'none' }, paint: { 'circle-radius': ['interpolate', ['linear'], ['zoom'], 1, 4, 5, 6, 10, 8], 'circle-color': '#00d4ff', 'circle-opacity': 0.8 } });
             const fetchFlights = async () => {
                 if (!toggles.flights) return;
                 try {
@@ -654,7 +654,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 slFeatures.push({ type: 'Feature', geometry: { type: 'Point', coordinates: [lon, Math.max(-55, Math.min(55, lat))] } });
             }
             map.addSource('starlink-src', { type: 'geojson', data: { type: 'FeatureCollection', features: slFeatures } });
-            map.addLayer({ id: 'starlink-layer', type: 'circle', source: 'starlink-src', layout: { visibility: 'none' }, paint: { 'circle-radius': 1.5, 'circle-color': '#ffffff', 'circle-opacity': 0.45 } });
+            map.addLayer({ id: 'starlink-layer', type: 'circle', source: 'starlink-src', layout: { visibility: 'none' }, paint: { 'circle-radius': ['interpolate', ['linear'], ['zoom'], 1, 2, 5, 4, 10, 6], 'circle-color': '#ffffff', 'circle-opacity': 0.6, 'circle-blur': 0.4 } });
         } catch(e) { console.warn('[STARLINK] Init failed:', e.message); }
 
         // ── POPULATION DENSITY (NASA GIBS SEDAC) ──────────────
