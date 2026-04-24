@@ -219,6 +219,10 @@ header {
     padding: 8px 12px; display: flex; flex-direction: column; gap: 3px;
     position: relative; border-bottom: 1px solid rgba(255,255,255,0.05);
 }
+#sidebar header {
+    position: sticky; top: 0; z-index: 10;
+    background: var(--panel-bg); backdrop-filter: blur(18px);
+}
 .header-top-row { display: flex; justify-content: space-between; align-items: center; }
 
 /* Main title row — amber, signature color — use ID specificity to guarantee override */
@@ -519,7 +523,7 @@ body.no-ticker #sidebar { top: 14px !important; }
 ------------------------------------------------------- */
 #info-panel {
     position: fixed; z-index: 100;
-    top: 110px; left: 14px; width: 240px;
+    top: 52px; left: 14px; width: 240px;
     border-left: 3px solid var(--neon-blue);
     max-height: 42px;
     background: var(--panel-bg);

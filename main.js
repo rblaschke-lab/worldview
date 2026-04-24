@@ -338,9 +338,9 @@ document.addEventListener("DOMContentLoaded", () => {
             </div>
             <div class="briefing-body">
                 <h3>SITUATION</h3>
-                <p>${escHtml(eventData.what)}</p>
+                <p>${eventData.what || ''}</p>
                 <h3>ASSESSMENT</h3>
-                <p>${escHtml(eventData.why)}</p>
+                <p>${eventData.why || ''}</p>
                 
                 <div class="briefing-meta-grid">
                     <div><span>TIME DETECTED</span>${escHtml(eventData.time)}</div>
@@ -1896,27 +1896,24 @@ document.addEventListener("DOMContentLoaded", () => {
                     </div>
                 </div>`;
         } else if (cam.srcType === 'youtube') {
-            // YouTube channel embed — auto-resolves to current livestream (when available)
-            const embedUrl = `https://www.youtube.com/embed/live_stream?channel=${cam.src}&autoplay=0&mute=1`;
+            // YouTube channel link — opens live stream in new tab (avoids blank embed when offline)
+            const channelUrl = `https://www.youtube.com/channel/${cam.src}/live`;
             return `
                 <div style="font-family:'Share Tech Mono',monospace; width:320px; background:rgba(0,10,20,0.97); border:1px solid #ffb000; padding:0; border-radius:4px; overflow:hidden;">
                     <div style="padding:6px 10px; border-bottom:1px solid rgba(255,176,0,0.2); display:flex; justify-content:space-between; align-items:center;">
                         <span style="color:#ffb000; font-size:0.72rem; letter-spacing:1px;"><i class="fa-solid fa-video" style="margin-right:4px;"></i>${escHtml(cam.title)}</span>
                         <span style="font-size:0.5rem; color:#ffb000; letter-spacing:1px; opacity:0.7;">▶ STREAM</span>
                     </div>
-                    <div style="position:relative; width:100%; background:#000;">
-                        <iframe src="${embedUrl}" style="width:100%; height:180px; border:none; display:block;"
-                                allow="autoplay; encrypted-media" allowfullscreen loading="lazy"
-                                onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"></iframe>
-                        <div style="display:none; width:100%; height:180px; align-items:center; justify-content:center; flex-direction:column; background:rgba(0,0,0,0.9);">
-                            <i class="fa-solid fa-tower-broadcast" style="color:#ffb000; font-size:1.5rem; margin-bottom:8px; opacity:0.5;"></i>
-                            <span style="color:#ffb000; font-size:0.65rem; letter-spacing:1px; opacity:0.7;">STREAM OFFLINE</span>
-                            <span style="color:rgba(255,255,255,0.3); font-size:0.5rem; margin-top:4px;">YouTube channel may not be live</span>
+                    <a href="${channelUrl}" target="_blank" rel="noopener" style="display:block; text-decoration:none; position:relative; width:100%; background:#000;">
+                        <div style="width:100%; height:160px; display:flex; align-items:center; justify-content:center; flex-direction:column; background:linear-gradient(135deg, rgba(20,15,30,1) 0%, rgba(40,20,10,1) 100%);">
+                            <i class="fa-brands fa-youtube" style="color:#ff0000; font-size:2.5rem; margin-bottom:10px; filter:drop-shadow(0 0 8px rgba(255,0,0,0.4));"></i>
+                            <span style="color:#ffb000; font-size:0.72rem; letter-spacing:2px; font-family:'Share Tech Mono',monospace;">OPEN LIVE STREAM</span>
+                            <span style="color:rgba(255,255,255,0.35); font-size:0.5rem; margin-top:4px; letter-spacing:1px;">Opens YouTube in new tab</span>
                         </div>
-                    </div>
+                    </a>
                     <div style="padding:5px 10px; display:flex; justify-content:space-between; align-items:center; border-top:1px solid rgba(255,255,255,0.06);">
                         <span style="font-size:0.5rem; color:rgba(255,255,255,0.35);">${escHtml(cam.location)}</span>
-                        <span style="font-size:0.42rem; color:rgba(255,176,0,0.4); letter-spacing:1px;">YT EMBED · MAY BE OFFLINE</span>
+                        <span style="font-size:0.42rem; color:rgba(255,176,0,0.4); letter-spacing:1px;">VIA ${escHtml(cam.provider)}</span>
                     </div>
                 </div>`;
         }
@@ -1933,10 +1930,11 @@ document.addEventListener("DOMContentLoaded", () => {
             const markerColor = isFotoWebcam ? 'rgba(0,255,136,0.85)' : 'rgba(255,176,0,0.7)';
             const glowColor = isFotoWebcam ? 'rgba(0,255,136,0.6)' : 'rgba(255,176,0,0.5)';
             el.className = 'marker-webcam';
-            el.style.cssText = `width:20px;height:20px;cursor:pointer;background:${markerColor};border-radius:50%;border:2px solid #fff;display:flex;align-items:center;justify-content:center;color:#fff;font-size:10px;box-shadow:0 0 10px ${glowColor};transition:transform 0.2s;`;
-            el.innerHTML = '<i class="fa-solid fa-video" style="font-size:8px;"></i>';
-            el.onmouseenter = () => { el.style.transform = 'scale(1.3)'; };
-            el.onmouseleave = () => { el.style.transform = 'scale(1)'; };
+            el.style.cssText = `width:20px;height:20px;cursor:pointer;`;
+            el.innerHTML = `<div style="width:20px;height:20px;background:${markerColor};border-radius:50%;border:2px solid #fff;display:flex;align-items:center;justify-content:center;color:#fff;font-size:10px;box-shadow:0 0 10px ${glowColor};transition:transform 0.2s;"><i class="fa-solid fa-video" style="font-size:8px;"></i></div>`;
+            const inner = el.firstElementChild;
+            el.onmouseenter = () => { inner.style.transform = 'scale(1.3)'; };
+            el.onmouseleave = () => { inner.style.transform = 'scale(1)'; };
 
             const popup = new maplibregl.Popup({ offset: 14, maxWidth: '340px', closeButton: true })
                 .setHTML(buildWebcamPopup(cam));
