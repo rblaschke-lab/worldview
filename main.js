@@ -2026,7 +2026,54 @@ document.addEventListener("DOMContentLoaded", () => {
     const initISS = () => {
         const el = document.createElement('div');
         el.className = 'marker-iss';
-        el.style.cssText = 'width:24px;height:24px;cursor:pointer;background:url("data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'%2300ffcc\'><path d=\'M21,11V13H19V11H21M17,11V13H15V11H17M13,11V13H11V11H13M9,11V13H7V11H9M5,11V13H3V11H5Z\'/></svg>") center/contain no-repeat; filter:drop-shadow(0 0 5px #00ffcc); transition:all 1s linear;';
+        el.style.cssText = 'width:36px;height:36px;cursor:pointer;display:flex;align-items:center;justify-content:center;';
+        el.innerHTML = `<div style="width:36px;height:36px;border-radius:50%;background:rgba(0,255,204,0.15);border:2px solid #00ffcc;display:flex;align-items:center;justify-content:center;box-shadow:0 0 16px rgba(0,255,204,0.5),0 0 40px rgba(0,255,204,0.2);animation:iss-pulse 2s ease-in-out infinite;">
+            <i class="fa-solid fa-satellite" style="color:#00ffcc;font-size:14px;filter:drop-shadow(0 0 4px #00ffcc);"></i>
+        </div>`;
+
+        // Add ISS pulse animation
+        if (!document.getElementById('iss-pulse-style')) {
+            const style = document.createElement('style');
+            style.id = 'iss-pulse-style';
+            style.textContent = `@keyframes iss-pulse { 0%,100%{box-shadow:0 0 16px rgba(0,255,204,0.5),0 0 40px rgba(0,255,204,0.2)} 50%{box-shadow:0 0 24px rgba(0,255,204,0.7),0 0 60px rgba(0,255,204,0.3)} }`;
+            document.head.appendChild(style);
+        }
+
+        let issData = { latitude: 0, longitude: 0, altitude: 0, velocity: 0 };
+
+        const issPopup = new maplibregl.Popup({ offset: 20, maxWidth: '280px', closeButton: true });
+
+        el.addEventListener('click', () => {
+            issPopup.setLngLat([issData.longitude, issData.latitude])
+                .setHTML(`<div style="font-family:'Share Tech Mono',monospace;font-size:.72rem;">
+                    <h3 style="color:#00ffcc;margin:0 0 6px;font-size:.8rem;display:flex;align-items:center;gap:6px;">
+                        <i class="fa-solid fa-satellite" style="font-size:.7rem;"></i> INTERNATIONAL SPACE STATION
+                    </h3>
+                    <div style="opacity:.5;font-size:.6rem;margin-bottom:6px;">NASA / ROSCOSMOS / ESA / JAXA / CSA</div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:6px;">
+                        <div style="background:rgba(0,255,204,.05);padding:4px;text-align:center;border-radius:3px;">
+                            <div style="opacity:.4;font-size:.5rem;">ALTITUDE</div>
+                            <div style="color:#00ffcc;font-size:.75rem;">${Math.round(issData.altitude)} km</div>
+                        </div>
+                        <div style="background:rgba(0,255,204,.05);padding:4px;text-align:center;border-radius:3px;">
+                            <div style="opacity:.4;font-size:.5rem;">SPEED</div>
+                            <div style="color:#00ffcc;font-size:.75rem;">${Math.round(issData.velocity).toLocaleString()} km/h</div>
+                        </div>
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;">
+                        <div style="background:rgba(0,255,204,.05);padding:4px;text-align:center;border-radius:3px;">
+                            <div style="opacity:.4;font-size:.5rem;">LATITUDE</div>
+                            <div style="font-size:.65rem;">${issData.latitude.toFixed(4)}°</div>
+                        </div>
+                        <div style="background:rgba(0,255,204,.05);padding:4px;text-align:center;border-radius:3px;">
+                            <div style="opacity:.4;font-size:.5rem;">LONGITUDE</div>
+                            <div style="font-size:.65rem;">${issData.longitude.toFixed(4)}°</div>
+                        </div>
+                    </div>
+                    <div style="opacity:.35;font-size:.5rem;margin-top:6px;letter-spacing:1px;">ORBITS EARTH EVERY 90 MIN · LIVE VIA WHERETHEISS.AT</div>
+                </div>`)
+                .addTo(map);
+        });
         
         issMarker = new maplibregl.Marker({ element: el })
             .setLngLat([0,0])
@@ -2036,6 +2083,7 @@ document.addEventListener("DOMContentLoaded", () => {
             try {
                 const result = await window.reliableFetch('https://api.wheretheiss.at/v1/satellites/25544', 'iss_telemetry');
                 const data = result.data;
+                issData = { latitude: data.latitude, longitude: data.longitude, altitude: data.altitude, velocity: data.velocity };
                 issMarker.setLngLat([data.longitude, data.latitude]);
                 if (toggles.iss && !issMarker._map) issMarker.addTo(map);
             } catch(e) {}

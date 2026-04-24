@@ -319,19 +319,67 @@
             </div>
         </section>
 
+        <!-- GUIDED TOURS -->
+        <section class="doc-section sec-scenario">
+            <div class="sec-header">
+                <i class="fa-solid fa-route"></i>
+                <h2>3. Guided Tours & Audio Narration</h2>
+            </div>
+            <div class="sec-content">
+                <p>GEOPULSE includes <strong>12 interactive guided tours</strong> that fly you around the globe with educational narration. Each tour consists of multiple stops — the map zooms to each location automatically with cinematic camera movements.</p>
+                
+                <div class="feature-grid">
+                    <div class="f-card">
+                        <h3><i class="fa-solid fa-play" style="color:var(--green)"></i> Starting a Tour</h3>
+                        <p>Open the <span class="ui-tag">GLOBAL SCENARIOS</span> section in the sidebar. Tours are grouped into three categories: <strong>Geopolitics</strong> (Cold War, Belt & Road, Trump World Tour, Chokepoints, Water Wars), <strong>Science & Nature</strong> (Ring of Fire, Nuclear Legacy, Digital Silk Road, Battery Race, Climate Frontlines), and <strong>Sports & Culture</strong> (Formula 1, FIFA World Cup).</p>
+                    </div>
+                    <div class="f-card">
+                        <h3><i class="fa-solid fa-volume-high" style="color:var(--amber)"></i> Audio Narration</h3>
+                        <p>Each tour has a <strong>🔊 speaker button</strong> in the tour panel header. Click it to activate automatic text-to-speech narration using your browser's Web Speech API. The narrator reads each stop's briefing aloud. Click again to deactivate. The button glows <strong style="color:#00d4ff;">blue</strong> when active.</p>
+                    </div>
+                    <div class="f-card">
+                        <h3><i class="fa-solid fa-arrows-left-right" style="color:var(--cyan)"></i> Navigation</h3>
+                        <p>Use <span class="ui-tag">◀ PREV</span> and <span class="ui-tag">NEXT ▶</span> to move between stops. The tour panel shows your current stop number (e.g. "STOP 3 OF 9"). Click <span class="ui-tag">✕</span> to exit the tour at any time. The map auto-zooms to each location.</p>
+                    </div>
+                    <div class="f-card">
+                        <h3><i class="fa-solid fa-hand-pointer" style="color:var(--green)"></i> Interactive Markers</h3>
+                        <p>During tours, relevant map layers are automatically activated. Click any marker on the map for additional detail and Wikipedia links — these complement the tour narration with deeper data.</p>
+                    </div>
+                </div>
+
+                <div style="margin-top:24px;background:var(--surface2);border:1px solid var(--border);padding:20px;border-radius:8px;">
+                    <h4 style="color:var(--amber);font-family:'Share Tech Mono',monospace;margin-bottom:12px;font-size:.85rem;">AVAILABLE TOURS</h4>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:.85rem;color:var(--text-muted);">
+                        <div>🔴 Cold War → Reunification</div>
+                        <div>🟦 Belt & Road Initiative</div>
+                        <div>🏛️ Trump World Tour</div>
+                        <div>🌊 Chokepoints</div>
+                        <div>💧 Water Wars</div>
+                        <div>🌋 Ring of Fire</div>
+                        <div>☢️ Nuclear Legacy</div>
+                        <div>🌐 Digital Silk Road</div>
+                        <div>🔋 Battery Race</div>
+                        <div>🌡️ Climate Frontlines</div>
+                        <div>🏎️ Formula 1 World Tour</div>
+                        <div>⚽ FIFA World Cup</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
         <!-- GLOBAL SCENARIOS -->
         <section class="doc-section sec-scenario">
             <div class="sec-header">
                 <i class="fa-solid fa-crosshairs"></i>
-                <h2>3. Global Scenario Presets</h2>
+                <h2>4. Scenario Presets</h2>
             </div>
             <div class="sec-content">
-                <p>Located in the collapsible <span class="ui-tag">GLOBAL SCENARIOS</span> menu. These buttons configure the map into educational views optimized for exploring specific global crises.</p>
+                <p>Located below the tours in the <span class="ui-tag">GLOBAL SCENARIOS</span> menu. These one-click buttons configure the map view for specific global crises by activating relevant layers and zooming to the affected region.</p>
                 <ul style="color:var(--text-muted); margin-left:20px; line-height:2; margin-bottom:20px;">
-                    <li><strong>Europe Energy:</strong> Activates Nuclear Sites + Cables + Power Outages, pans to Central Europe. Explore Europe's energy dependencies.</li>
-                    <li><strong>Taiwan Esc.:</strong> Activates AIS Shipping + Submarine Cables + Nuclear zones, centering on the Taiwan Strait to understand maritime chokepoint dynamics.</li>
-                    <li><strong>Red Sea:</strong> Isolates the Suez/Houthi corridor with commercial shipping tracks to visualize global trade route disruption.</li>
-                    <li><strong>Nuclear Risk:</strong> Overlays Active Conflicts with Nuclear Infrastructure and Arsenal data for escalation awareness.</li>
+                    <li><strong>Europe Energy:</strong> Activates Nuclear Sites + Cables + Power Infrastructure, pans to Central Europe.</li>
+                    <li><strong>Taiwan Esc.:</strong> Activates AIS Shipping + Submarine Cables + Nuclear zones, centering on the Taiwan Strait.</li>
+                    <li><strong>Red Sea:</strong> Isolates the Suez/Houthi corridor with commercial shipping tracks.</li>
+                    <li><strong>Nuclear Risk:</strong> Overlays Active Conflicts with Nuclear Infrastructure and Arsenal data.</li>
                 </ul>
                 <p>Use the <span class="ui-tag">[ RESET LAYERS ]</span> button to clear the scenario and return to normal map view.</p>
             </div>
@@ -341,20 +389,31 @@
         <section class="doc-section">
             <div class="sec-header">
                 <i class="fa-solid fa-video"></i>
-                <h2>4. Live Webcams</h2>
+                <h2>5. Live Webcams</h2>
             </div>
             <div class="sec-content">
-                <p>Toggle the <span class="ui-tag">Live Webcams</span> layer to place 18 camera markers on the map. Click any marker to see a live snapshot or video stream from that location.</p>
+                <p>Toggle the <span class="ui-tag">Live Webcams</span> layer to place 18 camera markers on the map. Click any marker to see a live snapshot or link to a video stream.</p>
                 <div class="feature-grid">
                     <div class="f-card" style="border-color: rgba(0,255,136,0.3);">
                         <h3 style="color: var(--green);"><i class="fa-solid fa-camera"></i> Snapshot Cameras (Green)</h3>
-                        <p>9 cameras powered by <strong>foto-webcam.eu</strong> — real JPEG photographs that auto-refresh every 60 seconds. Covers the Alps, Zugspitze, Feldberg/Wiesbaden area, Innsbruck, Vienna, Salzburg, and more. Highly reliable (~90%).</p>
+                        <p>9 cameras powered by <strong>foto-webcam.eu</strong> — real JPEG photographs that auto-refresh every 60 seconds. Covers the Alps, Zugspitze, Feldberg/Wiesbaden, Innsbruck, Vienna, Salzburg. ~90% reliability.</p>
                     </div>
                     <div class="f-card">
-                        <h3><i class="fa-solid fa-tower-broadcast" style="color: var(--amber);"></i> Stream Cameras (Amber)</h3>
-                        <p>9 cameras using <strong>YouTube channel embeds</strong> for global cities — Matterhorn, Kyiv, New York, Tokyo, Paris, London, Beijing, and Yosemite. These may be offline if the channel is not currently live streaming.</p>
+                        <h3><i class="fa-brands fa-youtube" style="color: #ff0000;"></i> Stream Cameras (Amber)</h3>
+                        <p>9 cameras linking to <strong>YouTube live streams</strong> for global cities — Matterhorn, Kyiv, NYC, Tokyo, Paris, London, Beijing, Yosemite. Click to open the channel's live page in a new tab.</p>
                     </div>
                 </div>
+            </div>
+        </section>
+
+        <!-- FEEDBACK -->
+        <section class="doc-section">
+            <div class="sec-header">
+                <i class="fa-solid fa-comment-dots"></i>
+                <h2>6. Feedback Widget</h2>
+            </div>
+            <div class="sec-content">
+                <p>Click the <span class="ui-tag">💬</span> button in the bottom-right corner to open the feedback form. Rate your experience, share your favourite feature, suggest improvements, and wish for new features. All feedback is submitted directly to the development team via Google Forms.</p>
             </div>
         </section>
 
@@ -362,7 +421,7 @@
         <section class="doc-section">
             <div class="sec-header">
                 <i class="fa-solid fa-language"></i>
-                <h2>5. Interface Language & Info Panel</h2>
+                <h2>7. Interface Language & Info Panel</h2>
             </div>
             <div class="sec-content">
                 <div class="feature-grid">
@@ -371,8 +430,8 @@
                         <p>Click the <span class="ui-tag">EN</span> / <span class="ui-tag">DE</span> buttons in the sidebar header to switch the entire interface between English and German. The preference is saved locally.</p>
                     </div>
                     <div class="f-card">
-                        <h3><i class="fa-solid fa-info-circle" style="color:var(--cyan)"></i> In-App INFO Panel</h3>
-                        <p>Tap <span class="ui-tag">INFO</span> in the bottom navigation bar to open the in-app info panel. It lists all data sources, links to original databases, and explains how to interpret the map.</p>
+                        <h3><i class="fa-solid fa-info-circle" style="color:var(--cyan)"></i> About This Map Panel</h3>
+                        <p>Click the <span class="ui-tag">ABOUT THIS MAP</span> panel on the top-left of the screen. It lists all data sources, links to original databases, and explains how to interpret the map.</p>
                     </div>
                 </div>
             </div>
