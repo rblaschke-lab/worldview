@@ -29,7 +29,7 @@ window.GeopulseConfig = {
         "sst": { id: "sst", name: "Ocean Temp", status: "STATIC", source: "NOAA", reliabilityScore: 98 },
         "population": { id: "population", name: "Population", status: "STATIC", source: "CIESIN", reliabilityScore: 95 },
         "temperature": { id: "temperature", name: "Surface Temp", status: "STATIC", source: "Global Temp", reliabilityScore: 98 },
-        "webcams": { id: "webcams", name: "Webcam Streams", status: "STATIC", source: "EarthCam Relay", reliabilityScore: 70 },
+        "webcams": { id: "webcams", name: "Live Webcams", status: "LIVE", source: "foto-webcam.eu + YouTube", reliabilityScore: 80 },
         "starlink": { id: "starlink", name: "Starlink Net", status: "STATIC", source: "Orbital Sim", reliabilityScore: 100 },
         "satellites": { id: "satellites", name: "Sat & Debris", status: "STATIC", source: "SpaceTrack", reliabilityScore: 92 },
         "volcanoes": { id: "volcanoes", name: "Volcanoes", status: "STATIC", source: "Smithsonian", reliabilityScore: 95 },

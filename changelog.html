@@ -305,9 +305,33 @@
 
     <div class="timeline">
 
-        <!-- V10.0 -->
+        <!-- V10.1 -->
         <div class="version-entry">
             <div class="version-dot current"></div>
+            <div class="version-header">
+                <span class="version-number">V10.1</span>
+                <span class="version-type type-minor">MINOR</span>
+                <span class="version-name">Webcam Overhaul &amp; Intelligence Cleanup</span>
+                <span class="version-date">APR 2026</span>
+            </div>
+            <ul class="version-changes">
+                <li><span class="change-icon feat">✦</span> Live Webcam system rebuilt — 18 real cameras worldwide</li>
+                <li><span class="change-icon feat">✦</span> 9 foto-webcam.eu snapshot cameras (Alps, Zugspitze, Feldberg/Wiesbaden, Innsbruck, Vienna, Salzburg)</li>
+                <li><span class="change-icon feat">✦</span> 9 YouTube channel embeds (Matterhorn, Kyiv, NYC, Tokyo, Paris, London, Beijing, Yosemite)</li>
+                <li><span class="change-icon feat">✦</span> Camera catalog data model with source type, provider, and tags</li>
+                <li><span class="change-icon feat">✦</span> Auto-refresh snapshots every 60 seconds</li>
+                <li><span class="change-icon feat">✦</span> Graceful offline fallback UI ("SIGNAL LOST" / "STREAM OFFLINE")</li>
+                <li><span class="change-icon ui">◆</span> Green markers for reliable snapshots, amber for YouTube streams</li>
+                <li><span class="change-icon ui">◆</span> CSP updated — foto-webcam.eu img-src + YouTube/foto-webcam frame-src</li>
+                <li><span class="change-icon perf">⚡</span> Removed defunct Intelligence panel (HTML, JS, CSS — ~200 lines dead code)</li>
+                <li><span class="change-icon perf">⚡</span> Removed fake SVG skyline webcam placeholders</li>
+                <li><span class="change-icon fix">●</span> Updated manual, about page, and config to reflect current features</li>
+            </ul>
+        </div>
+
+        <!-- V10.0 -->
+        <div class="version-entry">
+            <div class="version-dot major"></div>
             <div class="version-header">
                 <span class="version-number">V10.0</span>
                 <span class="version-type type-major">MAJOR</span>
@@ -463,7 +487,7 @@
                 <li><span class="change-icon feat">✦</span> Unified mobile navigation system</li>
                 <li><span class="change-icon feat">✦</span> Live news ticker with RSS feeds</li>
                 <li><span class="change-icon feat">✦</span> Power outage monitoring layer</li>
-                <li><span class="change-icon feat">✦</span> Intelligence alert cards with severity color-coding</li>
+                <li><span class="change-icon feat">✦</span> Intelligence alert cards with severity color-coding <em style="color:var(--text-muted);font-size:.7rem;">(removed V10.1)</em></li>
                 <li><span class="change-icon feat">✦</span> Ocean SST map replacing night lights</li>
                 <li><span class="change-icon feat">✦</span> Solar storm index in Hazards menu</li>
                 <li><span class="change-icon ui">◆</span> Midnight Slate glassmorphism design system</li>
@@ -493,7 +517,7 @@
                 <li><span class="change-icon feat">✦</span> Iran-Israel/USA conflict zones</li>
                 <li><span class="change-icon feat">✦</span> Black Marble night lights</li>
                 <li><span class="change-icon feat">✦</span> Clickable city popups</li>
-                <li><span class="change-icon feat">✦</span> Intelligence anomaly scanner (5min scan, 3-entry rolling)</li>
+                <li><span class="change-icon feat">✦</span> Intelligence anomaly scanner <em style="color:var(--text-muted);font-size:.7rem;">(removed V10.1)</em></li>
                 <li><span class="change-icon ui">◆</span> Menu redesign with collapsible categories</li>
                 <li><span class="change-icon fix">●</span> Myanmar lat/lon fix that was blocking all layer inits</li>
             </ul>

@@ -27,7 +27,7 @@
     <meta name="twitter:image" content="./og-preview.png">
 
     <!-- Security Headers -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://unpkg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com https://unpkg.com; font-src https://fonts.gstatic.com https://cdnjs.cloudflare.com https://fonts.openmaptiles.org; img-src 'self' https://*.arcgisonline.com https://tile.openstreetmap.org https://tilecache.rainviewer.com https://firms.modaps.eosdis.nasa.gov https://gibs.earthdata.nasa.gov https://picsum.photos https://fastly.picsum.photos data: blob:; connect-src 'self' https://api.rss2json.com https://earthquake.usgs.gov https://api.wheretheiss.at https://opensky-network.org https://services.swpc.noaa.gov https://api.rainviewer.com https://ll.thespacedevs.com https://api.ioda.inetintel.cc.gatech.edu wss://stream.aisstream.io https://firms.modaps.eosdis.nasa.gov https://gibs.earthdata.nasa.gov https://*.arcgisonline.com https://fonts.googleapis.com https://fonts.gstatic.com https://fonts.openmaptiles.org https://unpkg.com https://cdnjs.cloudflare.com; worker-src blob:; child-src blob:;">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://unpkg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com https://unpkg.com; font-src https://fonts.gstatic.com https://cdnjs.cloudflare.com https://fonts.openmaptiles.org; img-src 'self' https://*.arcgisonline.com https://tile.openstreetmap.org https://tilecache.rainviewer.com https://firms.modaps.eosdis.nasa.gov https://gibs.earthdata.nasa.gov https://www.foto-webcam.eu data: blob:; connect-src 'self' https://api.rss2json.com https://earthquake.usgs.gov https://api.wheretheiss.at https://opensky-network.org https://services.swpc.noaa.gov https://api.rainviewer.com https://ll.thespacedevs.com https://api.ioda.inetintel.cc.gatech.edu wss://stream.aisstream.io https://firms.modaps.eosdis.nasa.gov https://gibs.earthdata.nasa.gov https://*.arcgisonline.com https://fonts.googleapis.com https://fonts.gstatic.com https://fonts.openmaptiles.org https://unpkg.com https://cdnjs.cloudflare.com; frame-src https://www.youtube.com https://www.foto-webcam.eu; worker-src blob:; child-src blob:;">
     <meta http-equiv="X-Content-Type-Options" content="nosniff">
     <meta name="referrer" content="no-referrer">
     
@@ -45,7 +45,7 @@
 
     <script src="./fetchWrapper.js"></script>
     <script src="./config.js"></script>
-    <link rel="stylesheet" href="./style.css?v=9.0">
+    <link rel="stylesheet" href="./style.css?v=11.0">
 </head>
 <body class="theme-clean">
     <div id="map"></div>
@@ -151,7 +151,7 @@
                         <label class="toggle-switch"><input type="checkbox" id="toggle-iss"><span class="slider"></span></label>
                     </div>
                     <div class="control-item">
-                        <div class="layer-info"><span>📹 <span data-i18n="layer_webcams">Live Webcams</span></span><p class="layer-desc" data-i18n="desc_webcams">Static EarthCam feeds from major global cities.</p></div>
+                        <div class="layer-info"><span>📹 <span data-i18n="layer_webcams">Live Webcams</span></span><p class="layer-desc" data-i18n="desc_webcams">Real webcam snapshots from foto-webcam.eu + YouTube live streams. 18 cameras worldwide.</p></div>
                         <label class="toggle-switch"><input type="checkbox" id="toggle-webcams"><span class="slider"></span></label>
                     </div>
                     <div class="control-item">
@@ -270,22 +270,7 @@
         <button class="nav-btn" data-target="info"><i class="fa-solid fa-info-circle"></i><span data-i18n="nav_info">INFO</span></button>
     </nav>
 
-    <!-- INTEL PANEL -->
-    <div id="intelligence-panel" class="terminal-panel">
-        <header>
-            <div class="header-top-row">
-                <h2><span data-i18n="intel_title">INTELLIGENCE</span> <span class="pulse"></span></h2>
-            </div>
-            <div class="sub-header"><span class="blinking-cursor">_</span> <span data-i18n="intel_subtitle">CORE_ANOMALY_SCANNER</span></div>
-        </header>
-        <div id="alert-list">
-            <div class="alert-item" style="opacity: 0.5;">
-                <h4><i class="fa-solid fa-satellite-dish"></i> <span data-i18n="intel_init">INITIALIZING AI CORE...</span></h4>
-                <p data-i18n="intel_init_desc">Establishing spatial aggregation patterns.</p>
-                <span class="timestamp" data-i18n="intel_awaiting">AWAITING TELEMETRY</span>
-            </div>
-        </div>
-    </div>
+
 
     <!-- INFO PANEL (In-App — replaces external about.html link) -->
     <div id="info-panel" class="terminal-panel">
@@ -459,6 +444,6 @@
         <a href="./changelog.html" target="_blank" title="Changelog"><i class="fa-solid fa-code-branch"></i> Changelog</a>
     </div>
 
-    <script src="./main.js?v=10.0"></script>
+    <script src="./main.js?v=11.0"></script>
 </body>
 </html>

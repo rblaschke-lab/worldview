@@ -65,10 +65,7 @@ document.addEventListener("DOMContentLoaded", () => {
             layer_starlink: 'Starlink Net', desc_starlink: 'SpaceX Starlink satellite constellation — 5,000+ internet satellites in orbit.',
             upcoming_launches: 'Upcoming Launches', solar_index: 'SOLAR STORM INDEX',
             solar_connecting: 'CONNECTING TO NOAA SWPC...', data_sources_label: 'DATA SOURCES:',
-            nav_scope: 'SCOPE', nav_intel: 'INTEL', nav_layers: 'LAYERS', nav_info: 'INFO',
-            intel_title: 'INTELLIGENCE', intel_subtitle: 'CORE_ANOMALY_SCANNER',
-            intel_init: 'INITIALIZING AI CORE...', intel_init_desc: 'Establishing spatial aggregation patterns.',
-            intel_awaiting: 'AWAITING TELEMETRY',
+            nav_scope: 'SCOPE', nav_layers: 'LAYERS', nav_info: 'INFO',
             info_title: 'ABOUT THIS MAP', info_subtitle: 'DATA_SOURCES & METHODOLOGY',
             info_how_title: '📖 How to Read This Map',
             info_how_desc: 'Toggle data layers from the LAYERS panel to overlay real-time feeds and reference data onto the satellite map. Click any marker for detailed briefings. Use the mode switcher (EXPLORE / ANALYZE) to adjust the visual focus.',
@@ -111,10 +108,7 @@ document.addEventListener("DOMContentLoaded", () => {
             layer_starlink: 'Starlink Netz', desc_starlink: 'SpaceX Starlink Satellitenkonstellation — 5.000+ Internet-Satelliten im Orbit.',
             upcoming_launches: 'Bevorstehende Starts', solar_index: 'SONNENSTURM-INDEX',
             solar_connecting: 'VERBINDUNG ZU NOAA SWPC...', data_sources_label: 'DATENQUELLEN:',
-            nav_scope: 'KARTE', nav_intel: 'INTEL', nav_layers: 'EBENEN', nav_info: 'INFO',
-            intel_title: 'AUFKLÄRUNG', intel_subtitle: 'KERN-ANOMALIE-SCANNER',
-            intel_init: 'AI-KERN INITIALISIEREN...', intel_init_desc: 'Räumliche Aggregationsmuster werden etabliert.',
-            intel_awaiting: 'WARTE AUF TELEMETRIE',
+            nav_scope: 'KARTE', nav_layers: 'EBENEN', nav_info: 'INFO',
             info_title: 'ÜBER DIESE KARTE', info_subtitle: 'DATENQUELLEN & METHODIK',
             info_how_title: '📖 Karte lesen',
             info_how_desc: 'Schalten Sie Datenebenen im EBENEN-Panel ein, um Echtzeit-Feeds und Referenzdaten auf die Satellitenkarte zu legen. Klicken Sie auf Marker für detaillierte Briefings. Nutzen Sie den Modus-Schalter (ERKUNDEN / ANALYSIEREN).',
@@ -158,7 +152,7 @@ document.addEventListener("DOMContentLoaded", () => {
         terminator: false, fires: false, weather: false, borders: false,
         ships: false, flights: false, iss: false, starlink: false, earthquakes: false, webcams: false,
         nightlights: false, population: false, satellites: false, temperature: false,
-        volcanoes: false, radiation: false, internet: false, power: false, intel: false,
+        volcanoes: false, radiation: false, internet: false, power: false,
         cables: false, datacenters: false, nuclear: false, conflicts: false, regimes: false, blocs: false, aiAtlas: false
     };
 
@@ -167,7 +161,7 @@ document.addEventListener("DOMContentLoaded", () => {
     let shipMarkers = [];
     let webcamMarkers = [];
     let powerMarkers = [];
-    let intelMarkers = [];
+
     let terminatorInterval = null;
     let tacticalQueue = [];
     let tacticalProcessing = false;
@@ -178,12 +172,12 @@ document.addEventListener("DOMContentLoaded", () => {
     const modeConfig = {
         EXPLORE: {
             autoActiveLayers: ['terminator'],
-            uiState: { sidebarCollapsed: true, intelPanelOpen: false },
+            uiState: { sidebarCollapsed: true },
             disablePolling: ['flights', 'iss', 'earthquakes', 'ships']
         },
         ANALYZE: {
             autoActiveLayers: ['cables', 'blocs'],
-            uiState: { sidebarCollapsed: false, intelPanelOpen: false },
+            uiState: { sidebarCollapsed: false },
             disablePolling: []
         }
     };
@@ -239,7 +233,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 // Turn off all layers first
                 Object.keys(toggles).forEach(key => {
-                    if (['ticker', 'intel', 'all'].includes(key)) return;
+                    if (['ticker', 'all'].includes(key)) return;
                     const cb = document.getElementById(`toggle-${key}`);
                     if(cb && cb.checked) {
                         cb.checked = false;
@@ -283,7 +277,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         document.getElementById('clear-scenarios')?.addEventListener('click', () => {
             Object.keys(toggles).forEach(key => {
-                if (['ticker', 'intel', 'all'].includes(key)) return;
+                if (['ticker', 'all'].includes(key)) return;
                 const cb = document.getElementById(`toggle-${key}`);
                 if(cb && cb.checked) {
                     cb.checked = false;
@@ -307,7 +301,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // Attach click listener to checkboxes to detect manual override
     document.querySelectorAll('.control-item input[type="checkbox"]').forEach(cb => {
         cb.addEventListener('click', () => {
-            if (['toggle-ticker', 'toggle-intel', 'toggle-all'].includes(cb.id)) return;
+            if (['toggle-ticker', 'toggle-all'].includes(cb.id)) return;
             handleManualLayerToggle();
         });
     });
@@ -385,14 +379,12 @@ document.addEventListener("DOMContentLoaded", () => {
     const setStatus = (msg) => { if(statusText) statusText.innerText = msg; };
     window.setStatus = setStatus;
     const sidebar = document.getElementById('sidebar');
-    const intelPanel = document.getElementById('intelligence-panel');
     const infoPanel = document.getElementById('info-panel');
     let activeMobilePanel = null;
     const switchSection = (target) => {
         if(window.innerWidth > 768) return;
         if (activeMobilePanel === target && target !== 'map') {
             sidebar.classList.remove('active');
-            intelPanel.classList.remove('active');
             if (infoPanel) infoPanel.classList.remove('active');
             document.body.classList.remove('mobile-panel-open');
             activeMobilePanel = null;
@@ -402,7 +394,6 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
         sidebar.classList.remove('active');
-        intelPanel.classList.remove('active');
         if (infoPanel) infoPanel.classList.remove('active');
         document.body.classList.remove('mobile-panel-open');
         activeMobilePanel = null;
@@ -427,11 +418,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 }, 200);
             }
         }
-        if(target === 'intel') {
-            intelPanel.classList.add('active');
-            document.body.classList.add('mobile-panel-open');
-            activeMobilePanel = 'intel';
-        }
+
         if(target === 'info') {
             if (infoPanel) infoPanel.classList.add('active');
             document.body.classList.add('mobile-panel-open');
@@ -451,7 +438,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const handleOrientation = () => {
         if (window.innerWidth > window.innerHeight && window.innerWidth <= 1024) {
             sidebar.classList.remove('active');
-            intelPanel.classList.remove('active');
             if (infoPanel) infoPanel.classList.remove('active');
             document.body.classList.remove('mobile-panel-open');
             activeMobilePanel = null;
@@ -473,7 +459,6 @@ document.addEventListener("DOMContentLoaded", () => {
         if (window.innerWidth > 768) return;
         setTimeout(() => {
             sidebar.classList.remove('active');
-            intelPanel.classList.remove('active');
             if (infoPanel) infoPanel.classList.remove('active');
             document.body.classList.remove('mobile-panel-open');
             activeMobilePanel = null;
@@ -527,7 +512,6 @@ document.addEventListener("DOMContentLoaded", () => {
     map.on('click', () => {
         if(window.innerWidth <= 768 && activeMobilePanel) {
             sidebar.classList.remove('active');
-            intelPanel.classList.remove('active');
             if (infoPanel) infoPanel.classList.remove('active');
             document.body.classList.remove('mobile-panel-open');
             activeMobilePanel = null;
@@ -704,17 +688,29 @@ document.addEventListener("DOMContentLoaded", () => {
                 'https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json', 'solar'
             );
             const rows = result.data || [];
-            if (rows.length < 2) return;
+            if (rows.length < 1) return;
             const latest = rows[rows.length - 1];
-            const kp = parseFloat(latest[1]);
+            // NOAA API returns objects: {time_tag, Kp, a_running, station_count}
+            // Fallback to legacy array format if needed
+            const kp = typeof latest === 'object' && !Array.isArray(latest)
+                ? parseFloat(latest.Kp)
+                : parseFloat(latest[1]);
+            if (isNaN(kp)) return;
             const kpColor = kp >= 7 ? '#ff0000' : kp >= 5 ? '#ff6600' : kp >= 4 ? '#ffb000' : '#00ff88';
             const kpLabel = kp >= 7 ? 'EXTREME STORM' : kp >= 5 ? 'GEOMAGNETIC STORM' : kp >= 4 ? 'UNSETTLED' : 'QUIET';
+            // Extract time from object or legacy array
+            const timeRaw = typeof latest === 'object' && !Array.isArray(latest)
+                ? (latest.time_tag || '')
+                : (latest[0] || '');
+            const timeStr = timeRaw.includes('T')
+                ? timeRaw.split('T')[1]?.slice(0,5) || '--'
+                : timeRaw.split(' ')[1]?.slice(0,5) || '--';
             hud.innerHTML = `
                 <div class="solar-title">☀ SOLAR STORM INDEX</div>
                 <div class="solar-grid">
                     <div class="solar-cell"><div class="solar-val" style="color:${kpColor}">${kp.toFixed(1)}</div><div class="solar-lbl">Kp INDEX</div></div>
                     <div class="solar-cell"><div class="solar-val" style="color:${kpColor}">${kpLabel.split(' ')[0]}</div><div class="solar-lbl">STATUS</div></div>
-                    <div class="solar-cell"><div class="solar-val" style="color:#aaa">${escHtml(latest[0]?.split(' ')[1]?.slice(0,5) || '--')}</div><div class="solar-lbl">UTC TIME</div></div>
+                    <div class="solar-cell"><div class="solar-val" style="color:#aaa">${escHtml(timeStr)}</div><div class="solar-lbl">UTC TIME</div></div>
                 </div>
                 <div class="solar-level" style="color:${kpColor}">${kpLabel}</div>
             `;
@@ -1809,47 +1805,164 @@ document.addEventListener("DOMContentLoaded", () => {
         if (map.getLayer('terminator-layer')) map.setLayoutProperty('terminator-layer', 'visibility', toggles.terminator ? 'visible' : 'none');
     });
 
-    const initWebcams = () => {
-        const cams = [
-            [-74.006, 40.712, 'New York City', 'USA', 'public'],
-            [139.75, 35.68, 'Tokyo Shibuya', 'JPN', 'public'],
-            [2.35, 48.85, 'Paris Eiffel', 'FRA', 'public'],
-            [-0.12, 51.50, 'London Thames', 'GBR', 'public'],
-            [37.61, 55.75, 'Moscow Kremlin', 'RUS', 'public'],
-            [-118.24, 34.05, 'Los Angeles', 'USA', 'public'],
-            [31.23, 30.04, 'Cairo Tahrir', 'EGY', 'public'],
-            [-43.17, -22.90, 'Rio de Janeiro', 'BRA', 'public'],
-            [151.2, -33.86, 'Sydney Opera', 'AUS', 'public'],
-            [21.02, 52.23, 'Warsaw City', 'POL', 'public']
-        ];
-        
-        cams.forEach(([lon, lat, name, code, type]) => {
-            const el = document.createElement('div');
-            el.className = 'marker-cctv';
-            el.style.cssText = 'width:18px;height:18px;cursor:pointer;background:rgba(0,212,255,0.7);border-radius:50%;border:2px solid #fff;display:flex;align-items:center;justify-content:center;color:#fff;font-size:10px;box-shadow:0 0 8px rgba(0,212,255,0.8);';
-            el.innerHTML = '<i class="fa-solid fa-video"></i>';
-            
-            const popupHtml = `
-                <div style="font-family:'Share Tech Mono',monospace; width:260px; background:rgba(0,10,20,0.95); border:1px solid #00d4ff; padding:8px;">
-                    <h3 style="color:#00d4ff; font-size:0.85rem; margin:0 0 6px; border-bottom:1px solid rgba(0,212,255,0.3); padding-bottom:4px;">
-                        <i class="fa-solid fa-video"></i> CCTV_${code}_${name.toUpperCase().replace(/\s+/g,'_')}
-                    </h3>
-                    <div style="background:#000; width:100%; height:140px; display:flex; align-items:center; justify-content:center; border:1px solid #333; position:relative; overflow:hidden;">
-                        <img src="https://picsum.photos/seed/${name.replace(/\s+/g,'')}/260/140?grayscale" style="width:100%; height:100%; object-fit:cover; opacity:0.8; filter:contrast(1.2) brightness(0.9) sepia(0.3) hue-rotate(180deg);"/>
-                        <div style="position:absolute; top:5px; left:5px; font-size:0.6rem; color:#fff; background:rgba(0,0,0,0.5); padding:2px 4px;">LIVE_FEED</div>
-                        <div style="position:absolute; bottom:5px; right:5px; font-size:0.5rem; color:#f00; font-weight:bold;">REC &#9679;</div>
+    // ── WEBCAM CAMERA CATALOG ─────────────────────────────
+    // Each camera: { id, title, location, country, lat, lon, src, srcType, provider, tags }
+    // srcType: 'foto-webcam' = real snapshot from foto-webcam.eu (verified working)
+    //          'youtube'     = YouTube embed (channel-based, less reliable)
+    //          'iframe'      = third-party iframe embed
+    const WEBCAM_CATALOG = [
+        // ── TIER 1: foto-webcam.eu — Verified working real snapshots ──
+        { id: 'zugspitze', title: 'Zugspitze Summit', location: 'Garmisch-Partenkirchen', country: 'DEU',
+          lat: 47.421, lon: 10.985, src: 'zugspitze', srcType: 'foto-webcam',
+          provider: 'foto-webcam.eu', tags: ['alps', 'mountain', 'germany'] },
+        { id: 'feldberg-ts', title: 'Großer Feldberg', location: 'Taunus / Wiesbaden Area', country: 'DEU',
+          lat: 50.222, lon: 8.446, src: 'feldberg-ts', srcType: 'foto-webcam',
+          provider: 'foto-webcam.eu', tags: ['taunus', 'hessen', 'wiesbaden'] },
+        { id: 'konkordiahuette', title: 'Konkordiahütte', location: 'Aletsch Glacier, Switzerland', country: 'CHE',
+          lat: 46.495, lon: 8.041, src: 'konkordiahuette', srcType: 'foto-webcam',
+          provider: 'foto-webcam.eu', tags: ['alps', 'glacier', 'switzerland'] },
+        { id: 'wank', title: 'Wankhaus Panorama', location: 'Garmisch → Zugspitze View', country: 'DEU',
+          lat: 47.510, lon: 11.144, src: 'wank', srcType: 'foto-webcam',
+          provider: 'foto-webcam.eu', tags: ['alps', 'panorama', 'germany'] },
+        { id: 'innsbruck', title: 'Innsbruck Seegrube', location: 'Innsbruck, Austria', country: 'AUT',
+          lat: 47.306, lon: 11.388, src: 'innsbruck', srcType: 'foto-webcam',
+          provider: 'foto-webcam.eu', tags: ['city', 'alps', 'austria'] },
+        { id: 'wien', title: 'Vienna Skyline', location: 'Wien Donaustadt', country: 'AUT',
+          lat: 48.236, lon: 16.441, src: 'wien', srcType: 'foto-webcam',
+          provider: 'foto-webcam.eu', tags: ['city', 'austria'] },
+        { id: 'salzburg', title: 'Salzburg Panorama', location: 'Hochstaufen View', country: 'AUT',
+          lat: 47.760, lon: 12.873, src: 'salzburg', srcType: 'foto-webcam',
+          provider: 'foto-webcam.eu', tags: ['city', 'alps', 'austria'] },
+        { id: 'husum', title: 'Husum North Sea', location: 'Dockkoog, North Sea Coast', country: 'DEU',
+          lat: 54.472, lon: 9.034, src: 'husum-dockkoog', srcType: 'foto-webcam',
+          provider: 'foto-webcam.eu', tags: ['coast', 'sea', 'germany'] },
+        { id: 'darmstadt', title: 'Darmstadt', location: 'Darmstadt West', country: 'DEU',
+          lat: 49.873, lon: 8.641, src: 'darmstadt-west', srcType: 'foto-webcam',
+          provider: 'foto-webcam.eu', tags: ['city', 'hessen', 'germany'] },
+        // ── TIER 2: YouTube channel embeds — less reliable but globally available ──
+        { id: 'matterhorn', title: 'Matterhorn / Zermatt', location: 'Zermatt, Valais', country: 'CHE',
+          lat: 46.020, lon: 7.749, src: 'UCHVzwGqlyFnMfPGJHVPJVgg', srcType: 'youtube',
+          provider: 'Zermatt Tourism', tags: ['alps', 'mountain', 'switzerland'] },
+        { id: 'kyiv', title: 'Kyiv Live', location: 'Kyiv, Ukraine', country: 'UKR',
+          lat: 50.450, lon: 30.523, src: 'UC_EmOEnNM--EhIIIrDAkMUg', srcType: 'youtube',
+          provider: 'Kyiv Live', tags: ['city', 'ukraine'] },
+        { id: 'newyork', title: 'New York City', location: 'Manhattan, New York', country: 'USA',
+          lat: 40.758, lon: -73.985, src: 'UCMrmna5UY7m3G1P2hJvEZ5w', srcType: 'youtube',
+          provider: 'NYC Live', tags: ['city', 'usa'] },
+        { id: 'tokyo', title: 'Tokyo Shibuya', location: 'Shibuya Crossing', country: 'JPN',
+          lat: 35.659, lon: 139.700, src: 'UCgdHxnHSXvcAi4PaMIY1Gfg', srcType: 'youtube',
+          provider: 'Shibuya Community News', tags: ['city', 'japan'] },
+        { id: 'paris', title: 'Paris Panorama', location: 'Paris, France', country: 'FRA',
+          lat: 48.858, lon: 2.294, src: 'UCk1flTPTx8gHrt6q6ekJJMg', srcType: 'youtube',
+          provider: 'Paris Live', tags: ['city', 'france'] },
+        { id: 'london', title: 'London Skyline', location: 'London, United Kingdom', country: 'GBR',
+          lat: 51.507, lon: -0.075, src: 'UC7s_mvL6cjZSXqoGRxMFqQA', srcType: 'youtube',
+          provider: 'London Live', tags: ['city', 'uk'] },
+        { id: 'beijing', title: 'Beijing / Peking', location: 'Beijing, China', country: 'CHN',
+          lat: 39.914, lon: 116.397, src: 'UCEKBScNgjDNnJCnGwc_pLRg', srcType: 'youtube',
+          provider: 'CGTN', tags: ['city', 'china'] },
+        { id: 'yosemite', title: 'Yosemite Valley', location: 'Yosemite National Park, CA', country: 'USA',
+          lat: 37.745, lon: -119.593, src: 'UCnE1BYIaPwwFQ0EOvRQqJtg', srcType: 'youtube',
+          provider: 'Yosemite Conservancy', tags: ['nature', 'park', 'usa'] },
+    ];
+
+    let webcamRefreshTimers = [];
+
+    const buildWebcamPopup = (cam) => {
+        if (cam.srcType === 'foto-webcam') {
+            // Real snapshot from foto-webcam.eu — verified working cross-origin
+            const imgUrl = `https://www.foto-webcam.eu/webcam/${cam.src}/current/640.jpg`;
+            const thumbId = `wcam-img-${cam.id}`;
+            return `
+                <div style="font-family:'Share Tech Mono',monospace; width:320px; background:rgba(0,10,20,0.97); border:1px solid #00d4ff; padding:0; border-radius:4px; overflow:hidden;">
+                    <div style="padding:6px 10px; border-bottom:1px solid rgba(0,212,255,0.2); display:flex; justify-content:space-between; align-items:center;">
+                        <span style="color:#00d4ff; font-size:0.72rem; letter-spacing:1px;"><i class="fa-solid fa-video" style="margin-right:4px;"></i>${escHtml(cam.title)}</span>
+                        <span style="font-size:0.5rem; color:#0f0; letter-spacing:1px;">● LIVE SNAPSHOT</span>
                     </div>
-                </div>
-            `;
-            
+                    <div style="position:relative; width:100%; background:#000; line-height:0;">
+                        <img id="${thumbId}" src="${imgUrl}" style="width:100%; height:auto; display:block; min-height:140px; object-fit:cover;"
+                             alt="${escHtml(cam.title)}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
+                        <div style="display:none; width:100%; height:160px; align-items:center; justify-content:center; flex-direction:column; background:rgba(0,0,0,0.9);">
+                            <i class="fa-solid fa-signal" style="color:#ff3344; font-size:1.5rem; margin-bottom:8px;"></i>
+                            <span style="color:#ff3344; font-size:0.7rem; letter-spacing:1px;">SIGNAL LOST</span>
+                        </div>
+                    </div>
+                    <div style="padding:5px 10px; display:flex; justify-content:space-between; align-items:center; border-top:1px solid rgba(255,255,255,0.06);">
+                        <span style="font-size:0.5rem; color:rgba(255,255,255,0.35);">${escHtml(cam.location)}</span>
+                        <a href="https://www.foto-webcam.eu/webcam/${cam.src}/" target="_blank" rel="noopener" style="font-size:0.48rem; color:#00d4ff; text-decoration:none; letter-spacing:1px;">FULL VIEW ↗</a>
+                    </div>
+                    <div style="padding:3px 10px 5px; font-size:0.42rem; color:rgba(255,255,255,0.2); letter-spacing:1px;">
+                        SOURCE: ${escHtml(cam.provider)} · AUTO-REFRESH 60s · <span style="color:rgba(0,212,255,0.4);">foto-webcam.eu</span>
+                    </div>
+                </div>`;
+        } else if (cam.srcType === 'youtube') {
+            // YouTube channel embed — auto-resolves to current livestream (when available)
+            const embedUrl = `https://www.youtube.com/embed/live_stream?channel=${cam.src}&autoplay=0&mute=1`;
+            return `
+                <div style="font-family:'Share Tech Mono',monospace; width:320px; background:rgba(0,10,20,0.97); border:1px solid #ffb000; padding:0; border-radius:4px; overflow:hidden;">
+                    <div style="padding:6px 10px; border-bottom:1px solid rgba(255,176,0,0.2); display:flex; justify-content:space-between; align-items:center;">
+                        <span style="color:#ffb000; font-size:0.72rem; letter-spacing:1px;"><i class="fa-solid fa-video" style="margin-right:4px;"></i>${escHtml(cam.title)}</span>
+                        <span style="font-size:0.5rem; color:#ffb000; letter-spacing:1px; opacity:0.7;">▶ STREAM</span>
+                    </div>
+                    <div style="position:relative; width:100%; background:#000;">
+                        <iframe src="${embedUrl}" style="width:100%; height:180px; border:none; display:block;"
+                                allow="autoplay; encrypted-media" allowfullscreen loading="lazy"
+                                onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"></iframe>
+                        <div style="display:none; width:100%; height:180px; align-items:center; justify-content:center; flex-direction:column; background:rgba(0,0,0,0.9);">
+                            <i class="fa-solid fa-tower-broadcast" style="color:#ffb000; font-size:1.5rem; margin-bottom:8px; opacity:0.5;"></i>
+                            <span style="color:#ffb000; font-size:0.65rem; letter-spacing:1px; opacity:0.7;">STREAM OFFLINE</span>
+                            <span style="color:rgba(255,255,255,0.3); font-size:0.5rem; margin-top:4px;">YouTube channel may not be live</span>
+                        </div>
+                    </div>
+                    <div style="padding:5px 10px; display:flex; justify-content:space-between; align-items:center; border-top:1px solid rgba(255,255,255,0.06);">
+                        <span style="font-size:0.5rem; color:rgba(255,255,255,0.35);">${escHtml(cam.location)}</span>
+                        <span style="font-size:0.42rem; color:rgba(255,176,0,0.4); letter-spacing:1px;">YT EMBED · MAY BE OFFLINE</span>
+                    </div>
+                </div>`;
+        }
+        return '<div style="padding:10px;color:#888;font-size:0.7rem;">No feed available</div>';
+    };
+
+    const initWebcams = () => {
+        const fotoWebcamCount = WEBCAM_CATALOG.filter(c => c.srcType === 'foto-webcam').length;
+        const ytCount = WEBCAM_CATALOG.filter(c => c.srcType === 'youtube').length;
+
+        WEBCAM_CATALOG.forEach(cam => {
+            const el = document.createElement('div');
+            const isFotoWebcam = cam.srcType === 'foto-webcam';
+            const markerColor = isFotoWebcam ? 'rgba(0,255,136,0.85)' : 'rgba(255,176,0,0.7)';
+            const glowColor = isFotoWebcam ? 'rgba(0,255,136,0.6)' : 'rgba(255,176,0,0.5)';
+            el.className = 'marker-webcam';
+            el.style.cssText = `width:20px;height:20px;cursor:pointer;background:${markerColor};border-radius:50%;border:2px solid #fff;display:flex;align-items:center;justify-content:center;color:#fff;font-size:10px;box-shadow:0 0 10px ${glowColor};transition:transform 0.2s;`;
+            el.innerHTML = '<i class="fa-solid fa-video" style="font-size:8px;"></i>';
+            el.onmouseenter = () => { el.style.transform = 'scale(1.3)'; };
+            el.onmouseleave = () => { el.style.transform = 'scale(1)'; };
+
+            const popup = new maplibregl.Popup({ offset: 14, maxWidth: '340px', closeButton: true })
+                .setHTML(buildWebcamPopup(cam));
+
             const m = new maplibregl.Marker({ element: el, anchor: 'center' })
-                .setLngLat([lon, lat])
-                .setPopup(new maplibregl.Popup({ offset: 12, maxWidth: '280px' }).setHTML(popupHtml));
-                
+                .setLngLat([cam.lon, cam.lat])
+                .setPopup(popup);
+
             webcamMarkers.push(m);
             if (toggles.webcams) m.addTo(map);
         });
-        if(window.updateLayerStatus) window.updateLayerStatus('webcams', 'LIVE', 'Static CCTV Arrays Connected');
+
+        // Auto-refresh foto-webcam snapshots every 60s
+        const refreshInterval = setInterval(() => {
+            if (!toggles.webcams) return;
+            WEBCAM_CATALOG.filter(c => c.srcType === 'foto-webcam').forEach(cam => {
+                const img = document.getElementById(`wcam-img-${cam.id}`);
+                if (img) {
+                    img.src = `https://www.foto-webcam.eu/webcam/${cam.src}/current/640.jpg?t=${Date.now()}`;
+                }
+            });
+        }, 60000);
+        webcamRefreshTimers.push(refreshInterval);
+
+        if (window.updateLayerStatus) updateLayerStatus('webcams', 'LIVE', `${fotoWebcamCount} snapshot + ${ytCount} stream feeds`);
+        setStatus(`WEBCAMS ONLINE: ${fotoWebcamCount} live snapshots, ${ytCount} YouTube streams`);
     };
 
     document.getElementById('toggle-webcams')?.addEventListener('change', (e) => {

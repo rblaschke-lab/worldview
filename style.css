@@ -92,7 +92,7 @@ body, html { width: 100%; height: 100%; overflow: hidden; background: #000; colo
     #mobile-menu-btn { display: none !important; }
 
     /* CRITICAL: Override ALL inline styles from switchMode() so .active class always wins */
-    #sidebar, #intelligence-panel, #info-panel {
+    #sidebar, #info-panel {
         position: fixed !important;
         width: 100% !important;
         left: 0 !important; right: 0 !important;
@@ -113,7 +113,7 @@ body, html { width: 100%; height: 100%; overflow: hidden; background: #000; colo
         -webkit-overflow-scrolling: touch;
     }
 
-    #sidebar.active, #intelligence-panel.active, #info-panel.active {
+    #sidebar.active, #info-panel.active {
         transform: translateY(0%) !important;
         z-index: 950 !important;
         pointer-events: auto !important;
@@ -124,13 +124,12 @@ body, html { width: 100%; height: 100%; overflow: hidden; background: #000; colo
         max-height: none !important;
         width: 100% !important;
     }
-    #intelligence-panel:hover, #info-panel:hover {
+    #info-panel:hover {
         max-height: none !important;
         width: 100% !important;
     }
 
     .sidebar-body { height: calc(100% - 60px); overflow-y: auto; -webkit-overflow-scrolling: touch; }
-    #alert-list { max-height: none !important; overflow-y: auto; -webkit-overflow-scrolling: touch; }
 
     /* Semi-transparent backdrop when a panel is open */
     body.mobile-panel-open::after {
@@ -205,12 +204,7 @@ body, html { width: 100%; height: 100%; overflow: hidden; background: #000; colo
 }
 #sidebar:hover { max-height: 90vh; overflow-y: auto; width: 320px; box-shadow: 0 0 30px var(--amber-dim); }
 
-#intelligence-panel {
-    top: 52px; left: 14px; width: 240px;
-    border-left: 3px solid var(--neon-green);
-    max-height: 42px;
-}
-#intelligence-panel:hover { max-height: 85vh; width: 320px; box-shadow: 0 0 30px rgba(0,255,136,0.15); }
+
 
 /* CRT Scanline Overlay */
 .terminal-panel::before {
@@ -246,9 +240,7 @@ header {
     color: rgba(255,255,255,0.35); opacity: 1; gap: 4px;
 }
 
-/* Intelligence panel title */
 header h2 { font-size: 0.85rem; letter-spacing: 2.5px; font-weight: 700; margin: 0; }
-#intelligence-panel header h2 { color: var(--neon-green); font-size: 0.8rem; text-shadow: 0 0 5px rgba(0,255,136,0.5); }
 
 .version { font-size: 0.6rem; opacity: 0.5; }
 .sub-header {
@@ -329,43 +321,7 @@ input:checked + .slider:before {
     border-color: rgba(0,255,255,0.3);
 }
 
-/* -------------------------------------------------------
-   INTELLIGENCE PULSE MARKERS
-------------------------------------------------------- */
-@keyframes pulse-red-alert {
-    0% { transform: translate(-50%, -50%) scale(0.8); opacity: 0.8; box-shadow: 0 0 0 0 rgba(255,51,0,0.7); }
-    70% { transform: translate(-50%, -50%) scale(1.2); opacity: 0.3; box-shadow: 0 0 0 20px rgba(255,51,0,0); }
-    100% { transform: translate(-50%, -50%) scale(0.8); opacity: 0.8; box-shadow: 0 0 0 0 rgba(255,51,0,0); }
-}
-.intel-pulse-red {
-    width: 60px; height: 60px;
-    background: rgba(255,51,0,0.2);
-    border: 2px solid #ff3300;
-    border-radius: 50%;
-    animation: pulse-red-alert 2s infinite;
-    cursor: pointer;
-    pointer-events: auto;
-    z-index: 10;
-}
 
-.marker-intel {
-    position: relative; width: 40px; height: 40px;
-    display: flex; align-items: center; justify-content: center;
-    cursor: pointer; pointer-events: auto;
-}
-.intel-pulse {
-    position: absolute; inset: 0;
-    border-radius: 50%; opacity: 0.3;
-    animation: pulse-red-alert 2s infinite;
-}
-.marker-intel.severity-high .intel-pulse { background: var(--neon-red); border: 2px solid var(--neon-red); }
-.marker-intel.severity-medium .intel-pulse { background: var(--amber); border: 2px solid var(--amber); }
-.marker-intel.severity-low .intel-pulse { background: var(--neon-green); border: 2px solid var(--neon-green); }
-
-.intel-icon {
-    position: relative; z-index: 2;
-    font-size: 1.1rem; text-shadow: 0 0 5px currentColor;
-}
 
 /* -------------------------------------------------------
    POWER OUTAGE MARKERS
@@ -426,57 +382,6 @@ input:checked + .slider:before {
 .category-title { opacity: 0.9 !important; font-size: 0.75rem !important; }
 .control-item span { opacity: 0.95 !important; font-size: 0.72rem !important; }
 
-/* -------------------------------------------------------
-   INTELLIGENCE ALERT CARDS
-------------------------------------------------------- */
-#alert-list {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-    padding: 6px 10px 8px;
-    font-family: 'Share Tech Mono', monospace;
-}
-
-.alert-item {
-    background: rgba(255,255,255,0.03);
-    border: 1px solid rgba(255,255,255,0.07);
-    border-left: 3px solid var(--amber);
-    border-radius: 3px;
-    padding: 6px 8px;
-    cursor: pointer;
-    transition: background 0.2s;
-}
-.alert-item:hover { background: rgba(255,176,0,0.06); }
-
-.alert-item.severity-high   { border-left-color: #ff3333; }
-.alert-item.severity-medium { border-left-color: #ffb000; }
-.alert-item.severity-low    { border-left-color: #00ff88; }
-
-.alert-item h4 {
-    font-size: 0.62rem;
-    font-weight: 700;
-    letter-spacing: 1px;
-    color: var(--amber);
-    margin: 0 0 3px;
-    text-transform: uppercase;
-}
-.alert-item.severity-high h4   { color: #ff5555; }
-.alert-item.severity-medium h4 { color: #ffb000; }
-.alert-item.severity-low h4    { color: #00ff88; }
-
-.alert-item p {
-    font-size: 0.6rem;
-    margin: 0 0 4px;
-    color: rgba(255,255,255,0.75);
-    line-height: 1.4;
-}
-
-.alert-item .timestamp {
-    font-size: 0.52rem;
-    color: rgba(255,255,255,0.3);
-    letter-spacing: 0.5px;
-    display: block;
-}
 
 
 #launch-hud {
@@ -524,7 +429,6 @@ input:checked + .slider:before {
 /* Hide elements when ticker is disabled */
 body.no-ticker .global-ticker { display: none !important; }
 body.no-ticker #sidebar { top: 14px !important; }
-body.no-ticker #intelligence-panel { top: 14px !important; }
 
 /* -------------------------------------------------------
    SOLAR WIDGET — Integrated Menu Style
