@@ -606,10 +606,45 @@ document.addEventListener("DOMContentLoaded", () => {
         map.addSource('ships-src', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
         map.addLayer({ id: 'ships-layer', type: 'circle', source: 'ships-src', layout: { visibility: 'none' }, paint: { 'circle-radius': ['interpolate', ['linear'], ['zoom'], 1, 4, 5, 6, 10, 8], 'circle-color': '#00ffcc', 'circle-opacity': 0.8 } });
 
+        // Click handler for ships
+        map.on('click', 'ships-layer', (e) => {
+            const p = e.features[0].properties;
+            const coords = e.features[0].geometry.coordinates;
+            new maplibregl.Popup({ offset: 6, maxWidth: '240px' })
+                .setLngLat(coords)
+                .setHTML(`<div style="font-family:'Share Tech Mono',monospace;font-size:.72rem;">
+                    <h3 style="color:#00ffcc;margin:0 0 4px;font-size:.75rem;">🚢 ${escHtml(p.name || p.mmsi || 'VESSEL')}</h3>
+                    <div style="opacity:.5;font-size:.6rem;">${escHtml(p.type || 'AIS Transponder Signal')}</div>
+                    <div style="opacity:.35;font-size:.5rem;margin-top:4px;letter-spacing:1px;">VIA AIS STREAM · LIVE</div>
+                </div>`)
+                .addTo(map);
+        });
+        map.on('mouseenter', 'ships-layer', () => { map.getCanvas().style.cursor = 'pointer'; });
+        map.on('mouseleave', 'ships-layer', () => { map.getCanvas().style.cursor = ''; });
+
         // ── FLIGHTS (OpenSky Network — European airspace) ──────
         try {
             map.addSource('flights-src', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
             map.addLayer({ id: 'flights-layer', type: 'circle', source: 'flights-src', layout: { visibility: 'none' }, paint: { 'circle-radius': ['interpolate', ['linear'], ['zoom'], 1, 4, 5, 6, 10, 8], 'circle-color': '#00d4ff', 'circle-opacity': 0.8 } });
+
+            // Click handler for flights
+            map.on('click', 'flights-layer', (e) => {
+                const p = e.features[0].properties;
+                const coords = e.features[0].geometry.coordinates;
+                new maplibregl.Popup({ offset: 6, maxWidth: '240px' })
+                    .setLngLat(coords)
+                    .setHTML(`<div style="font-family:'Share Tech Mono',monospace;font-size:.72rem;">
+                        <h3 style="color:#00d4ff;margin:0 0 4px;font-size:.75rem;">✈️ ${escHtml(p.callsign || 'UNKNOWN')}</h3>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:3px;">
+                            <div style="background:rgba(0,212,255,.05);padding:3px;text-align:center;"><div style="opacity:.4;font-size:.5rem;">ALTITUDE</div><div style="color:#00d4ff;">${p.alt ? p.alt.toLocaleString() + ' m' : 'N/A'}</div></div>
+                            <div style="background:rgba(0,212,255,.05);padding:3px;text-align:center;"><div style="opacity:.4;font-size:.5rem;">SPEED</div><div style="color:#00d4ff;">${p.vel ? p.vel.toLocaleString() + ' km/h' : 'N/A'}</div></div>
+                        </div>
+                        <div style="opacity:.35;font-size:.5rem;margin-top:4px;letter-spacing:1px;">VIA OPENSKY NETWORK · LIVE</div>
+                    </div>`)
+                    .addTo(map);
+            });
+            map.on('mouseenter', 'flights-layer', () => { map.getCanvas().style.cursor = 'pointer'; });
+            map.on('mouseleave', 'flights-layer', () => { map.getCanvas().style.cursor = ''; });
             const fetchFlights = async () => {
                 if (!toggles.flights) return;
                 try {
@@ -639,6 +674,25 @@ document.addEventListener("DOMContentLoaded", () => {
             }
             map.addSource('starlink-src', { type: 'geojson', data: { type: 'FeatureCollection', features: slFeatures } });
             map.addLayer({ id: 'starlink-layer', type: 'circle', source: 'starlink-src', layout: { visibility: 'none' }, paint: { 'circle-radius': ['interpolate', ['linear'], ['zoom'], 1, 2, 5, 4, 10, 6], 'circle-color': '#ffffff', 'circle-opacity': 0.6, 'circle-blur': 0.4 } });
+
+            // Click handler for Starlink satellites
+            map.on('click', 'starlink-layer', (e) => {
+                const coords = e.features[0].geometry.coordinates;
+                new maplibregl.Popup({ offset: 6, maxWidth: '240px' })
+                    .setLngLat(coords)
+                    .setHTML(`<div style="font-family:'Share Tech Mono',monospace;font-size:.72rem;">
+                        <h3 style="color:#fff;margin:0 0 4px;font-size:.75rem;">🛰️ STARLINK SATELLITE</h3>
+                        <div style="opacity:.5;font-size:.6rem;margin-bottom:4px;">SpaceX LEO Constellation</div>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:3px;">
+                            <div style="background:rgba(255,255,255,.05);padding:3px;text-align:center;"><div style="opacity:.4;font-size:.5rem;">ORBIT</div><div style="color:#00d4ff;">~550 km</div></div>
+                            <div style="background:rgba(255,255,255,.05);padding:3px;text-align:center;"><div style="opacity:.4;font-size:.5rem;">SPEED</div><div style="color:#00d4ff;">27,000 km/h</div></div>
+                        </div>
+                        <div style="opacity:.35;font-size:.5rem;margin-top:4px;letter-spacing:1px;">SIMULATED POSITION · 5,500+ SATS IN ORBIT</div>
+                    </div>`)
+                    .addTo(map);
+            });
+            map.on('mouseenter', 'starlink-layer', () => { map.getCanvas().style.cursor = 'pointer'; });
+            map.on('mouseleave', 'starlink-layer', () => { map.getCanvas().style.cursor = ''; });
         } catch(e) { console.warn('[STARLINK] Init failed:', e.message); }
 
         // ── POPULATION DENSITY (NASA GIBS SEDAC) ──────────────
@@ -2761,48 +2815,93 @@ document.addEventListener("DOMContentLoaded", () => {
             name: 'Formula 1 — The Global Speed Circuit',
             steps: [
                 {
-                    center: [7.42, 43.73], zoom: 10, title: '🏎️ MONACO — THE JEWEL IN THE CROWN',
+                    center: [7.420, 43.737], zoom: 15, title: '🏎️ MONACO — THE JEWEL IN THE CROWN',
                     text: 'Circuit de Monaco: the most prestigious race in F1 since 1929. Just 3.337km through the streets of Monte Carlo — the shortest, slowest, and most glamorous circuit. Capacity: ~37,000 (but millions watch from yachts). The tunnel, the swimming pool chicane, and the hairpin at the Fairmont Hotel make it virtually impossible to overtake. Ayrton Senna won here 6 times. It\'s not the fastest race — it\'s the one every driver wants to win.',
                     layers: []
                 },
                 {
-                    center: [-1.02, 52.07], zoom: 8, title: '🏎️ SILVERSTONE — WHERE IT ALL BEGAN',
+                    center: [-1.017, 52.073], zoom: 14, title: '🏎️ SILVERSTONE — WHERE IT ALL BEGAN',
                     text: 'Silverstone hosted the very first Formula 1 World Championship race on May 13, 1950. Built on a former WWII bomber airfield in rural England, the circuit is 5.891km of high-speed corners. Capacity: 142,000. The British Grand Prix regularly draws F1\'s largest crowds. Copse, Maggots, Becketts, and Stowe are among the most famous corners in motorsport. Lewis Hamilton has won his home race 8 times.',
                     layers: []
                 },
                 {
-                    center: [9.29, 45.62], zoom: 9, title: '🏎️ MONZA — THE TEMPLE OF SPEED',
+                    center: [9.289, 45.621], zoom: 14, title: '🏎️ MONZA — THE TEMPLE OF SPEED',
                     text: 'Autodromo Nazionale di Monza: F1\'s fastest circuit. Average speeds exceed 260 km/h, with top speeds reaching 360+ km/h on the start-finish straight. The Italian Grand Prix has been on the calendar since 1950 — the only race to feature in every F1 season. Capacity: 118,000. The Tifosi (Ferrari fans) turn the grandstands into a sea of red. The old banked oval, abandoned but still visible in the park, adds to Monza\'s haunting history.',
                     layers: []
                 },
                 {
-                    center: [5.97, 50.44], zoom: 9, title: '🏎️ SPA-FRANCORCHAMPS — THE DRIVERS\' FAVOURITE',
+                    center: [5.971, 50.437], zoom: 14, title: '🏎️ SPA-FRANCORCHAMPS — THE DRIVERS\' FAVOURITE',
                     text: 'Circuit de Spa-Francorchamps in the Belgian Ardennes forest: 7.004km of elevation changes, blind crests, and unpredictable weather. Eau Rouge — the iconic uphill left-right-left sequence taken at 300+ km/h — is the most famous corner complex in racing. Capacity: 75,000. It frequently rains on one part of the circuit while another is dry, making it the ultimate driver\'s test. Max Verstappen won his first ever F1 race here in 2015.',
                     layers: []
                 },
                 {
-                    center: [136.54, 34.84], zoom: 9, title: '🏎️ SUZUKA — PRECISION ENGINEERING',
+                    center: [136.541, 34.843], zoom: 14, title: '🏎️ SUZUKA — PRECISION ENGINEERING',
                     text: 'Suzuka Circuit in Japan is the only figure-eight layout in F1 — the track crosses over itself via a bridge. Designed by Dutchman John Hugenholtz in 1962, it\'s 5.807km of technical brilliance. The 130R corner (taken flat at 300 km/h) and the Degner curves are legendary. Capacity: 100,000. The Japanese Grand Prix has decided multiple championships. Japanese fans are renowned as the most knowledgeable and respectful in the sport.',
                     layers: []
                 },
                 {
-                    center: [-46.7, -23.7], zoom: 9, title: '🏎️ INTERLAGOS — WHERE LEGENDS ARE MADE',
+                    center: [-46.698, -23.702], zoom: 14, title: '🏎️ INTERLAGOS — WHERE LEGENDS ARE MADE',
                     text: 'Autódromo José Carlos Pace in São Paulo: 4.309km of passionate, unpredictable racing. The Brazilian Grand Prix — often the season\'s penultimate race — has produced some of F1\'s most dramatic moments. Capacity: 60,000 (but 200,000+ lined the hills in Senna\'s era). Ayrton Senna\'s 1991 victory here, driving the final laps stuck in 6th gear, is the greatest drive in F1 history. Brazil has produced 3 World Champions.',
                     layers: []
                 },
                 {
-                    center: [103.86, 1.29], zoom: 10, title: '🏎️ SINGAPORE — THE NIGHT SPECTACLE',
+                    center: [103.864, 1.291], zoom: 14, title: '🏎️ SINGAPORE — THE NIGHT SPECTACLE',
                     text: 'Marina Bay Street Circuit: F1\'s first-ever night race (2008). 4.940km under floodlights through the streets of Singapore — 1,500 light projectors illuminate the track. Capacity: 80,000. The heat, humidity (80%+), and 23 corners make it the most physically demanding race. Drivers lose 2-3kg in body weight during the 2-hour race. The Singapore skyline backdrop makes it arguably the most visually stunning race on the calendar.',
                     layers: []
                 },
                 {
-                    center: [54.6, 24.47], zoom: 9, title: '🏎️ YAS MARINA — THE SEASON FINALE',
+                    center: [54.603, 24.467], zoom: 14, title: '🏎️ YAS MARINA — THE SEASON FINALE',
                     text: 'Yas Marina Circuit in Abu Dhabi: 5.281km of modern engineering. The season-ending Abu Dhabi Grand Prix starts in daylight and finishes under lights. Capacity: 60,000. The 2021 finale — Verstappen vs Hamilton on the final lap — was the most controversial finish in F1 history. The circuit passes through the Yas Hotel, a landmark that straddles the track. Abu Dhabi exemplifies F1\'s expansion into the Middle East and the Gulf states\' use of sport as soft power.',
                     layers: []
                 },
                 {
                     center: [20, 20], zoom: 2, title: '🏁 FORMULA 1 — THE GLOBAL CIRCUS',
                     text: 'Formula 1 visits 24 countries across 5 continents in a single season — making it the most geographically diverse annual sporting event on Earth. The F1 paddock is a traveling city of 3,000+ personnel, 10 teams, and $3+ billion in machinery. Global TV audience: 1.5 billion per year. F1 has evolved from a European gentleman\'s pursuit to a global entertainment platform, with new races in Las Vegas, Qatar, and Saudi Arabia reflecting shifting economic and political power.',
+                    layers: ['blocs']
+                }
+            ]
+        },
+        worldcup: {
+            name: 'FIFA World Cup — Football\'s Greatest Stage',
+            steps: [
+                {
+                    center: [-43.23, -22.91], zoom: 6, title: '⚽ BRAZIL 2014 — FOOTBALL COMES HOME',
+                    text: 'The 2014 FIFA World Cup was hosted across 12 Brazilian cities. Brazil, the most successful World Cup nation (5 titles), suffered a historic 7-1 semi-final defeat to Germany at Belo Horizonte\'s Mineirão stadium — the most shocking result in World Cup history. Germany went on to win their 4th title. The tournament attracted 3.4 million spectators and cost Brazil $15 billion in stadium and infrastructure investment.',
+                    layers: []
+                },
+                {
+                    center: [37.62, 55.75], zoom: 5, title: '⚽ RUSSIA 2018 — EAST MEETS WEST',
+                    text: 'Russia hosted the first World Cup in Eastern Europe, using 12 stadiums across 11 cities. France won their second title, defeating Croatia 4-2 in the final at Moscow\'s Luzhniki Stadium. The tournament is remembered for VAR\'s full introduction, and the fairytale run of host nation Russia (knocked out in quarter-finals). Total cost: $14.2 billion. 3.57 billion viewers watched worldwide — 50% of the global population.',
+                    layers: []
+                },
+                {
+                    center: [51.44, 25.35], zoom: 6, title: '⚽ QATAR 2022 — THE DESERT FINAL',
+                    text: 'Qatar became the smallest country and first Arab nation to host the World Cup. Played in winter (Nov-Dec) for the first time to avoid extreme heat. Argentina won their 3rd title as Lionel Messi lifted the trophy in what many call the greatest final ever — a 3-3 draw settled on penalties against defending champions France. The tournament cost an unprecedented $220 billion in total infrastructure. 8 state-of-the-art stadiums were built, including Lusail (88,966 capacity).',
+                    layers: []
+                },
+                {
+                    center: [-99.13, 19.43], zoom: 4, title: '⚽ 2026 — UNITED BID (USA, CANADA, MEXICO)',
+                    text: 'The 2026 World Cup will be the largest ever — 48 teams (up from 32) across 16 venues in 3 countries. The USA hosts 11 cities including New York/New Jersey (MetLife Stadium — 82,500), Los Angeles (SoFi Stadium), and Dallas (AT&T Stadium). Mexico City\'s Azteca becomes the first stadium to host 3 World Cups. Canada hosts for the first time (Toronto, Vancouver). An estimated 5.5 million fans are expected to attend.',
+                    layers: ['blocs']
+                },
+                {
+                    center: [46.68, 24.71], zoom: 5, title: '⚽ 2034 — SAUDI ARABIA',
+                    text: 'Saudi Arabia will host the 2034 World Cup — continuing football\'s expansion into the Gulf region after Qatar 2022. The kingdom plans a $500 billion infrastructure program including NEOM, a futuristic megacity. Saudi Arabia has invested heavily in football: buying Newcastle United, launching the Saudi Pro League with Cristiano Ronaldo, Neymar, and Benzema, and bidding for the 2030 Asian Games. Critics cite human rights concerns and the concept of "sportswashing" — using sport to improve national image.',
+                    layers: ['blocs']
+                },
+                {
+                    center: [13.38, 52.52], zoom: 5, title: '⚽ GERMANY 2006 — THE SUMMER FAIRYTALE',
+                    text: 'Germany 2006 is widely considered the best-organized World Cup in history. Known as "Sommermärchen" (Summer Fairytale), it transformed Germany\'s international image. Italy won their 4th title, defeating France in a final remembered for Zinedine Zidane\'s infamous headbutt on Marco Materazzi. 12 stadiums were used, including Berlin\'s Olympiastadion (final) and Munich\'s Allianz Arena. The tournament pioneered the modern fan zone concept, with public viewing events attracting millions.',
+                    layers: []
+                },
+                {
+                    center: [28.23, -25.74], zoom: 5, title: '⚽ SOUTH AFRICA 2010 — AFRICA\'S MOMENT',
+                    text: 'South Africa became the first African nation to host the World Cup. The vuvuzela horn became the tournament\'s iconic (and divisive) soundtrack. Spain won their first-ever title, defeating Netherlands 1-0 in extra time at Soccer City, Johannesburg (capacity: 94,736). The tournament was seen as a milestone for African football and diplomacy. Nelson Mandela, aged 92, made a rare public appearance at the final — his last major event. Cost: $3.6 billion.',
+                    layers: []
+                },
+                {
+                    center: [10, 20], zoom: 2, title: '🏆 THE WORLD CUP — FOOTBALL\'S UNIVERSE',
+                    text: 'The FIFA World Cup is the most-watched sporting event on Earth. The 2022 final drew 1.5 billion viewers — more than the Super Bowl, Olympics, and Champions League combined. Since 1930, only 8 nations have won the trophy: Brazil (5), Germany (4), Italy (4), Argentina (3), France (2), Uruguay (2), England (1), Spain (1). The World Cup generates over $7 billion per tournament. It has been hosted on every continent except Antarctica and Oceania. Football is played by 270 million people in 211 countries — more than any other sport in human history.',
                     layers: ['blocs']
                 }
             ]
