@@ -114,13 +114,31 @@
                 <!-- GUIDED TOURS -->
                 <div style="border-top:1px solid rgba(0,212,255,0.15);padding-top:6px;margin-top:4px;">
                     <div style="font-size:.6rem;opacity:.5;letter-spacing:1px;margin-bottom:4px;">🎓 <span data-i18n="guided_tours">GUIDED TOURS</span></div>
+
+                    <!-- Geopolitics -->
+                    <div style="font-size:.55rem;opacity:.4;letter-spacing:1px;margin:6px 0 3px;color:#ff6633;">▸ GEOPOLITICS</div>
+                    <div class="scenario-grid" style="display:grid;grid-template-columns:1fr;gap:3px;">
+                        <button class="preset-btn tour-btn" data-tour="coldwar" style="border-color:rgba(180,180,180,0.4);color:#bbb;text-align:left;padding:6px 8px;">🧱 <span data-i18n="tour_coldwar">Cold War → Reunification</span></button>
+                        <button class="preset-btn tour-btn" data-tour="bri" style="border-color:rgba(255,200,0,0.4);color:#ffc800;text-align:left;padding:6px 8px;">🛤️ <span data-i18n="tour_bri">Belt &amp; Road Initiative</span></button>
+                        <button class="preset-btn tour-btn" data-tour="trump" style="border-color:rgba(255,102,51,0.5);color:#ff6633;text-align:left;padding:6px 8px;">🏛️ <span data-i18n="tour_trump">Trump World Tour</span></button>
+                        <button class="preset-btn tour-btn" data-tour="chokepoints" style="border-color:rgba(0,180,255,0.4);color:#00b4ff;text-align:left;padding:6px 8px;">🌊 <span data-i18n="tour_chokepoints">Chokepoints</span></button>
+                        <button class="preset-btn tour-btn" data-tour="water" style="border-color:rgba(0,150,255,0.4);color:#0096ff;text-align:left;padding:6px 8px;">💧 <span data-i18n="tour_water">Water Wars</span></button>
+                    </div>
+
+                    <!-- Science & Nature -->
+                    <div style="font-size:.55rem;opacity:.4;letter-spacing:1px;margin:8px 0 3px;color:#00ff88;">▸ SCIENCE &amp; NATURE</div>
                     <div class="scenario-grid" style="display:grid;grid-template-columns:1fr;gap:3px;">
                         <button class="preset-btn tour-btn" data-tour="ringoffire" style="border-color:rgba(255,100,0,0.5);color:#ff8844;text-align:left;padding:6px 8px;">🌋 <span data-i18n="tour_ringoffire">Ring of Fire</span></button>
                         <button class="preset-btn tour-btn" data-tour="nuclear" style="border-color:rgba(255,0,0,0.4);color:#ff4444;text-align:left;padding:6px 8px;">☢️ <span data-i18n="tour_nuclear">Nuclear Legacy</span></button>
                         <button class="preset-btn tour-btn" data-tour="cables" style="border-color:rgba(0,212,255,0.4);color:#00d4ff;text-align:left;padding:6px 8px;">🌐 <span data-i18n="tour_cables">Digital Silk Road</span></button>
-                        <button class="preset-btn tour-btn" data-tour="bri" style="border-color:rgba(255,200,0,0.4);color:#ffc800;text-align:left;padding:6px 8px;">🛤️ <span data-i18n="tour_bri">Belt & Road Initiative</span></button>
-                        <button class="preset-btn tour-btn" data-tour="coldwar" style="border-color:rgba(180,180,180,0.4);color:#bbb;text-align:left;padding:6px 8px;">🧱 <span data-i18n="tour_coldwar">Cold War → Reunification</span></button>
-                        <button class="preset-btn tour-btn" data-tour="trump" style="border-color:rgba(255,102,51,0.5);color:#ff6633;text-align:left;padding:6px 8px;">🏛️ <span data-i18n="tour_trump">Trump World Tour</span></button>
+                        <button class="preset-btn tour-btn" data-tour="battery" style="border-color:rgba(0,255,136,0.4);color:#00ff88;text-align:left;padding:6px 8px;">🔋 <span data-i18n="tour_battery">Battery Race</span></button>
+                        <button class="preset-btn tour-btn" data-tour="climate" style="border-color:rgba(255,150,0,0.4);color:#ff9600;text-align:left;padding:6px 8px;">🌡️ <span data-i18n="tour_climate">Climate Frontlines</span></button>
+                    </div>
+
+                    <!-- Sports & Culture -->
+                    <div style="font-size:.55rem;opacity:.4;letter-spacing:1px;margin:8px 0 3px;color:#ff3355;">▸ SPORTS &amp; CULTURE</div>
+                    <div class="scenario-grid" style="display:grid;grid-template-columns:1fr;gap:3px;">
+                        <button class="preset-btn tour-btn" data-tour="f1" style="border-color:rgba(255,51,85,0.4);color:#ff3355;text-align:left;padding:6px 8px;">🏎️ <span data-i18n="tour_f1">Formula 1 World Tour</span></button>
                     </div>
                 </div>
 
@@ -419,6 +437,9 @@
     <div id="tour-briefing" class="tour-briefing-panel hidden">
         <div class="tour-briefing-header">
             <span id="tour-step-counter" class="tour-step-num">1/5</span>
+            <button id="tour-narrate" class="btn-narrate-briefing" title="Toggle narration" onclick="this.classList.toggle('active'); if(!this.classList.contains('active') && window.speechSynthesis) speechSynthesis.cancel();">
+                <i class="fa-solid fa-volume-high"></i>
+            </button>
             <button id="tour-close" class="btn-close-briefing"><i class="fa-solid fa-xmark"></i></button>
         </div>
         <h2 id="tour-briefing-title" class="tour-title"></h2>

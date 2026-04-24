@@ -2593,6 +2593,221 @@ document.addEventListener("DOMContentLoaded", () => {
                     layers: ['blocs', 'regimes', 'conflicts']
                 }
             ]
+        },
+        chokepoints: {
+            name: 'Chokepoints — The World Hangs by a Thread',
+            steps: [
+                {
+                    center: [56.3, 26.6], zoom: 6, title: '⛽ STRAIT OF HORMUZ — THE OIL GATE',
+                    text: 'The Strait of Hormuz is just 33km wide at its narrowest, yet 20% of the world\'s oil passes through it daily — roughly 21 million barrels. Iran controls the northern shore, Oman the southern. Any disruption here sends global oil prices surging within hours. In 2019, Iran seized a British tanker here. The U.S. Fifth Fleet is permanently stationed in nearby Bahrain specifically to keep this strait open.',
+                    layers: ['conflicts', 'cables']
+                },
+                {
+                    center: [32.3, 30.5], zoom: 6, title: '🚢 SUEZ CANAL — THE SHORTCUT THAT CHANGED HISTORY',
+                    text: 'The Suez Canal carries 12% of global trade — roughly $9.4 billion worth of goods per day. When the Ever Given blocked it for 6 days in March 2021, it cost the global economy an estimated $54 billion. The canal saves ships a 6,000-mile detour around Africa. Egypt earns $8+ billion annually in transit fees. Over a dozen submarine internet cables also pass through this corridor.',
+                    layers: ['cables']
+                },
+                {
+                    center: [104, 1.3], zoom: 5, title: '⚓ STRAIT OF MALACCA — ASIA\'S LIFELINE',
+                    text: 'The busiest shipping lane on Earth. Over 100,000 vessels pass through annually, carrying one-third of global trade. At its narrowest point (Phillips Channel near Singapore), it\'s just 2.7km wide. China imports 80% of its oil through Malacca — a strategic vulnerability Beijing calls the "Malacca Dilemma." Piracy remains a persistent threat despite international naval patrols.',
+                    layers: ['cables']
+                },
+                {
+                    center: [43.3, 12.6], zoom: 6, title: '🔥 BAB EL-MANDEB — THE GATE OF TEARS',
+                    text: 'This 26km-wide strait connects the Red Sea to the Indian Ocean. Every ship using the Suez Canal must also pass through here. In 2024-25, Houthi rebel attacks on commercial shipping forced major carriers to reroute around Africa, adding 10-14 days and $1 million per voyage. Submarine internet cables running through this strait were also damaged, disrupting 25% of traffic between Europe and Asia.',
+                    layers: ['conflicts', 'cables']
+                },
+                {
+                    center: [-5.5, 35.9], zoom: 7, title: '🏛️ STRAIT OF GIBRALTAR — MEDITERRANEAN GATE',
+                    text: 'Just 14km separates Europe from Africa at Gibraltar. Every ship entering or leaving the Mediterranean — the world\'s busiest sea — must pass through. The UK has held Gibraltar since 1713, a source of ongoing tension with Spain. Over 300 ships transit daily. It\'s also a major migration corridor — thousands attempt the crossing annually in small boats.',
+                    layers: ['blocs']
+                },
+                {
+                    center: [29, 41.1], zoom: 7, title: '🇹🇷 TURKISH STRAITS — RUSSIA\'S WARM WATER EXIT',
+                    text: 'The Bosporus (just 700m wide at its narrowest) and the Dardanelles are the only exit from the Black Sea to the Mediterranean. Under the 1936 Montreux Convention, Turkey controls transit and can restrict warship passage during conflicts. This gives Turkey enormous leverage — Russia\'s Black Sea Fleet depends on these straits. Turkey restricted warship access after Russia\'s 2022 invasion of Ukraine.',
+                    layers: ['blocs', 'conflicts']
+                },
+                {
+                    center: [-79.5, 9.1], zoom: 6, title: '🚢 PANAMA CANAL — THE GREAT SHORTCUT',
+                    text: 'The Panama Canal saves ships a 12,500km journey around South America. It handles 5% of global maritime trade and 40% of U.S. container traffic. But it runs on freshwater from Gatun Lake — and drought conditions in 2024-25 forced a 33% reduction in daily transits. Climate change threatens the canal\'s long-term viability, forcing the world to reconsider this 110-year-old engineering marvel.',
+                    layers: ['cables']
+                },
+                {
+                    center: [20, 25], zoom: 2, title: '🌍 THE CHOKEPOINT MAP — FRAGILE BY DESIGN',
+                    text: 'Global trade depends on fewer than 10 narrow waterways, most of them in politically unstable regions. A simultaneous disruption of just two — say Hormuz and Suez — would trigger a global economic crisis within days. 80% of world trade travels by sea. These chokepoints are also where submarine internet cables, oil pipelines, and naval power converge. The global economy is, by design, fragile.',
+                    layers: ['cables', 'conflicts', 'blocs']
+                }
+            ]
+        },
+        battery: {
+            name: 'The Battery Race — Where Your Phone Comes From',
+            steps: [
+                {
+                    center: [25.5, -4.3], zoom: 5, title: '⛏️ CONGO — THE COBALT MINES',
+                    text: 'The Democratic Republic of Congo produces 73% of the world\'s cobalt — an essential element in lithium-ion batteries. Much of it is mined by hand, including by an estimated 40,000 child miners in artisanal operations. A single smartphone battery contains 5-10g of cobalt. Major tech companies have pledged to audit their supply chains, but traceability remains extremely difficult in a region plagued by armed conflict.',
+                    layers: ['conflicts', 'regimes']
+                },
+                {
+                    center: [-68, -23.5], zoom: 5, title: '🔋 LITHIUM TRIANGLE — THE WHITE GOLD',
+                    text: 'Chile, Argentina, and Bolivia sit atop the "Lithium Triangle" — holding 58% of global lithium reserves. Lithium is extracted from salt flats (salars) by pumping mineral-rich brine into evaporation pools. It takes 2.2 million liters of water to produce 1 ton of lithium — devastating for some of Earth\'s driest regions. Bolivia alone holds an estimated 21 million tons but has struggled to industrialize extraction.',
+                    layers: ['regimes']
+                },
+                {
+                    center: [121.5, -28], zoom: 4, title: '🇦🇺 AUSTRALIA — HARD ROCK LITHIUM',
+                    text: 'Australia is the world\'s largest lithium producer by volume, using hard-rock mining (spodumene) rather than brine extraction. The Greenbushes mine in Western Australia is the single largest lithium operation on Earth. Australia exports most raw material to China for processing — a dependency the government is trying to reverse with new domestic refining investments.',
+                    layers: ['blocs']
+                },
+                {
+                    center: [108, 30], zoom: 4, title: '🇨🇳 CHINA — THE PROCESSING MONOPOLY',
+                    text: 'China controls 60% of global lithium refining, 77% of battery cell manufacturing, and 80% of cobalt processing — even though it mines very little of either. This processing dominance is the result of decades of strategic industrial policy. Every major EV battery brand (CATL, BYD) is Chinese. The U.S. and EU are now racing to build domestic capacity, but China has a 15-20 year head start.',
+                    layers: ['blocs', 'regimes']
+                },
+                {
+                    center: [120.96, 24.8], zoom: 6, title: '🔬 TAIWAN — THE CHIP BOTTLENECK',
+                    text: 'TSMC (Taiwan Semiconductor Manufacturing Company) fabricates over 90% of the world\'s most advanced chips — the processors in every phone, car, and AI server. A single fab costs $20+ billion to build. If Taiwan\'s chip production were disrupted, the global tech industry would halt within weeks. This is why Taiwan\'s geopolitical status is now a matter of global economic security, not just regional politics.',
+                    layers: ['cables', 'blocs', 'conflicts']
+                },
+                {
+                    center: [-118, 36], zoom: 4, title: '🏭 GIGAFACTORIES — THE ASSEMBLY LINE',
+                    text: 'Tesla\'s Gigafactory Nevada produces more batteries annually than the entire world did in 2014. Similar megafactories are now rising across the U.S. (Georgia, Texas), Europe (Germany, Sweden, Hungary), and Asia. The Inflation Reduction Act (2022) triggered a $100+ billion wave of U.S. battery factory investments. The race is on to control not just mining, but manufacturing.',
+                    layers: ['blocs']
+                },
+                {
+                    center: [30, 15], zoom: 2, title: '🌍 THE BATTERY SUPPLY CHAIN — MAPPED',
+                    text: 'Your phone\'s battery travels 50,000+ km before it reaches your pocket: cobalt from Congo, lithium from Chile, refined in China, fabricated into chips in Taiwan, assembled in a gigafactory, shipped globally. This supply chain crosses conflict zones, authoritarian regimes, and maritime chokepoints. One disruption — a coup, a drought, a blockade — and the entire chain breaks. The energy transition depends on solving this fragility.',
+                    layers: ['cables', 'conflicts', 'regimes', 'blocs']
+                }
+            ]
+        },
+        climate: {
+            name: 'Climate Frontlines — Who Burns, Who Drowns',
+            steps: [
+                {
+                    center: [16, 78.2], zoom: 5, title: '❄️ SVALBARD — THE ARCTIC CANARY',
+                    text: 'Svalbard, halfway between Norway and the North Pole, is warming 7x faster than the global average. Permafrost that has been frozen for 10,000+ years is thawing, releasing methane — a greenhouse gas 80x more potent than CO₂ over 20 years. The Global Seed Vault here, designed to survive any catastrophe, had water leak into its entrance tunnel in 2017 due to unexpected melting.',
+                    layers: ['volcanoes']
+                },
+                {
+                    center: [147, -18.3], zoom: 5, title: '🐠 GREAT BARRIER REEF — MASS BLEACHING',
+                    text: 'The world\'s largest coral reef system (2,300km) experienced its 7th mass bleaching event in 2024 — the most severe ever recorded. Ocean temperatures exceeded 2°C above the March average across vast stretches. Coral bleaching is irreversible if sustained. The reef supports $6.4 billion in tourism and 64,000 jobs. Scientists warn that at 1.5°C global warming, 70-90% of coral reefs worldwide will die.',
+                    layers: ['volcanoes']
+                },
+                {
+                    center: [-60, -3], zoom: 4, title: '🌳 AMAZON — THE LUNGS ARE BURNING',
+                    text: 'The Amazon rainforest produces 6% of the world\'s oxygen and stores 150-200 billion tons of carbon. Between 2000 and 2025, an area the size of Spain was deforested — primarily for cattle ranching and soy. Scientists warn the Amazon is approaching a "tipping point" where the forest can no longer sustain itself and begins converting to savanna, releasing its stored carbon and accelerating global warming.',
+                    layers: ['fires']
+                },
+                {
+                    center: [90, 23.7], zoom: 5, title: '🌊 BANGLADESH — DROWNING IN SLOW MOTION',
+                    text: 'Bangladesh is the world\'s most climate-vulnerable nation. With 170 million people in a low-lying delta, a 1-meter sea level rise would flood 17% of the country and displace 20 million people. Annual monsoon flooding already displaces 4-5 million each year. Bangladesh contributes just 0.4% of global emissions — yet bears among the highest costs. Climate migration from Bangladesh to India is already creating political tensions.',
+                    layers: ['regimes']
+                },
+                {
+                    center: [179, -8.5], zoom: 6, title: '🏝️ TUVALU — THE NATION THAT DISAPPEARS',
+                    text: 'Tuvalu, population 11,500, is the world\'s first country facing total submersion due to sea level rise. Its highest point is just 4.6 meters above sea level. King tides already flood the capital several times per year. In 2023, Tuvalu signed a treaty with Australia to accept its citizens as climate refugees and began digitizing its land records to preserve sovereignty even after the islands are gone — creating the concept of a "digital nation."',
+                    layers: ['regimes']
+                },
+                {
+                    center: [-120, 37], zoom: 5, title: '🔥 CALIFORNIA — FIRE SEASON IS NOW YEAR-ROUND',
+                    text: 'California\'s wildfire season has lengthened by 75 days since the 1970s. The 2020 fire season burned 4.2 million acres — an area larger than Connecticut. In January 2025, the Palisades and Eaton fires devastated Los Angeles communities, burning 12,000+ structures. Climate change creates drier vegetation, stronger winds, and less predictable rainfall — turning the American West into a permanent fire zone.',
+                    layers: ['fires']
+                },
+                {
+                    center: [10, 20], zoom: 2, title: '🌍 CLIMATE FRONTLINES — THE MAP DOESN\'T LIE',
+                    text: 'The nations least responsible for emissions are suffering the most. The top 10 emitters produce 68% of global CO₂, while the bottom 100 nations produce less than 3% combined. Wildfires, coral death, glacial melt, rising seas, and extreme heat are no longer projections — they are measurable, mappable, and accelerating. Earth\'s average temperature has risen 1.2°C since pre-industrial times. The Paris Agreement target of 1.5°C may be breached before 2030.',
+                    layers: ['fires', 'regimes']
+                }
+            ]
+        },
+        water: {
+            name: 'Water Wars — The Next Global Conflict',
+            steps: [
+                {
+                    center: [35, 15], zoom: 5, title: '🏗️ NILE — THE GREAT DAM STANDOFF',
+                    text: 'Ethiopia\'s Grand Ethiopian Renaissance Dam (GERD) on the Blue Nile is Africa\'s largest hydroelectric project — and Egypt\'s worst nightmare. Egypt gets 97% of its freshwater from the Nile and has called the dam an "existential threat." Ethiopia says it needs the dam to electrify a nation where 55% lack power. Sudan is caught in between. Negotiations have stalled repeatedly. Egypt\'s president has said "all options are on the table" — a barely veiled military threat.',
+                    layers: ['conflicts', 'regimes']
+                },
+                {
+                    center: [42, 37], zoom: 5, title: '🇹🇷 TIGRIS-EUPHRATES — TURKEY CONTROLS THE TAP',
+                    text: 'Turkey\'s massive Southeastern Anatolia Project (GAP) includes 22 dams on the Tigris and Euphrates rivers — reducing downstream flow to Syria and Iraq by up to 80% in dry seasons. Iraq\'s marshlands, once the size of New Jersey, have shrunk by 90%. Water scarcity was a contributing factor to Syria\'s 2011 uprising — a record drought from 2006-2010 drove 1.5 million farmers into cities, fueling unrest.',
+                    layers: ['conflicts', 'regimes']
+                },
+                {
+                    center: [72, 32], zoom: 5, title: '⚔️ INDUS — TWO NUCLEAR POWERS, ONE RIVER',
+                    text: 'The Indus Waters Treaty (1960) divides the Indus river system between India and Pakistan — two nuclear-armed neighbors that have fought four wars. India controls the upstream tributaries and has built several dams that Pakistan views as threats to its water supply. 65% of Pakistan\'s agriculture depends on the Indus. In 2023, India signaled it may renegotiate the treaty. For Pakistan, water is now a national security issue.',
+                    layers: ['conflicts', 'regimes']
+                },
+                {
+                    center: [-111, 36.5], zoom: 5, title: '🏜️ COLORADO RIVER — RUNNING DRY',
+                    text: 'The Colorado River supplies water to 40 million people across 7 U.S. states and Mexico. Lake Mead and Lake Powell, its two main reservoirs, hit historic lows in 2022-2023 — dropping below 25% capacity. The river has been over-allocated since the 1922 Colorado River Compact, which was based on an abnormally wet period. Cities like Phoenix, Las Vegas, and Los Angeles face mandatory water cuts. The American West is discovering that infinite growth in a desert has limits.',
+                    layers: ['regimes']
+                },
+                {
+                    center: [60, 45], zoom: 5, title: '💀 ARAL SEA — THE GREATEST ENVIRONMENTAL DISASTER',
+                    text: 'Once the world\'s 4th largest lake, the Aral Sea has lost 90% of its volume since the 1960s — the result of Soviet irrigation diversions for cotton farming. Fishing communities were stranded 100km from the receding shoreline. The exposed seabed, contaminated with pesticides and salt, created toxic dust storms that increased respiratory illness and cancer rates across the region. The northern section has partially recovered thanks to a World Bank-funded dam; the southern section is effectively gone.',
+                    layers: ['regimes']
+                },
+                {
+                    center: [14, 13], zoom: 5, title: '🌍 LAKE CHAD — A CONTINENT\'S CRISIS',
+                    text: 'Lake Chad has shrunk by 90% since the 1960s — from 25,000 km² to just 1,350 km². Climate change and irrigation have devastated a water source that 30 million people across Nigeria, Niger, Chad, and Cameroon depend on. The collapse has fueled Boko Haram recruitment, as desperate farmers and fishermen turn to armed groups. The UN calls the Lake Chad Basin "one of the worst humanitarian crises on Earth."',
+                    layers: ['conflicts', 'regimes']
+                },
+                {
+                    center: [40, 25], zoom: 2, title: '💧 WATER WARS — THE 21ST CENTURY THREAT',
+                    text: 'Freshwater is 2.5% of all water on Earth — and only 0.3% is accessible. By 2030, global water demand will exceed supply by 40%. The World Bank warns that water scarcity could reduce GDP by 6% in the most affected regions. Unlike oil, water has no substitute. Every river crossing a national border is a potential flashpoint. The next great conflicts may not be fought over territory or ideology — but over the right to drink.',
+                    layers: ['conflicts', 'regimes']
+                }
+            ]
+        },
+        f1: {
+            name: 'Formula 1 — The Global Speed Circuit',
+            steps: [
+                {
+                    center: [7.42, 43.73], zoom: 10, title: '🏎️ MONACO — THE JEWEL IN THE CROWN',
+                    text: 'Circuit de Monaco: the most prestigious race in F1 since 1929. Just 3.337km through the streets of Monte Carlo — the shortest, slowest, and most glamorous circuit. Capacity: ~37,000 (but millions watch from yachts). The tunnel, the swimming pool chicane, and the hairpin at the Fairmont Hotel make it virtually impossible to overtake. Ayrton Senna won here 6 times. It\'s not the fastest race — it\'s the one every driver wants to win.',
+                    layers: []
+                },
+                {
+                    center: [-1.02, 52.07], zoom: 8, title: '🏎️ SILVERSTONE — WHERE IT ALL BEGAN',
+                    text: 'Silverstone hosted the very first Formula 1 World Championship race on May 13, 1950. Built on a former WWII bomber airfield in rural England, the circuit is 5.891km of high-speed corners. Capacity: 142,000. The British Grand Prix regularly draws F1\'s largest crowds. Copse, Maggots, Becketts, and Stowe are among the most famous corners in motorsport. Lewis Hamilton has won his home race 8 times.',
+                    layers: []
+                },
+                {
+                    center: [9.29, 45.62], zoom: 9, title: '🏎️ MONZA — THE TEMPLE OF SPEED',
+                    text: 'Autodromo Nazionale di Monza: F1\'s fastest circuit. Average speeds exceed 260 km/h, with top speeds reaching 360+ km/h on the start-finish straight. The Italian Grand Prix has been on the calendar since 1950 — the only race to feature in every F1 season. Capacity: 118,000. The Tifosi (Ferrari fans) turn the grandstands into a sea of red. The old banked oval, abandoned but still visible in the park, adds to Monza\'s haunting history.',
+                    layers: []
+                },
+                {
+                    center: [5.97, 50.44], zoom: 9, title: '🏎️ SPA-FRANCORCHAMPS — THE DRIVERS\' FAVOURITE',
+                    text: 'Circuit de Spa-Francorchamps in the Belgian Ardennes forest: 7.004km of elevation changes, blind crests, and unpredictable weather. Eau Rouge — the iconic uphill left-right-left sequence taken at 300+ km/h — is the most famous corner complex in racing. Capacity: 75,000. It frequently rains on one part of the circuit while another is dry, making it the ultimate driver\'s test. Max Verstappen won his first ever F1 race here in 2015.',
+                    layers: []
+                },
+                {
+                    center: [136.54, 34.84], zoom: 9, title: '🏎️ SUZUKA — PRECISION ENGINEERING',
+                    text: 'Suzuka Circuit in Japan is the only figure-eight layout in F1 — the track crosses over itself via a bridge. Designed by Dutchman John Hugenholtz in 1962, it\'s 5.807km of technical brilliance. The 130R corner (taken flat at 300 km/h) and the Degner curves are legendary. Capacity: 100,000. The Japanese Grand Prix has decided multiple championships. Japanese fans are renowned as the most knowledgeable and respectful in the sport.',
+                    layers: []
+                },
+                {
+                    center: [-46.7, -23.7], zoom: 9, title: '🏎️ INTERLAGOS — WHERE LEGENDS ARE MADE',
+                    text: 'Autódromo José Carlos Pace in São Paulo: 4.309km of passionate, unpredictable racing. The Brazilian Grand Prix — often the season\'s penultimate race — has produced some of F1\'s most dramatic moments. Capacity: 60,000 (but 200,000+ lined the hills in Senna\'s era). Ayrton Senna\'s 1991 victory here, driving the final laps stuck in 6th gear, is the greatest drive in F1 history. Brazil has produced 3 World Champions.',
+                    layers: []
+                },
+                {
+                    center: [103.86, 1.29], zoom: 10, title: '🏎️ SINGAPORE — THE NIGHT SPECTACLE',
+                    text: 'Marina Bay Street Circuit: F1\'s first-ever night race (2008). 4.940km under floodlights through the streets of Singapore — 1,500 light projectors illuminate the track. Capacity: 80,000. The heat, humidity (80%+), and 23 corners make it the most physically demanding race. Drivers lose 2-3kg in body weight during the 2-hour race. The Singapore skyline backdrop makes it arguably the most visually stunning race on the calendar.',
+                    layers: []
+                },
+                {
+                    center: [54.6, 24.47], zoom: 9, title: '🏎️ YAS MARINA — THE SEASON FINALE',
+                    text: 'Yas Marina Circuit in Abu Dhabi: 5.281km of modern engineering. The season-ending Abu Dhabi Grand Prix starts in daylight and finishes under lights. Capacity: 60,000. The 2021 finale — Verstappen vs Hamilton on the final lap — was the most controversial finish in F1 history. The circuit passes through the Yas Hotel, a landmark that straddles the track. Abu Dhabi exemplifies F1\'s expansion into the Middle East and the Gulf states\' use of sport as soft power.',
+                    layers: []
+                },
+                {
+                    center: [20, 20], zoom: 2, title: '🏁 FORMULA 1 — THE GLOBAL CIRCUS',
+                    text: 'Formula 1 visits 24 countries across 5 continents in a single season — making it the most geographically diverse annual sporting event on Earth. The F1 paddock is a traveling city of 3,000+ personnel, 10 teams, and $3+ billion in machinery. Global TV audience: 1.5 billion per year. F1 has evolved from a European gentleman\'s pursuit to a global entertainment platform, with new races in Las Vegas, Qatar, and Saudi Arabia reflecting shifting economic and political power.',
+                    layers: ['blocs']
+                }
+            ]
         }
     };
 
@@ -2631,6 +2846,9 @@ document.addEventListener("DOMContentLoaded", () => {
             });
         }
 
+        // Stop any ongoing narration
+        if (window.speechSynthesis) speechSynthesis.cancel();
+
         // Hide briefing during flight
         tourPanel.classList.add('hidden');
         tourPanel.classList.add('flying');
@@ -2657,6 +2875,14 @@ document.addEventListener("DOMContentLoaded", () => {
             tourText.textContent = step.text;
             tourCounter.textContent = 'STOP ' + (tourStepIndex + 1) + ' OF ' + activeTour.steps.length;
             tourPanel.classList.remove('hidden');
+
+            // Auto-narrate if enabled
+            const narrateBtn = document.getElementById('tour-narrate');
+            if (narrateBtn && narrateBtn.classList.contains('active') && window.speechSynthesis) {
+                const utter = new SpeechSynthesisUtterance(step.text);
+                utter.rate = 0.92; utter.pitch = 1; utter.lang = 'en-US';
+                speechSynthesis.speak(utter);
+            }
 
             // Re-enable nav
             if (tourPrev) tourPrev.disabled = false;
