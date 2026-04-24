@@ -1210,3 +1210,171 @@ body.no-ticker #sidebar { top: 14px !important; }
     font-size: 0.55rem;
     opacity: 0.7;
 }
+
+/* -------------------------------------------------------
+   FEEDBACK WIDGET
+------------------------------------------------------- */
+#feedback-widget {
+    position: fixed;
+    bottom: 10px;
+    right: 10px;
+    z-index: 2500;
+}
+
+#feedback-toggle {
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, rgba(255,176,0,0.2), rgba(255,100,0,0.15));
+    border: 1px solid rgba(255,176,0,0.4);
+    color: var(--amber);
+    font-size: 1.1rem;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.3s;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    backdrop-filter: blur(8px);
+}
+#feedback-toggle:hover {
+    transform: scale(1.1);
+    box-shadow: 0 0 20px rgba(255,176,0,0.3);
+    border-color: var(--amber);
+}
+
+#feedback-panel {
+    position: absolute;
+    bottom: 54px; right: 0;
+    width: 300px;
+    background: rgba(5, 10, 20, 0.96);
+    border: 1px solid rgba(255,176,0,0.3);
+    border-radius: 8px;
+    padding: 16px;
+    box-shadow: 0 12px 50px rgba(0,0,0,0.8), 0 0 30px rgba(255,176,0,0.06);
+    backdrop-filter: blur(15px);
+    font-family: 'Share Tech Mono', monospace;
+    transition: all 0.35s cubic-bezier(0.19, 1, 0.22, 1);
+}
+#feedback-panel.hidden {
+    opacity: 0;
+    transform: translateY(15px) scale(0.95);
+    pointer-events: none;
+}
+
+.feedback-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(255,176,0,0.2);
+}
+.feedback-title {
+    font-size: 0.7rem;
+    color: var(--amber);
+    letter-spacing: 2px;
+}
+.feedback-close-btn {
+    background: transparent; border: none;
+    color: rgba(255,255,255,0.4); cursor: pointer;
+    font-size: 0.9rem; transition: color 0.2s;
+}
+.feedback-close-btn:hover { color: #fff; }
+
+.feedback-section { margin-bottom: 12px; }
+.feedback-label {
+    display: block;
+    font-size: 0.6rem;
+    color: rgba(255,255,255,0.5);
+    letter-spacing: 1px;
+    margin-bottom: 5px;
+    text-transform: uppercase;
+}
+
+/* Star Rating */
+.star-rating {
+    display: flex; gap: 4px;
+}
+.star {
+    font-size: 1.4rem;
+    color: rgba(255,255,255,0.15);
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.star:hover, .star.hover { color: rgba(255,176,0,0.6); transform: scale(1.15); }
+.star.active { color: var(--amber); text-shadow: 0 0 8px rgba(255,176,0,0.4); }
+.star-label {
+    font-size: 0.55rem;
+    color: var(--amber);
+    margin-left: 8px;
+    letter-spacing: 1px;
+    opacity: 0.7;
+}
+
+/* Form inputs */
+.feedback-select, .feedback-input, .feedback-textarea {
+    width: 100%;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 4px;
+    color: #ddd;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.65rem;
+    padding: 7px 9px;
+    transition: border-color 0.2s;
+    outline: none;
+}
+.feedback-select:focus, .feedback-input:focus, .feedback-textarea:focus {
+    border-color: rgba(255,176,0,0.4);
+}
+.feedback-select option {
+    background: #111; color: #ddd;
+}
+.feedback-textarea { resize: vertical; min-height: 36px; }
+
+/* Actions */
+.feedback-actions {
+    display: flex; flex-direction: column; gap: 6px;
+    margin-top: 14px;
+}
+.feedback-submit-btn {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 1.5px;
+    padding: 10px;
+    border: 1px solid rgba(255,176,0,0.4);
+    background: rgba(255,176,0,0.12);
+    color: var(--amber);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+}
+.feedback-submit-btn:hover {
+    background: var(--amber);
+    color: #000;
+    box-shadow: 0 0 20px rgba(255,176,0,0.3);
+}
+.feedback-bug-link {
+    font-size: 0.55rem;
+    color: rgba(255,255,255,0.35);
+    text-decoration: none;
+    text-align: center;
+    letter-spacing: 1px;
+    padding: 4px;
+    transition: color 0.2s;
+}
+.feedback-bug-link:hover { color: var(--neon-blue); }
+
+.feedback-footer {
+    font-size: 0.45rem;
+    color: rgba(255,255,255,0.2);
+    text-align: center;
+    margin-top: 10px;
+    letter-spacing: 0.5px;
+}
+
+@media (max-width: 768px) {
+    #feedback-panel {
+        width: calc(100vw - 30px);
+        right: -5px;
+    }
+}

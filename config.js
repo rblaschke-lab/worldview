@@ -34,5 +34,16 @@ window.GeopulseConfig = {
         "satellites": { id: "satellites", name: "Sat & Debris", status: "STATIC", source: "SpaceTrack", reliabilityScore: 92 },
         "volcanoes": { id: "volcanoes", name: "Volcanoes", status: "STATIC", source: "Smithsonian", reliabilityScore: 95 },
         "radiation": { id: "radiation", name: "Radiation Sites", status: "STATIC", source: "Safecast", reliabilityScore: 85 }
+    },
+    FEEDBACK: {
+        // Replace FORM_ID with your Google Form ID after creating the form.
+        // See setup instructions at the bottom of this file.
+        GOOGLE_FORM_URL: "https://docs.google.com/forms/d/e/FORM_ID/viewform",
+        GITHUB_ISSUES_URL: "https://github.com/rblaschke-lab/geopulse/issues/new",
+        // Google Form field entry IDs (replace after creating form):
+        FIELD_RATING: "entry.1000000",   // Rating (1-5)
+        FIELD_FAVOURITE: "entry.1000001", // Favourite feature
+        FIELD_COMMENT: "entry.1000002",   // Comment text
+        FIELD_WISH: "entry.1000003"       // Feature wish
     }
 };

@@ -459,6 +459,73 @@
         document.querySelectorAll('.dyn-version-stable').forEach(el => el.innerText = `V${window.GeopulseConfig.VERSION}_STABLE`);
     </script>
 
+    <!-- FEEDBACK WIDGET -->
+    <div id="feedback-widget">
+        <button id="feedback-toggle" title="Send Feedback">
+            <i class="fa-solid fa-comment-dots"></i>
+        </button>
+        <div id="feedback-panel" class="hidden">
+            <div class="feedback-header">
+                <span class="feedback-title"><i class="fa-solid fa-paper-plane"></i> FEEDBACK</span>
+                <button id="feedback-close" class="feedback-close-btn"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <!-- Star Rating -->
+            <div class="feedback-section">
+                <label class="feedback-label">How do you rate GEOPULSE?</label>
+                <div class="star-rating" id="star-rating">
+                    <span class="star" data-val="1">★</span>
+                    <span class="star" data-val="2">★</span>
+                    <span class="star" data-val="3">★</span>
+                    <span class="star" data-val="4">★</span>
+                    <span class="star" data-val="5">★</span>
+                </div>
+                <span class="star-label" id="star-label"></span>
+            </div>
+
+            <!-- Favourite Feature -->
+            <div class="feedback-section">
+                <label class="feedback-label">What do you enjoy most?</label>
+                <select id="feedback-fav" class="feedback-select">
+                    <option value="">— select —</option>
+                    <option value="Guided Tours">🎓 Guided Tours</option>
+                    <option value="Map Layers">🗺️ Map Layers</option>
+                    <option value="Live Webcams">📹 Live Webcams</option>
+                    <option value="Design / UI">🎨 Design / UI</option>
+                    <option value="Educational Content">📖 Educational Content</option>
+                    <option value="Scenarios">🎯 Scenarios</option>
+                    <option value="Everything">🔥 Everything</option>
+                </select>
+            </div>
+
+            <!-- Feature Wish -->
+            <div class="feedback-section">
+                <label class="feedback-label">Feature wish (optional)</label>
+                <input type="text" id="feedback-wish" class="feedback-input" placeholder="e.g. More tours, Dark mode..." maxlength="120">
+            </div>
+
+            <!-- Comment -->
+            <div class="feedback-section">
+                <label class="feedback-label">Anything else? (optional)</label>
+                <textarea id="feedback-comment" class="feedback-textarea" rows="2" placeholder="Tell us what you think..." maxlength="500"></textarea>
+            </div>
+
+            <!-- Actions -->
+            <div class="feedback-actions">
+                <button id="feedback-submit" class="feedback-submit-btn">
+                    <i class="fa-solid fa-paper-plane"></i> SUBMIT FEEDBACK
+                </button>
+                <a id="feedback-bug" class="feedback-bug-link" target="_blank">
+                    <i class="fa-solid fa-bug"></i> Report a Bug (GitHub)
+                </a>
+            </div>
+
+            <div class="feedback-footer">
+                Feedback goes to a Google Form — no login required.
+            </div>
+        </div>
+    </div>
+
     <!-- QUICK LINKS (bottom-left) -->
     <div id="quick-links">
         <a href="./about.html" target="_blank" title="About GEOPULSE"><i class="fa-solid fa-circle-info"></i> About</a>
