@@ -15,12 +15,12 @@
 | Category | Layers |
 |----------|--------|
 | **🛰️ Real-Time Tracking** | AIS Shipping, ISS Tracker, Earthquakes (USGS), NASA Wildfires, Flights, Day/Night Terminator |
-| **🌐 Geopolitics** | Regime Types, Alliances & Blocs, Active Conflicts, Undersea Cables, Nuclear Plants |
+| **🌐 Geopolitics** | Regime Types, Alliances & Blocs, Active Conflicts, Country Borders & Labels, Undersea Cables, Nuclear Plants |
 | **🌋 Environment & Space** | Ocean Temperature, Surface Temperature, Population Density, Volcanoes, Radiation Sites, Starlink |
 
 ### Key Capabilities
 
-- **Guided Tours** — 5 cinematic educational tours (Ring of Fire, Nuclear Legacy, Digital Silk Road, Belt & Road, Cold War)
+- **Guided Tours** — 14 cinematic educational tours across 4 categories: Geopolitics, History (WW1, WW2), Science & Nature, Sports & Culture
 - **2-Mode System** — EXPLORE (full satellite view) / ANALYZE (data-focused overlays)
 - **Bilingual Interface** — Switch between English and German (EN/DE) with one click
 - **Global Scenario Presets** — One-click educational presets (Taiwan, Red Sea, Europe Energy, Nuclear Risk)
@@ -28,6 +28,8 @@
 - **Wikipedia Integration** — Click markers for detailed context with direct Wikipedia links
 - **Mobile-First** — Full touch support with swipeable panels and 4-button bottom nav
 - **Welcome Overlay** — First-visit onboarding with tour launcher for students
+- **Tour Images** — Wikipedia thumbnails displayed at key historical/geographic stops
+- **Country Borders** — Natural Earth 110m boundaries + 121 country labels (zoom-dependent)
 
 ## Tech Stack
 
