@@ -1,6 +1,6 @@
 // Global GEOPULSE Configuration
 window.GeopulseConfig = {
-    VERSION: "2.5",
+    VERSION: "2.6",
     // NASA FIRMS map key — free, per-user, rate-limited, read-only.
     // Public by design (client-side); rotate at firms.modaps.eosdis.nasa.gov if needed.
     FIRMS_MAP_KEY: "53809ad8a8e6c66c28d2b1e2a85b3d80",

@@ -2523,10 +2523,311 @@ document.addEventListener("DOMContentLoaded", () => {
         setStatus(currentLang === 'de' ? `WEBCAMS ONLINE: ${camCount} Live-Kameras (foto-webcam.eu)` : `WEBCAMS ONLINE: ${camCount} live cameras (foto-webcam.eu)`);
     };
 
+    // ══════════════════════════════════════════════════════════════════════
+    // KAMERA-RASTER — indexgestützt, zoomgesteuert                    (V2.6)
+    // ══════════════════════════════════════════════════════════════════════
+    //
+    // Die neun kuratierten foto-webcam.eu-Kameras oben bleiben unverändert:
+    // Panoramen, die man auch aus der Ferne sehen will. Hier kommt die Masse
+    // dazu — knapp 5.000 öffentliche Verkehrskameras aus London, Austin und
+    // Kalifornien.
+    //
+    // Drei Regeln halten das beherrschbar:
+    //
+    //  1. NICHTS VOR DER STADTEBENE. Unterhalb CAM_MIN_ZOOM wird kein einziger
+    //     Marker gezeichnet. 5.000 Punkte auf einer Weltkarte sind kein
+    //     Informationsgewinn, sondern Konfetti.
+    //  2. NUR DER AUSSCHNITT, gedeckelt auf CAM_MAX_MARKERS. Der Index bleibt
+    //     vollständig im Speicher — er ist Daten, keine DOM-Knoten, und kostet
+    //     die Karte nichts.
+    //  3. EIN POPUP, nicht eines je Kamera. Das Bild wird beim Klick geladen,
+    //     nie auf Vorrat.
+    //
+    // Der Index (data/cameras.json) entsteht zur Bauzeit über
+    // scripts/build-camera-index.mjs und wird träge geladen: wer den Layer nie
+    // einschaltet und nie nach einer Kamera sucht, lädt ihn nie.
+    const CAM_MIN_ZOOM = 11;        // Stadtebene — Straßenzüge unterscheidbar
+    const CAM_MAX_MARKERS = 300;    // Obergrenze je Ausschnitt
+    const CAM_REFRESH_MS = 60000;
+
+    /** Bild-URL-Vorlagen. MUSS mit IMAGE_URL in scripts/build-camera-index.mjs übereinstimmen. */
+    const CAM_IMAGE_URL = {
+        t: (id) => `https://s3-eu-west-1.amazonaws.com/jamcams.tfl.gov.uk/${id}.jpg`,
+        a: (id) => `https://cctv.austinmobility.io/image/${id}.jpg`,
+    };
+    const CAM_SOURCE_LABEL = { t: 'TfL Open Data', a: 'City of Austin', c: 'Caltrans' };
+
+    let camIndex = null;            // { generated, attribution, cameras: [...] }
+    let camIndexPromise = null;
+    const camMarkers = new Map();   // "quelle:id" -> maplibregl.Marker
+    let camPopup = null;
+    let camGridBound = false;
+
+    /** Zeile -> Bild-URL. Caltrans bringt sie mit (Feld 5), der Rest leitet sie ab. */
+    const camImageUrl = (c) => c[5] || CAM_IMAGE_URL[c[0]]?.(c[1]) || null;
+    const camKey = (c) => `${c[0]}:${c[1]}`;
+
+    /**
+     * Lädt den Index einmal. Mehrfachaufrufe teilen sich dieselbe Zusage, damit
+     * gleichzeitiges "Layer an" und "Suche tippen" nicht zweimal lädt.
+     */
+    function ensureCamIndex() {
+        if (camIndexPromise) return camIndexPromise;
+        const v = window.GeopulseConfig?.VERSION || '';
+        camIndexPromise = fetch(`./data/cameras.json?v=${encodeURIComponent(v)}`)
+            .then((r) => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+            .then((j) => {
+                camIndex = j;
+                document.dispatchEvent(new CustomEvent('geopulse:cameras-ready', { detail: j }));
+                return j;
+            })
+            .catch((err) => {
+                console.warn('[GEOPULSE] Kameraindex nicht ladbar:', err.message);
+                camIndexPromise = null;   // ein späterer Versuch darf es erneut probieren
+                throw err;
+            });
+        return camIndexPromise;
+    }
+
+    function buildCamPopupHtml(c) {
+        const img = camImageUrl(c);
+        // Pflichtangabe aus dem erzeugten Index — TfL verlangt vertraglich den
+        // vollen Satz ("Powered by TfL Open Data. Contains OS data © Crown
+        // copyright…"). Einzige Quelle dafür ist die JSON, damit Bauskript und
+        // Anzeige nicht auseinanderlaufen. CAM_SOURCE_LABEL ist nur der
+        // Notnagel, falls der Index eine unbekannte Quelle mitbringt.
+        const src = camIndex?.attribution?.[c[0]] || CAM_SOURCE_LABEL[c[0]] || c[0];
+        const de = currentLang === 'de';
+        return `
+            <div style="font-family:'Share Tech Mono',monospace; width:320px; background:rgba(0,10,20,0.97); border:1px solid #00d4ff; border-radius:4px; overflow:hidden;">
+                <div style="padding:6px 10px; border-bottom:1px solid rgba(0,212,255,0.2); display:flex; justify-content:space-between; align-items:center; gap:8px;">
+                    <span style="color:#00d4ff; font-size:0.68rem; letter-spacing:1px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"><i class="fa-solid fa-video" style="margin-right:4px;"></i>${escHtml(c[4])}</span>
+                    <span style="font-size:0.5rem; color:#0f0; letter-spacing:1px; flex-shrink:0;">● LIVE</span>
+                </div>
+                <div style="position:relative; width:100%; background:#000; line-height:0;">
+                    <img src="${escHtml(img)}?t=${Date.now()}" style="width:100%; height:auto; display:block; min-height:120px; object-fit:cover;"
+                         alt="${escHtml(c[4])}" loading="lazy"
+                         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
+                    <div style="display:none; width:100%; height:140px; align-items:center; justify-content:center; flex-direction:column; background:rgba(0,0,0,0.9);">
+                        <i class="fa-solid fa-signal" style="color:#ff3344; font-size:1.4rem; margin-bottom:6px;"></i>
+                        <span style="color:#ff3344; font-size:0.62rem; letter-spacing:1px;">${de ? 'KEIN SIGNAL' : 'SIGNAL LOST'}</span>
+                    </div>
+                </div>
+                <div style="padding:4px 10px 6px; font-size:0.42rem; color:rgba(255,255,255,0.3); letter-spacing:0.5px; line-height:1.35;">
+                    ${escHtml(src)}${camIndex?.generated ? ` · ${de ? 'Index' : 'index'} ${escHtml(camIndex.generated)}` : ''}
+                </div>
+            </div>`;
+    }
+
+    function openCamPopup(c) {
+        if (!camPopup) camPopup = new maplibregl.Popup({ offset: 12, maxWidth: '340px', closeButton: true });
+        camPopup.setLngLat([c[3], c[2]]).setHTML(buildCamPopupHtml(c)).addTo(map);
+    }
+
+    /**
+     * Abdeckungsmarken beim Herauszoomen.
+     *
+     * Ohne sie ist das Feature aus deutscher Sicht kaputt: die Kameras liegen in
+     * London, Austin und Kalifornien, sonst nirgends. Wer in Wiesbaden auf
+     * Stadtebene zoomt, sieht korrekt nichts — und hält es für einen Fehler,
+     * weil ihm niemand gesagt hat, wo überhaupt etwas ist. Diese Marken sagen es,
+     * und ein Klick bringt einen hin.
+     */
+    const camRegionMarkers = [];
+
+    function showCamRegions() {
+        if (camRegionMarkers.length || !camIndex?.regions) return;
+        const de = currentLang === 'de';
+        for (const r of camIndex.regions) {
+            const el = document.createElement('div');
+            el.className = 'marker-cam-region';
+            el.style.cssText = 'cursor:pointer;white-space:nowrap;';
+            el.innerHTML = `<div style="display:flex;align-items:center;gap:5px;padding:3px 9px;background:rgba(0,20,35,0.92);border:1px solid rgba(0,212,255,0.55);border-radius:11px;box-shadow:0 0 10px rgba(0,212,255,0.25);font-family:'Share Tech Mono',monospace;font-size:0.6rem;color:#00d4ff;letter-spacing:0.5px;transition:transform .15s;">
+                <i class="fa-solid fa-video" style="font-size:0.55rem;opacity:.8;"></i>
+                <span><strong>${r.count.toLocaleString(de ? 'de-DE' : 'en-US')}</strong> ${escHtml(de ? r.label_de : r.label_en)}</span>
+            </div>`;
+            const inner = el.firstElementChild;
+            el.onmouseenter = () => { inner.style.transform = 'scale(1.08)'; };
+            el.onmouseleave = () => { inner.style.transform = 'scale(1)'; };
+            el.onclick = (ev) => {
+                ev.stopPropagation();
+                map.flyTo({ center: [r.lon, r.lat], zoom: 12, speed: 1.3 });
+            };
+            camRegionMarkers.push(new maplibregl.Marker({ element: el, anchor: 'center' })
+                .setLngLat([r.lon, r.lat]).addTo(map));
+        }
+    }
+
+    function hideCamRegions() {
+        camRegionMarkers.forEach((m) => m.remove());
+        camRegionMarkers.length = 0;
+    }
+
+    /** Zeichnet die Kameras des aktuellen Ausschnitts und räumt weg, was hinausgescrollt ist. */
+    function renderCamViewport() {
+        if (!toggles.webcams || !camIndex) return;
+
+        if (map.getZoom() < CAM_MIN_ZOOM) {
+            camMarkers.forEach((m) => m.remove());
+            camMarkers.clear();
+            camPopup?.remove();
+            showCamRegions();
+            reportCamStatus(0, true);
+            return;
+        }
+        hideCamRegions();
+
+        const b = map.getBounds();
+        const w = b.getWest(), e = b.getEast(), s = b.getSouth(), n = b.getNorth();
+        const visible = [];
+        for (const c of camIndex.cameras) {
+            const lat = c[2], lon = c[3];
+            if (lat < s || lat > n || lon < w || lon > e) continue;
+            visible.push(c);
+            if (visible.length >= CAM_MAX_MARKERS) break;
+        }
+
+        const keep = new Set(visible.map(camKey));
+        camMarkers.forEach((m, k) => { if (!keep.has(k)) { m.remove(); camMarkers.delete(k); } });
+
+        for (const c of visible) {
+            const k = camKey(c);
+            if (camMarkers.has(k)) continue;
+            const el = document.createElement('div');
+            el.className = 'marker-webcam marker-cctv';
+            el.style.cssText = 'width:14px;height:14px;cursor:pointer;';
+            el.innerHTML = '<div style="width:14px;height:14px;background:rgba(0,212,255,0.8);border-radius:50%;border:1.5px solid rgba(255,255,255,0.9);box-shadow:0 0 6px rgba(0,212,255,0.5);transition:transform 0.15s;"></div>';
+            const inner = el.firstElementChild;
+            el.onmouseenter = () => { inner.style.transform = 'scale(1.4)'; };
+            el.onmouseleave = () => { inner.style.transform = 'scale(1)'; };
+            el.title = c[4];
+            // Klick statt vorgebautem Popup: 300 Popups hießen 300 <img>-Elemente,
+            // also 300 Bildabrufe für Kameras, die niemand ansieht.
+            el.onclick = (ev) => { ev.stopPropagation(); openCamPopup(c); };
+            camMarkers.set(k, new maplibregl.Marker({ element: el, anchor: 'center' })
+                .setLngLat([c[3], c[2]]).addTo(map));
+        }
+
+        reportCamStatus(visible.length, false);
+    }
+
+    /**
+     * Beantwortet "gibt es hier Kameras, und wie viele".
+     *
+     * Bewusst in die BESTEHENDE Beschreibungszeile des Webcam-Layers, nicht in
+     * ein neues Bedienelement — die Karte bekommt durch dieses Feature keinen
+     * einzigen Kasten dazu. `updateLayerStatus()` taugt dafür nicht: es pflegt
+     * nur das Metadatenobjekt und fasst laut eigenem Kommentar das DOM nicht an.
+     *
+     * Beim ersten Schreiben wird `data-i18n` entfernt, sonst überschreibt der
+     * Sprachumschalter den Zähler wieder mit dem statischen Beschreibungstext.
+     * Dafür rendern wir bei Sprachwechsel selbst neu (siehe unten).
+     */
+    let camStatusState = { shown: 0, zoomedOut: true };
+
+    function reportCamStatus(shown, zoomedOut) {
+        camStatusState = { shown, zoomedOut };
+        const el = document.getElementById('toggle-webcams')
+            ?.closest('.control-item')?.querySelector('.layer-desc');
+        if (!el) return;
+
+        const total = (camIndex?.cameras.length || 0) + WEBCAM_CATALOG.length;
+        const de = currentLang === 'de';
+        const num = (n) => n.toLocaleString(de ? 'de-DE' : 'en-US');
+        let detail;
+        if (!camIndex) {
+            detail = de ? `${WEBCAM_CATALOG.length} Panoramakameras` : `${WEBCAM_CATALOG.length} panorama cameras`;
+        } else if (zoomedOut) {
+            // Regionen NAMENTLICH nennen. "4.992 Kameras, auf Stadtebene zoomen"
+            // wäre eine Lüge durch Auslassung: außerhalb dieser drei Gebiete
+            // gibt es keine, und wer das nicht weiß, sucht vergeblich.
+            const names = (camIndex.regions || []).map((r) => (de ? r.label_de : r.label_en));
+            const list = names.length
+                ? names.slice(0, -1).join(', ') + (names.length > 1 ? (de ? ' und ' : ' and ') : '') + names[names.length - 1]
+                : '';
+            detail = de
+                ? `${num(total)} Kameras · Verkehrskameras in ${list} — dort auf Stadtebene zoomen`
+                : `${num(total)} cameras · traffic cams in ${list} — zoom to city level there`;
+        } else if (shown === 0) {
+            // Der Fall, der das Feature kaputt aussehen lässt: Stadtebene, aber
+            // außerhalb der abgedeckten Gebiete. "0 im Ausschnitt" wäre richtig
+            // und trotzdem nutzlos — es muss dastehen, wo etwas zu finden ist.
+            const names = (camIndex.regions || []).map((r) => (de ? r.label_de : r.label_en)).join(' · ');
+            detail = de
+                ? `hier keine Verkehrskameras · ${num(total)} in ${names}`
+                : `no traffic cams here · ${num(total)} in ${names}`;
+        } else {
+            const capped = shown >= CAM_MAX_MARKERS ? '+' : '';
+            detail = de
+                ? `${shown}${capped} im Ausschnitt · ${num(total)} gesamt`
+                : `${shown}${capped} in view · ${num(total)} total`;
+        }
+
+        el.removeAttribute('data-i18n');
+        el.textContent = detail;
+        if (window.updateLayerStatus) updateLayerStatus('webcams', 'LIVE', detail);
+    }
+
+    // Sprachwechsel: den Zähler in der neuen Sprache neu schreiben. Nötig, weil
+    // die Zeile oben aus der i18n-Verwaltung genommen wurde.
+    function refreshCamLocalisation() {
+        if (!toggles.webcams) return;
+        reportCamStatus(camStatusState.shown, camStatusState.zoomedOut);
+        // Die Abdeckungsmarken tragen Text ("890 London") — neu aufbauen, sonst
+        // steht die Zahl in der alten Sprachformatierung da.
+        if (camRegionMarkers.length) { hideCamRegions(); showCamRegions(); }
+    }
+    document.addEventListener('setLang', () => setTimeout(refreshCamLocalisation, 0));
+    const _camPrevSetLanguage = window.setLanguage;
+    window.setLanguage = function (lang) {
+        if (_camPrevSetLanguage) _camPrevSetLanguage(lang);
+        setTimeout(refreshCamLocalisation, 0);
+    };
+
+    /** Von der Suche aufgerufen: zur Kamera fliegen und sie öffnen. */
+    function focusCamera(key) {
+        const c = camIndex?.cameras.find((x) => camKey(x) === key);
+        if (!c) return false;
+        const toggle = document.getElementById('toggle-webcams');
+        if (toggle && !toggle.checked) { toggle.checked = true; toggle.dispatchEvent(new Event('change', { bubbles: true })); }
+        map.flyTo({ center: [c[3], c[2]], zoom: Math.max(map.getZoom(), 14), speed: 1.2 });
+        // Erst nach dem Flug öffnen, sonst steht das Popup noch am alten Ort.
+        map.once('moveend', () => { renderCamViewport(); openCamPopup(c); });
+        return true;
+    }
+
+    /** Damit Kameras auch bei ausgeschaltetem Layer auffindbar sind (search.js). */
+    window.geopulseCameras = {
+        ensureIndex: ensureCamIndex,
+        focus: focusCamera,
+        key: camKey,
+        get index() { return camIndex; },
+    };
+
     document.getElementById('toggle-webcams')?.addEventListener('change', (e) => {
         toggles.webcams = e.target.checked;
         if (toggles.webcams && webcamMarkers.length === 0) initWebcams();
         webcamMarkers.forEach(m => toggles.webcams ? m.addTo(map) : m.remove());
+
+        if (toggles.webcams) {
+            if (!camGridBound) {
+                camGridBound = true;
+                map.on('moveend', renderCamViewport);
+                map.on('zoomend', renderCamViewport);
+                setInterval(() => {
+                    // Nur das eine offene Popup frisch halten, nicht 300 Marker.
+                    if (!toggles.webcams || !camPopup?.isOpen()) return;
+                    const img = camPopup.getElement()?.querySelector('img');
+                    if (img) img.src = img.src.replace(/([?&]t=)\d+/, `$1${Date.now()}`);
+                }, CAM_REFRESH_MS);
+            }
+            ensureCamIndex().then(renderCamViewport).catch(() => { /* Panoramakameras laufen weiter */ });
+        } else {
+            camMarkers.forEach((m) => m.remove());
+            camMarkers.clear();
+            hideCamRegions();
+            camPopup?.remove();
+        }
     });
 
     const initISS = () => {

@@ -305,9 +305,47 @@
 
     <div class="timeline">
 
-        <!-- V2.41 — CURRENT -->
+        <!-- V2.6 — CURRENT -->
         <div class="version-entry">
             <div class="version-dot current"></div>
+            <div class="version-header">
+                <span class="version-number">V2.6</span>
+                <span class="version-type type-minor">MINOR</span>
+                <span class="version-name">Camera Grid — 4,996 Public Cameras</span>
+                <span class="version-date">27 AUG 2026</span>
+            </div>
+            <ul class="version-changes">
+                <li><span class="change-icon feat">✦</span> <strong>4,996 public cameras</strong> — TfL London (890), City of Austin (817) and Caltrans across nine California districts (3,289) join the nine curated foto-webcam.eu panoramas. All open data; no API key and no server involved</li>
+                <li><span class="change-icon feat">✦</span> <strong>Cameras are searchable by name</strong> — Type a street into the search box (Ctrl+K) and jump to the camera watching it. "Old Street", "Friars", "Rundberg" all resolve. Results cap at 8 with a hint when a query is too broad</li>
+                <li><span class="change-icon ui">◆</span> <strong>Nothing before city level</strong> — Cameras draw only at zoom 11 and closer, and only those inside the current view (max 300). Zoomed out, the layer reports how many exist instead of scattering 5,000 dots across the planet</li>
+                <li><span class="change-icon ui">◆</span> <strong>Coverage is visible, not implied</strong> — The cameras sit in three places on Earth, not everywhere. Zoomed out, clickable badges mark each region with its count (3,289 California · 890 London · 817 Austin) and fly you there. Zoom into a city outside those areas and the layer says "no traffic cams here" and names where they are, instead of leaving you to guess whether the feature is broken</li>
+                <li><span class="change-icon feat">✦</span> <strong>Build-time index</strong> — <code>scripts/build-camera-index.mjs</code> condenses 3 MB of raw catalogues into a 662 KB index (143 KB gzipped) that loads lazily: never fetched unless the layer is switched on or someone searches</li>
+                <li><span class="change-icon ui">◆</span> <strong>One popup, loaded on click</strong> — Images are fetched when a camera is opened, never in advance, and refresh every 60 s while visible. A dead feed shows "SIGNAL LOST" rather than a broken image</li>
+                <li><span class="change-icon fix">●</span> <strong>Attribution travels with the data</strong> — The required "Powered by TfL Open Data" notice and the Austin/Caltrans credits ship inside the generated index, so builder and display cannot drift apart</li>
+            </ul>
+        </div>
+
+        <!-- V2.5 -->
+        <div class="version-entry">
+            <div class="version-dot"></div>
+            <div class="version-header">
+                <span class="version-number">V2.5</span>
+                <span class="version-type type-minor">MINOR</span>
+                <span class="version-name">Left Column Untangled &amp; Faster Entry</span>
+                <span class="version-date">26 AUG 2026</span>
+            </div>
+            <ul class="version-changes">
+                <li><span class="change-icon fix">●</span> <strong>Quiz panel was half-covered</strong> — The map quiz is 50 px tall and 30 of them were hidden: 16 px under the search bar, 14 px under the quick links, including its own header. Tours and quiz now outrank the ticker, quick links and launch feed instead of sitting beneath them</li>
+                <li><span class="change-icon ui">◆</span> <strong>The left column is a stack now</strong> — Each panel's position derives from the one below it, so a height change can no longer silently create an overlap. Four colliding pairs went to zero, with 8 px of breathing room throughout</li>
+                <li><span class="change-icon ui">◆</span> <strong>One panel open at a time</strong> — An expanded tours or quiz panel is taller than the gaps to its neighbours, so the neighbours step aside while it is open</li>
+                <li><span class="change-icon ui">◆</span> <strong>Entry cut from 6 s to 2.2 s</strong> — The splash was a second waiting room holding the screen for 4.5 s before even revealing the welcome card. It is now a 1.2 s transition, skippable with a click or Esc. The audio drone keeps its own timing so it is no longer cut off mid-fade</li>
+                <li><span class="change-icon fix">●</span> <strong>Duplicate element id</strong> — <code>layer-legend</code> existed twice; every legend write landed in the undocumented copy while the documented one stayed empty</li>
+            </ul>
+        </div>
+
+        <!-- V2.41 -->
+        <div class="version-entry">
+            <div class="version-dot"></div>
             <div class="version-header">
                 <span class="version-number">V2.41</span>
                 <span class="version-type type-minor">MINOR</span>

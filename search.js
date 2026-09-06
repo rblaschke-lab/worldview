@@ -77,6 +77,41 @@
 
     console.log(`[GEOPULSE] Search index built: ${SEARCH_INDEX.length} items (tours + layers)`);
 
+    // --- Cameras (V2.6) ---------------------------------------------------
+    // Knapp 5.000 Verkehrskameras gehören in die Suche, aber nicht in den
+    // ersten Seitenaufruf. Der Index wird geholt, sobald jemand wirklich tippt
+    // — und dann genau einmal. Wer nie sucht, lädt ihn nie.
+    //
+    // Bewusst NICHT als Layer-Eintrag: Kameras sind Orte, keine Schalter. Man
+    // sucht "Old Street", nicht "Webcams".
+    let camerasRequested = false;
+
+    function requestCameraIndex() {
+        if (camerasRequested || !window.geopulseCameras) return;
+        camerasRequested = true;
+        window.geopulseCameras.ensureIndex().catch(() => { /* Suche läuft ohne weiter */ });
+    }
+
+    document.addEventListener('geopulse:cameras-ready', (ev) => {
+        const cams = ev.detail?.cameras;
+        if (!cams) return;
+        for (const c of cams) {
+            const name = c[4];
+            SEARCH_INDEX.push({
+                type: 'camera',
+                id: window.geopulseCameras.key(c),
+                icon: '📷',
+                name_en: name,
+                name_de: name,            // Straßennamen werden nicht übersetzt
+                _searchText: name.toLowerCase(),
+            });
+        }
+        console.log(`[GEOPULSE] Search index extended: +${cams.length} cameras`);
+        // Läuft gerade eine Suche, sofort nachziehen — sonst wirkt es kaputt,
+        // wenn Treffer erst beim nächsten Tastendruck auftauchen.
+        if (searchInput.value.length >= 2) renderResults(searchInput.value);
+    });
+
     // --- Fuzzy match ---
     function fuzzyMatch(query, item) {
         const words = query.toLowerCase().split(/\s+/).filter(w => w.length > 0);
@@ -104,6 +139,11 @@
         // Group by type
         const tours = matches.filter(m => m.type === 'tour');
         const layers = matches.filter(m => m.type === 'layer');
+        // Kameras zuletzt und gedeckelt: "Blvd" trifft in Austin hundertfach,
+        // und eine Trefferliste, die man scrollen muss, ist keine Antwort.
+        const CAMERA_RESULT_LIMIT = 8;
+        const camerasAll = matches.filter(m => m.type === 'camera');
+        const cameras = camerasAll.slice(0, CAMERA_RESULT_LIMIT);
         const lang = document.documentElement.lang === 'de' ? 'de' : 'en';
 
         let html = '';
@@ -128,6 +168,25 @@
                     <span class="sr-type">layer</span>
                 </div>`;
             });
+        }
+
+        if (cameras.length > 0) {
+            const more = camerasAll.length - cameras.length;
+            const label = lang === 'de' ? 'Kameras' : 'Cameras';
+            html += `<div class="search-group-label">${label}${more > 0 ? ` <span style="opacity:.45;">(${cameras.length}/${camerasAll.length})</span>` : ''}</div>`;
+            cameras.forEach((item, i) => {
+                html += `<div class="search-result-item" data-type="camera" data-id="${escapeHtml(item.id)}" data-idx="${tours.length + layers.length + i}">
+                    <span class="sr-icon">${item.icon}</span>
+                    <span class="sr-name">${highlightMatch(item.name_en, query)}</span>
+                    <span class="sr-type">cam</span>
+                </div>`;
+            });
+            if (more > 0) {
+                const hint = lang === 'de'
+                    ? `${more} weitere — Suche verfeinern`
+                    : `${more} more — refine your search`;
+                html += `<div class="search-no-results" style="opacity:.5;">${hint}</div>`;
+            }
         }
 
         searchResults.innerHTML = html;
@@ -176,6 +235,9 @@
                 }
                 btn.click();
             }
+        } else if (type === 'camera') {
+            // Schaltet den Layer bei Bedarf ein, fliegt hin und öffnet das Bild.
+            window.geopulseCameras?.focus(id);
         } else if (type === 'layer') {
             // Find and toggle the layer checkbox
             const toggle = document.getElementById('toggle-' + id);
@@ -203,6 +265,9 @@
         const q = searchInput.value.trim();
         searchClear.style.display = q ? 'block' : 'none';
         searchKbd.style.display = q ? 'none' : '';
+        // Erst ab zwei Zeichen: ein versehentlicher Tastendruck soll den Index
+        // nicht holen. Ab hier sucht jemand wirklich.
+        if (q.length >= 2) requestCameraIndex();
         clearTimeout(debounceTimer);
         debounceTimer = setTimeout(() => renderResults(q), 120);
     });

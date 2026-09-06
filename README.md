@@ -2,7 +2,7 @@
 
 **Free, real-time educational world map combining satellite imagery, geopolitical data, and live intelligence feeds into one interactive dashboard. By RB Design 2026.**
 
-![Version](https://img.shields.io/badge/version-2.2-blue)
+![Version](https://img.shields.io/badge/version-2.6-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Platform](https://img.shields.io/badge/platform-GitHub%20Pages-orange)
 ![Cost](https://img.shields.io/badge/cost-%240%2Fmonth-brightgreen)
@@ -13,13 +13,13 @@
 
 > 🌐 *Now live at **geopulseworld.com***
 
-> *10,000+ lines of code · 22+ data layers · 41 guided tours across 8 disciplines · GeoQuiz · Zero API keys · Zero cost*
+> *10,000+ lines of code · 22+ data layers · 5,005 live cameras · 41 guided tours across 8 disciplines · GeoQuiz · Zero API keys · Zero cost*
 
 ## Features
 
 | Category | Layers |
 |----------|--------|
-| **🛰️ Real-Time Tracking** | ISS Tracker, Earthquakes (USGS), NASA Wildfires, Day/Night Terminator, Live Webcams |
+| **🛰️ Real-Time Tracking** | ISS Tracker, Earthquakes (USGS), NASA Wildfires, Day/Night Terminator, 5,005 Live Cameras |
 | **🌐 Geopolitics** | Regime Types, Alliances & Blocs, Active Conflicts, Undersea Cables, Nuclear Plants, Nuclear Arsenal |
 | **🌋 Environment & Space** | Ocean Temperature, Surface Temperature, Population Density, Volcanoes, Radiation Sites, Starlink, Weather Radar, Aurora Forecast, Fireballs |
 
@@ -48,7 +48,7 @@
 | Architecture | Vanilla JavaScript (no frameworks, no bundlers) |
 | Hosting | GitHub Pages (static, free) |
 | Audio | Web Audio API (procedural) + Web Speech API |
-| Data Sources | USGS, NASA FIRMS/GIBS, NOAA, foto-webcam.eu, WhereTheISS, Wikipedia |
+| Data Sources | USGS, NASA FIRMS/GIBS, NOAA, foto-webcam.eu, TfL Open Data, City of Austin, Caltrans, WhereTheISS, Wikipedia |
 
 > 📋 See [TECH_SPEC.md](TECH_SPEC.md) for the full technical specification, complexity analysis, and API inventory.
 
@@ -71,6 +71,32 @@ open http://localhost:8080
 ```
 
 > **Zero API keys required.** All data sources are free and keyless. No `npm install`, no build step.
+
+### Refreshing the camera index
+
+`data/cameras.json` holds 4,996 traffic cameras and is the one file in the project
+that is generated rather than hand-written:
+
+```bash
+node scripts/build-camera-index.mjs
+```
+
+It reads the open catalogues of TfL London, the City of Austin and nine Caltrans
+districts — together over 3 MB — and condenses them to what the map needs:
+position, name, and how to reach the image. The result is 662 KB (143 KB gzipped)
+and is loaded lazily in the browser, only when the webcam layer is switched on or
+someone searches.
+
+Two things worth knowing:
+
+- **It is a snapshot.** Cameras get switched off, renamed and removed. Regenerate
+  it monthly; a stale index goes patchy, and the map shows "SIGNAL LOST" where a
+  feed has disappeared. A scheduled GitHub Action is the natural home for this.
+- **CORS does not apply here.** The script runs in Node, so catalogues without
+  CORS headers are fine. Only the image URLs need to work in a browser, and
+  `<img>` is exempt from CORS — which is why this feature needs no server.
+
+Rerun it whenever you bump the version, so the shipped index matches the release.
 
 ## Deployment
 
@@ -103,4 +129,4 @@ This project is open source under the [MIT License](LICENSE).
 
 ---
 
-**GEOPULSE V1.5.4** — Built with 🛰️ by RB Design 2026
+**GEOPULSE V2.6** — Built with 🛰️ by RB Design 2026
